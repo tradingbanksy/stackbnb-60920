@@ -25,16 +25,16 @@ const getExperienceImage = (experience) => {
   const imageMap = {
     1: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Sunset kayaking
     2: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&auto=format&fit=crop", // Beach bikes
-    3: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop", // Snorkeling
-    4: "https://images.unsplash.com/photo-1452421822248-d4c2b47f0c81?w=800&auto=format&fit=crop", // Beach photography
-    5: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop", // Spa/wellness
-    6: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&auto=format&fit=crop", // Food & wine
-    7: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop", // ATV jungle
-    8: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop", // Boat rental
-    9: "https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=800&auto=format&fit=crop", // Zip line
-    10: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&auto=format&fit=crop", // Horseback riding
-    11: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Scuba diving
-    12: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop", // Mountain hiking
+    3: "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=800&auto=format&fit=crop", // Snorkeling coral
+    4: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&auto=format&fit=crop", // Photography camera
+    5: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&auto=format&fit=crop", // Spa stones
+    6: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop", // Food platter
+    7: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop", // ATV off-road
+    8: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&auto=format&fit=crop", // Luxury boat
+    9: "https://images.unsplash.com/photo-1527786356703-4b100091cd2c?w=800&auto=format&fit=crop", // Zip line adventure
+    10: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&auto=format&fit=crop", // Horseback beach
+    11: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Scuba underwater
+    12: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop", // Mountain trail
   };
   return imageMap[experience.id] || imageMap[1];
 };
