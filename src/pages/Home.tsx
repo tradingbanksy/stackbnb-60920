@@ -56,10 +56,10 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
+          className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background/50 to-background/70" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center space-y-8">
