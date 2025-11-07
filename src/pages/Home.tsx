@@ -13,6 +13,7 @@ import stackdLogo from "@/assets/stackd-logo.png";
 const categories = [
   { id: "all", name: "All Experiences", icon: "✨" },
   { id: "Water Sports", name: "Water Sports", icon: "🌊" },
+  { id: "Tours & Activities", name: "Tours & Activities", icon: "🗺️" },
   { id: "Transportation", name: "Transportation", icon: "🚴" },
   { id: "Food & Dining", name: "Food & Dining", icon: "🍷" },
   { id: "Wellness", name: "Wellness", icon: "💆" },
@@ -28,6 +29,12 @@ const getExperienceImage = (experience) => {
     4: "https://images.unsplash.com/photo-1452421822248-d4c2b47f0c81?w=800&auto=format&fit=crop", // Beach photography
     5: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop", // Spa/wellness
     6: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&auto=format&fit=crop", // Food & wine
+    7: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop", // ATV jungle
+    8: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop", // Boat rental
+    9: "https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=800&auto=format&fit=crop", // Zip line
+    10: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&auto=format&fit=crop", // Horseback riding
+    11: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Scuba diving
+    12: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop", // Mountain hiking
   };
   return imageMap[experience.id] || imageMap[1];
 };
@@ -36,6 +43,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { isLoggedIn, userRole } = useUser();
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Redirect authenticated users to their dashboard
   useEffect(() => {
@@ -48,8 +56,15 @@ const Home = () => {
     }
   }, [isLoggedIn, userRole, navigate]);
 
-  const filteredExperiences =
-    selectedCategory === "all" ? experiences : experiences.filter((exp) => exp.category === selectedCategory);
+  const filteredExperiences = experiences.filter((exp) => {
+    const matchesCategory = selectedCategory === "all" || exp.category === selectedCategory;
+    const matchesSearch = searchQuery === "" || 
+      exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,6 +130,8 @@ const Home = () => {
                     <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <Input
                       placeholder="Search experiences..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       className="border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
                     />
                     <button className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-full p-3 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg">

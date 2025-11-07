@@ -347,6 +347,138 @@ export const experiences = [
       "Recipe cards"
     ],
     image: "/placeholder.svg"
+  },
+  {
+    id: 7,
+    name: "ATV Jungle Adventure",
+    vendor: "Adventure Seekers",
+    vendorId: 9,
+    category: "Tours & Activities",
+    categoryIcon: "🏍️",
+    price: 135,
+    duration: "3 hours",
+    maxGuests: 8,
+    rating: 4.9,
+    reviewCount: 178,
+    description: "Ride through lush jungle trails on powerful ATVs. Experience muddy tracks, river crossings, and breathtaking mountain views.",
+    included: [
+      "ATV and safety gear",
+      "Professional guide",
+      "Safety briefing",
+      "Refreshments and snacks",
+      "Action photos"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 8,
+    name: "Private Boat Rental",
+    vendor: "Marina Bay Charters",
+    vendorId: 10,
+    category: "Water Sports",
+    categoryIcon: "🚤",
+    price: 250,
+    duration: "4 hours",
+    maxGuests: 10,
+    rating: 5.0,
+    reviewCount: 92,
+    description: "Charter your own private boat for island hopping, fishing, or coastal exploration. Captain and fuel included.",
+    included: [
+      "Private boat with captain",
+      "Fuel and equipment",
+      "Snorkeling gear",
+      "Cooler with ice",
+      "Bluetooth sound system"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 9,
+    name: "Jungle Zip Line & Canopy Tour",
+    vendor: "Canopy Adventures",
+    vendorId: 11,
+    category: "Tours & Activities",
+    categoryIcon: "🌳",
+    price: 110,
+    duration: "2.5 hours",
+    maxGuests: 12,
+    rating: 4.9,
+    reviewCount: 234,
+    description: "Soar through the jungle canopy on 8 zip lines with platforms offering stunning forest views. Perfect for thrill-seekers!",
+    included: [
+      "8 zip line courses",
+      "All safety equipment",
+      "Professional guides",
+      "Jungle nature walk",
+      "Photo opportunities"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 10,
+    name: "Horseback Riding on Beach",
+    vendor: "Coastal Stables",
+    vendorId: 12,
+    category: "Tours & Activities",
+    categoryIcon: "🐴",
+    price: 90,
+    duration: "2 hours",
+    maxGuests: 6,
+    rating: 4.7,
+    reviewCount: 145,
+    description: "Experience the magic of riding gentle horses along pristine beaches at sunset. Perfect for all experience levels.",
+    included: [
+      "Well-trained horses",
+      "Riding helmets",
+      "Professional instructor",
+      "Beach sunset views",
+      "Photo session"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 11,
+    name: "Scuba Diving Certification",
+    vendor: "Deep Blue Dive School",
+    vendorId: 13,
+    category: "Water Sports",
+    categoryIcon: "🤿",
+    price: 450,
+    duration: "2 days",
+    maxGuests: 4,
+    rating: 5.0,
+    reviewCount: 88,
+    description: "Get PADI certified with our expert instructors. Includes classroom, pool training, and 4 open water dives.",
+    included: [
+      "PADI certification",
+      "All diving equipment",
+      "Digital learning materials",
+      "4 open water dives",
+      "Certification card"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 12,
+    name: "Mountain Hiking Expedition",
+    vendor: "Peak Adventures",
+    vendorId: 14,
+    category: "Tours & Activities",
+    categoryIcon: "⛰️",
+    price: 85,
+    duration: "5 hours",
+    maxGuests: 10,
+    rating: 4.8,
+    reviewCount: 167,
+    description: "Hike to stunning viewpoints with panoramic ocean and mountain views. Includes lunch at a scenic overlook.",
+    included: [
+      "Experienced hiking guide",
+      "Hiking poles if needed",
+      "Packed lunch",
+      "Water and snacks",
+      "First aid support"
+    ],
+    image: "/placeholder.svg"
   }
 ];
 
