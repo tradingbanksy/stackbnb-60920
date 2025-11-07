@@ -35,6 +35,12 @@ const getExperienceImage = (experience) => {
     10: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&auto=format&fit=crop", // Horseback beach
     11: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Scuba underwater
     12: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop", // Mountain trail
+    13: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop", // Parasailing
+    14: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop", // Beach yoga
+    15: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Deep sea fishing
+    16: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&auto=format&fit=crop", // Cooking class
+    17: "https://images.unsplash.com/photo-1498978441726-0fc8df1ec72e?w=800&auto=format&fit=crop", // Hot air balloon
+    18: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&auto=format&fit=crop", // Wine tasting
   };
   return imageMap[experience.id] || imageMap[1];
 };

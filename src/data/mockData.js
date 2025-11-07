@@ -479,6 +479,138 @@ export const experiences = [
       "First aid support"
     ],
     image: "/placeholder.svg"
+  },
+  {
+    id: 13,
+    name: "Parasailing Adventure",
+    vendor: "Sky High Watersports",
+    vendorId: 15,
+    category: "Water Sports",
+    categoryIcon: "🪂",
+    price: 140,
+    duration: "1.5 hours",
+    maxGuests: 3,
+    rating: 5.0,
+    reviewCount: 215,
+    description: "Soar 400 feet above the ocean for breathtaking aerial views. Safe, thrilling, and unforgettable experience.",
+    included: [
+      "Parasailing flight",
+      "All safety equipment",
+      "Boat ride to launch point",
+      "GoPro footage available",
+      "Experienced crew"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 14,
+    name: "Sunset Yoga on Beach",
+    vendor: "Zen Wellness Studio",
+    vendorId: 16,
+    category: "Wellness",
+    categoryIcon: "🧘",
+    price: 35,
+    duration: "1 hour",
+    maxGuests: 15,
+    rating: 4.9,
+    reviewCount: 189,
+    description: "Find your inner peace with gentle yoga flows as the sun sets over the ocean. All levels welcome.",
+    included: [
+      "Yoga mat provided",
+      "Guided meditation",
+      "Herbal tea after class",
+      "Beachfront location",
+      "Certified instructor"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 15,
+    name: "Deep Sea Fishing Charter",
+    vendor: "Captain's Catch Charters",
+    vendorId: 17,
+    category: "Water Sports",
+    categoryIcon: "🎣",
+    price: 320,
+    duration: "6 hours",
+    maxGuests: 6,
+    rating: 4.8,
+    reviewCount: 132,
+    description: "Fish for marlin, tuna, and mahi-mahi with experienced captain. All equipment and fishing licenses included.",
+    included: [
+      "Professional fishing gear",
+      "Fishing licenses",
+      "Bait and tackle",
+      "Cooler for your catch",
+      "Fish cleaning service"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 16,
+    name: "Cooking Class - Local Cuisine",
+    vendor: "Culinary Culture",
+    vendorId: 18,
+    category: "Food & Dining",
+    categoryIcon: "👨‍🍳",
+    price: 95,
+    duration: "3 hours",
+    maxGuests: 12,
+    rating: 4.9,
+    reviewCount: 156,
+    description: "Learn to cook authentic local dishes with a professional chef. Enjoy your creations with wine pairings.",
+    included: [
+      "Hands-on cooking",
+      "All ingredients provided",
+      "Wine pairings",
+      "Recipe booklet",
+      "Eat what you cook"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 17,
+    name: "Hot Air Balloon Ride",
+    vendor: "Skyview Balloons",
+    vendorId: 19,
+    category: "Tours & Activities",
+    categoryIcon: "🎈",
+    price: 280,
+    duration: "3 hours",
+    maxGuests: 8,
+    rating: 5.0,
+    reviewCount: 198,
+    description: "Float peacefully over stunning landscapes at sunrise. Includes champagne toast and breakfast after landing.",
+    included: [
+      "1-hour balloon flight",
+      "Champagne celebration",
+      "Gourmet breakfast",
+      "Flight certificate",
+      "Hotel pickup included"
+    ],
+    image: "/placeholder.svg"
+  },
+  {
+    id: 18,
+    name: "Wine Tasting Tour",
+    vendor: "Vineyard Ventures",
+    vendorId: 20,
+    category: "Food & Dining",
+    categoryIcon: "🍇",
+    price: 110,
+    duration: "4 hours",
+    maxGuests: 14,
+    rating: 4.7,
+    reviewCount: 176,
+    description: "Visit 3 boutique wineries with tastings, vineyard tours, and cheese pairings. Transportation included.",
+    included: [
+      "Visit 3 wineries",
+      "10+ wine tastings",
+      "Cheese pairings",
+      "Vineyard tours",
+      "Round-trip transport"
+    ],
+    image: "/placeholder.svg"
   }
 ];
 
