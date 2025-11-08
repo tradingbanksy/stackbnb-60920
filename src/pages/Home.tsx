@@ -9,6 +9,24 @@ import { useEffect, useState } from "react";
 import { experiences } from "@/data/mockData";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo.png";
+import kayakingImg from "@/assets/experiences/kayaking.jpg";
+import bikesImg from "@/assets/experiences/bikes.jpg";
+import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
+import photographyImg from "@/assets/experiences/photography.jpg";
+import spaImg from "@/assets/experiences/spa.jpg";
+import diningImg from "@/assets/experiences/dining.jpg";
+import atvImg from "@/assets/experiences/atv.jpg";
+import boatImg from "@/assets/experiences/boat.jpg";
+import ziplineImg from "@/assets/experiences/zipline.jpg";
+import horsebackImg from "@/assets/experiences/horseback.jpg";
+import scubaImg from "@/assets/experiences/scuba.jpg";
+import hikingImg from "@/assets/experiences/hiking.jpg";
+import parasailingImg from "@/assets/experiences/parasailing.jpg";
+import yogaImg from "@/assets/experiences/yoga.jpg";
+import fishingImg from "@/assets/experiences/fishing.jpg";
+import cookingImg from "@/assets/experiences/cooking.jpg";
+import balloonImg from "@/assets/experiences/balloon.jpg";
+import wineImg from "@/assets/experiences/wine.jpg";
 
 const categories = [
   { id: "all", name: "All Experiences", icon: "✨" },
@@ -23,26 +41,26 @@ const categories = [
 // Image mapping based on experience category and name
 const getExperienceImage = (experience) => {
   const imageMap = {
-    1: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop", // Sunset kayaking
-    2: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&auto=format&fit=crop", // Beach bikes
-    3: "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=800&auto=format&fit=crop", // Snorkeling coral
-    4: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&auto=format&fit=crop", // Photography camera
-    5: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&auto=format&fit=crop", // Spa stones
-    6: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop", // Food platter
-    7: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop", // ATV off-road
-    8: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&auto=format&fit=crop", // Luxury boat
-    9: "https://images.unsplash.com/photo-1527786356703-4b100091cd2c?w=800&auto=format&fit=crop", // Zip line adventure
-    10: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&auto=format&fit=crop", // Horseback beach
-    11: "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=800&auto=format&fit=crop", // Scuba underwater
-    12: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop", // Mountain trail
-    13: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop", // Parasailing
-    14: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop", // Beach yoga
-    15: "https://images.unsplash.com/photo-1566412777355-dc6e9fc0f9d6?w=800&auto=format&fit=crop", // Deep sea fishing
-    16: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&auto=format&fit=crop", // Cooking class
-    17: "https://images.unsplash.com/photo-1479245415506-4abeec913180?w=800&auto=format&fit=crop", // Hot air balloon
-    18: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&auto=format&fit=crop", // Wine tasting
+    1: kayakingImg,
+    2: bikesImg,
+    3: snorkelingImg,
+    4: photographyImg,
+    5: spaImg,
+    6: diningImg,
+    7: atvImg,
+    8: boatImg,
+    9: ziplineImg,
+    10: horsebackImg,
+    11: scubaImg,
+    12: hikingImg,
+    13: parasailingImg,
+    14: yogaImg,
+    15: fishingImg,
+    16: cookingImg,
+    17: balloonImg,
+    18: wineImg,
   };
-  return imageMap[experience.id] || imageMap[1];
+  return imageMap[experience.id] || kayakingImg;
 };
 
 const Home = () => {
