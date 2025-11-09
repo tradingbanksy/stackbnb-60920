@@ -35,7 +35,7 @@ const AddVendor = () => {
         return;
       }
 
-      const { error } = await supabase.from('vendors').insert({
+      const { error } = await supabase.from('vendors' as any).insert({
         user_id: user.id,
         name: formData.vendorName,
         email: formData.vendorEmail,
