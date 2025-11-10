@@ -58,6 +58,7 @@ const AppView = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<'explore' | 'wishlists'>('explore');
 
   useEffect(() => {
     fetchMyBusinesses();
@@ -111,6 +112,11 @@ const AppView = () => {
     !exp.category.toLowerCase().includes('food')
   ).slice(0, 10);
 
+  // Get favorited experiences
+  const favoritedExperiences = experiences.filter(exp => 
+    favorites.includes(exp.id)
+  );
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Centered Header */}
@@ -163,7 +169,75 @@ const AppView = () => {
         </div>
 
         <TabsContent value="explore" className="mt-0">
-          <main className="pt-6 space-y-8">
+          <main className="pt-6 space-y-8 pb-8">
+            {viewMode === 'wishlists' ? (
+              // Wishlists View
+              <section className="space-y-3">
+                <div className="px-4">
+                  <h2 className="text-lg font-semibold">My Wishlists ({favorites.length})</h2>
+                  {favorites.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      No favorites yet. Heart experiences to save them here!
+                    </p>
+                  )}
+                </div>
+                {favorites.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 px-4">
+                    {favoritedExperiences.map((experience) => (
+                      <Link
+                        key={experience.id}
+                        to={`/experience/${experience.id}`}
+                        className="group"
+                      >
+                        <div className="space-y-2">
+                          <div className="relative aspect-square overflow-hidden rounded-xl">
+                            <div
+                              className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                              style={{
+                                backgroundImage: `url(${getExperienceImage(experience)})`,
+                              }}
+                            />
+                            
+                            <button
+                              onClick={(e) => toggleFavorite(experience.id, e)}
+                              className="absolute top-2 right-2 z-10 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+                            >
+                              <Heart className="h-5 w-5 transition-all drop-shadow-md fill-red-500 text-red-500" />
+                            </button>
+
+                            {experience.rating >= 4.8 && (
+                              <div className="absolute top-2 left-2 z-10">
+                                <Badge className="bg-white/95 text-foreground backdrop-blur-sm shadow-sm text-[10px] px-2 py-0.5 border-0">
+                                  Guest favorite
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-0.5">
+                            <h3 className="font-semibold text-sm leading-tight line-clamp-1">
+                              {experience.name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {experience.vendor}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              ★ {experience.rating} · {experience.duration}
+                            </p>
+                            <div className="pt-0.5">
+                              <span className="text-sm font-semibold">${experience.price}</span>
+                              <span className="text-xs text-muted-foreground"> per person</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : (
+              // Explore View
+              <>
             {/* My Businesses Row */}
             {myBusinesses.length > 0 && (
               <section className="space-y-3">
@@ -204,8 +278,8 @@ const AppView = () => {
               <div className="px-4">
                 <h2 className="text-lg font-semibold">Restaurants Near You</h2>
               </div>
-              <ScrollArea className="w-full">
-                <div className="flex gap-4 px-4 pb-2">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex gap-4 px-4 pb-4">
                   {nearbyRestaurants.map((restaurant) => (
                     <Link
                       key={restaurant.id}
@@ -262,7 +336,7 @@ const AppView = () => {
                     </Link>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" />
+                <ScrollBar orientation="horizontal" className="h-3" />
               </ScrollArea>
             </section>
 
@@ -271,8 +345,8 @@ const AppView = () => {
               <div className="px-4">
                 <h2 className="text-lg font-semibold">Popular Experiences</h2>
               </div>
-              <ScrollArea className="w-full">
-                <div className="flex gap-4 px-4 pb-2">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex gap-4 px-4 pb-4">
                   {popularExperiences.map((experience) => (
                     <Link
                       key={experience.id}
@@ -329,9 +403,11 @@ const AppView = () => {
                     </Link>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" />
+                <ScrollBar orientation="horizontal" className="h-3" />
               </ScrollArea>
             </section>
+            </>
+            )}
           </main>
         </TabsContent>
 
@@ -399,10 +475,30 @@ const AppView = () => {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50 shadow-lg">
         <div className="max-w-[450px] mx-auto flex justify-around items-center h-16">
-          <Link to="/appview" className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground">
-            <Heart className="h-5 w-5" />
-            <span className="text-[10px]">Wishlists</span>
-          </Link>
+          <button 
+            onClick={() => setViewMode('wishlists')}
+            className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 ${
+              viewMode === 'wishlists' ? 'text-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${viewMode === 'wishlists' ? 'fill-current' : ''}`} />
+            <span className={`text-[10px] ${viewMode === 'wishlists' ? 'font-medium' : ''}`}>Wishlists</span>
+            {favorites.length > 0 && (
+              <div className="absolute top-1.5 right-1/4 h-4 w-4 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center">
+                {favorites.length}
+              </div>
+            )}
+          </button>
+
+          <button 
+            onClick={() => setViewMode('explore')}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 ${
+              viewMode === 'explore' ? 'text-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            <Search className="h-5 w-5" />
+            <span className={`text-[10px] ${viewMode === 'explore' ? 'font-medium' : ''}`}>Explore</span>
+          </button>
 
           <Link to="/appview" className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground">
             <MessageCircle className="h-5 w-5" />
