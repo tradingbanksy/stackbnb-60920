@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Message {
@@ -24,49 +24,14 @@ const TripPlannerChat = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Always scroll to bottom when messages update
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
-
-  const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  };
-
-  // 🧠 Smart typing animation based on message length
-  const typeOutMessage = (fullText: string) => {
-    return new Promise<void>((resolve) => {
-      setIsTyping(true);
-      let index = 0;
-
-      // Dynamically adjust typing speed by message length
-      const length = fullText.length;
-      let speed = 20; // default
-      if (length < 80) speed = 10;
-      else if (length < 300) speed = 20;
-      else speed = 35;
-
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
-
-      const interval = setInterval(() => {
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1].content = fullText.slice(0, index);
-          return updated;
-        });
-        index++;
-        if (index > fullText.length) {
-          clearInterval(interval);
-          setIsTyping(false);
-          resolve();
-        }
-      }, speed);
-    });
-  };
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -89,82 +54,107 @@ const TripPlannerChat = () => {
         }),
       });
 
-      if (!response.ok) {
-        if (response.status === 429 || response.status === 402) {
-          const error = await response.json();
-          throw new Error(error.error);
-        }
-        throw new Error("Failed to get response");
+      if (!response.ok || !response.body) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${errorText}`);
       }
 
-      const data = await response.json();
-      const assistantMessage = data?.reply || "I'm here to help! Can you try again?";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-      await typeOutMessage(assistantMessage);
+      let assistantText = "";
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith("data:")) continue;
+          if (trimmed === "data: [DONE]") continue;
+
+          try {
+            const json = JSON.parse(trimmed.slice(5).trim());
+            const content = json.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantText += content;
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1].content = assistantText;
+                return updated;
+              });
+            }
+          } catch (err) {
+            console.warn("Skipping malformed chunk:", trimmed);
+          }
+        }
+      }
     } catch (error: any) {
+      console.error(error);
       toast({
         title: "Error",
-        description: error.message || "Failed to send message",
+        description: error.message || "Failed to get AI response",
         variant: "destructive",
       });
+      setMessages((prev) => prev.filter((m) => m.role !== "assistant"));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="h-screen bg-gradient-to-b from-blue-50 to-emerald-50 flex flex-col">
-      <div className="max-w-[420px] mx-auto w-full flex flex-col h-full border-x border-gray-200 relative">
+    <div className="h-screen bg-background flex flex-col">
+      <div className="max-w-[375px] mx-auto w-full flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/appview")}>
-            <ArrowLeft className="h-5 w-5 text-gray-700" />
+        <div className="flex items-center justify-between p-4 border-b">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/appview")}
+          >
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold text-gray-800">Trip Planner</h1>
+          <h1 className="text-lg font-bold">Trip Planner</h1>
           <div className="w-10" />
         </div>
 
-        {/* Chat Messages */}
+        {/* Messages */}
         <ScrollArea ref={scrollRef} className="flex-1 p-4">
           <div className="space-y-4">
-            {messages.map((message, index) => (
+            {messages.map((m, i) => (
               <div
-                key={index}
+                key={i}
                 className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
+                  m.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <Card
-                  className={`max-w-[80%] p-3 rounded-2xl shadow-md ${
-                    message.role === "user"
-                      ? "bg-gradient-to-r from-orange-400 to-pink-500 text-white"
-                      : "bg-white text-gray-800 border border-gray-100"
+                  className={`max-w-[80%] p-3 text-sm whitespace-pre-wrap ${
+                    m.role === "user"
+                      ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white"
+                      : "bg-muted"
                   }`}
                 >
-                  <p
-                    className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                      message.role === "assistant" ? "chat-link-styles" : ""
-                    }`}
-                    dangerouslySetInnerHTML={{ __html: message.content }}
-                  />
+                  {m.content}
                 </Card>
               </div>
             ))}
-
-            {(isLoading || isTyping) && (
+            {isLoading && (
               <div className="flex justify-start">
-                <Card className="max-w-[80%] p-3 bg-white/80 shadow-sm flex items-center gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                <Card className="max-w-[80%] p-3 bg-muted">
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 </Card>
               </div>
             )}
           </div>
         </ScrollArea>
 
-        {/* Input Bar */}
-        <div className="p-4 border-t bg-white/80 backdrop-blur-sm sticky bottom-0">
+        {/* Input */}
+        <div className="p-4 border-t">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -175,35 +165,19 @@ const TripPlannerChat = () => {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask me a question..."
-              disabled={isLoading || isTyping}
-              className="text-sm"
+              placeholder="Ask about restaurants or activities..."
+              disabled={isLoading}
             />
             <Button
               type="submit"
               size="icon"
-              disabled={isLoading || isTyping || !input.trim()}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              disabled={isLoading || !input.trim()}
             >
               <Send className="h-4 w-4" />
             </Button>
           </form>
         </div>
       </div>
-
-      {/* Link styling */}
-      <style>{`
-        .chat-link-styles a {
-          color: #059669; /* teal-600 */
-          text-decoration: none;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        }
-        .chat-link-styles a:hover {
-          color: #047857;
-          text-decoration: underline;
-        }
-      `}</style>
     </div>
   );
 };
