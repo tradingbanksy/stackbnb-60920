@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { useEffect, useState } from "react";
 import { experiences } from "@/data/mockData";
+import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo.png";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -66,8 +67,16 @@ const getExperienceImage = (experience) => {
 const Home = () => {
   const navigate = useNavigate();
   const { isLoggedIn, userRole } = useUser();
+  const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Redirect mobile users to app view
+  useEffect(() => {
+    if (isMobile) {
+      navigate("/appview", { replace: true });
+    }
+  }, [isMobile, navigate]);
 
   // Redirect authenticated users to their dashboard
   useEffect(() => {
