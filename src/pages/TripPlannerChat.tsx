@@ -7,11 +7,15 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
+
+// Input validation constants
+const MAX_MESSAGE_LENGTH = 2000;
 
 const TripPlannerChat = () => {
   const navigate = useNavigate();
@@ -35,29 +39,62 @@ const TripPlannerChat = () => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || isLoading) return;
 
-    const userMessage = input.trim();
+    // Client-side validation
+    if (trimmedInput.length > MAX_MESSAGE_LENGTH) {
+      toast({
+        title: "Message too long",
+        description: `Please limit your message to ${MAX_MESSAGE_LENGTH} characters.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setMessages((prev) => [...prev, { role: "user", content: trimmedInput }]);
     setIsLoading(true);
 
     try {
+      // Get the current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to use the trip planner.",
+          variant: "destructive",
+        });
+        navigate("/auth");
+        return;
+      }
+
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/trip-planner-chat`;
       const response = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          messages: [...messages, { role: "user", content: userMessage }],
+          messages: [...messages, { role: "user", content: trimmedInput }],
         }),
       });
 
+      if (response.status === 401) {
+        toast({
+          title: "Session expired",
+          description: "Please sign in again.",
+          variant: "destructive",
+        });
+        navigate("/auth");
+        return;
+      }
+
       if (!response.ok || !response.body) {
-        const errorText = await response.text();
-        throw new Error(`API error: ${errorText}`);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || `API error: ${response.status}`);
       }
 
       const reader = response.body.getReader();
@@ -89,19 +126,26 @@ const TripPlannerChat = () => {
                 return updated;
               });
             }
-          } catch (err) {
-            console.warn("Skipping malformed chunk:", trimmed);
+          } catch {
+            // Skip malformed chunks silently
           }
         }
       }
-    } catch (error: any) {
-      console.error(error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to get AI response";
       toast({
         title: "Error",
-        description: error.message || "Failed to get AI response",
+        description: errorMessage,
         variant: "destructive",
       });
-      setMessages((prev) => prev.filter((m) => m.role !== "assistant"));
+      // Remove the empty assistant message if there was an error
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role === "assistant" && lastMessage.content === "") {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -176,6 +220,7 @@ const TripPlannerChat = () => {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about restaurants or activities..."
               disabled={isLoading}
+              maxLength={MAX_MESSAGE_LENGTH}
             />
             <Button
               type="submit"
@@ -185,6 +230,9 @@ const TripPlannerChat = () => {
               <Send className="h-4 w-4" />
             </Button>
           </form>
+          <p className="text-xs text-muted-foreground mt-1 text-right">
+            {input.length}/{MAX_MESSAGE_LENGTH}
+          </p>
         </div>
       </div>
     </div>

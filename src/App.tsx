@@ -2,10 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { UserProvider, useUser } from "./contexts/UserContext";
+import { UserProvider } from "./contexts/UserContext";
+import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import ExperienceDetailsPage from "./pages/ExperienceDetailsPage";
@@ -51,42 +50,56 @@ import Profile from "./pages/Profile";
 import TripPlannerChat from "./pages/TripPlannerChat";
 import RestaurantDetail from "./pages/RestaurantDetail";
 
-
-// Protected route component for hosts
+// Protected route component for hosts - uses Supabase session for authentication
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, hasCompletedSignup, userRole } = useUser();
-  const [authChecked, setAuthChecked] = useState(false);
+  const { isAuthenticated, isLoading, role } = useAuthContext();
   
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session && !isLoggedIn && !hasCompletedSignup) {
-        window.location.href = "/auth/host";
-      }
-      setAuthChecked(true);
-    };
-    checkAuth();
-  }, [isLoggedIn, hasCompletedSignup]);
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
   
-  if (!authChecked) return null;
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/host" replace />;
+  }
   
-  if (userRole === 'vendor') {
+  // If user has vendor role, redirect to vendor dashboard
+  if (role === 'vendor') {
     return <Navigate to="/vendor/dashboard" replace />;
   }
   
   return <>{children}</>;
 };
 
-// Protected route component for vendors
+// Protected route component for vendors - uses Supabase session for authentication
 const ProtectedVendorRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, hasCompletedSignup, userRole } = useUser();
+  const { isAuthenticated, isLoading, role } = useAuthContext();
   
-  if (!isLoggedIn && !hasCompletedSignup) {
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
     return <Navigate to="/signup/vendor" replace />;
   }
   
-  if (userRole === 'host') {
+  // If user has host role, redirect to host dashboard
+  if (role === 'host') {
     return <Navigate to="/host/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Generic protected route that just checks authentication
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuthContext();
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
   }
   
   return <>{children}</>;
@@ -106,7 +119,7 @@ const AppRoutes = () => (
     <Route path="/storefront/:hostId" element={<HostStorefront />} />
     <Route path="/auth" element={<Auth />} />
     <Route path="/profile" element={<Profile />} />
-    <Route path="/trip-planner-chat" element={<TripPlannerChat />} />
+    <Route path="/trip-planner-chat" element={<ProtectedRoute><TripPlannerChat /></ProtectedRoute>} />
     <Route path="/restaurant/:id" element={<RestaurantDetail />} />
     
     {/* Legacy routes */}
@@ -238,16 +251,18 @@ const AppRoutes = () => (
 );
 
 const App = () => (
-  <UserProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
-  </UserProvider>
+  <AuthProvider>
+    <UserProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </UserProvider>
+  </AuthProvider>
 );
 
 export default App;
