@@ -1,23 +1,37 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, User, LogOut } from "lucide-react";
+import { profileSchema, type ProfileFormData } from "@/lib/validations";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    city: "",
-    zip_code: "",
+
+  const form = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      full_name: "",
+      email: "",
+      phone: "",
+      city: "",
+      zip_code: "",
+    },
   });
 
   useEffect(() => {
@@ -46,7 +60,7 @@ const Profile = () => {
       if (error && error.code !== "PGRST116") throw error;
       
       if (data) {
-        setProfile({
+        form.reset({
           full_name: data.full_name || "",
           email: data.email || user.email || "",
           phone: data.phone || "",
@@ -54,7 +68,7 @@ const Profile = () => {
           zip_code: data.zip_code || "",
         });
       } else {
-        setProfile(prev => ({ ...prev, email: user.email || "" }));
+        form.setValue("email", user.email || "");
       }
     } catch (error: any) {
       toast({
@@ -65,8 +79,7 @@ const Profile = () => {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (data: ProfileFormData) => {
     setLoading(true);
 
     try {
@@ -77,7 +90,11 @@ const Profile = () => {
         .from("profiles")
         .upsert({
           user_id: user.id,
-          ...profile,
+          full_name: data.full_name?.trim() || null,
+          email: data.email?.trim() || null,
+          phone: data.phone?.trim() || null,
+          city: data.city?.trim() || null,
+          zip_code: data.zip_code?.trim() || null,
         });
 
       if (error) throw error;
@@ -130,67 +147,95 @@ const Profile = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                value={profile.full_name}
-                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                placeholder="John Doe"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                placeholder="you@example.com"
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                placeholder="+1 (555) 123-4567"
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={profile.city}
-                onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                placeholder="Los Angeles"
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Los Angeles" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="zip_code">Zip Code</Label>
-              <Input
-                id="zip_code"
-                value={profile.zip_code}
-                onChange={(e) => setProfile({ ...profile, zip_code: e.target.value })}
-                placeholder="90210"
+              <FormField
+                control={form.control}
+                name="zip_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Zip Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="90210" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save Profile"}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Profile"}
+              </Button>
+            </form>
+          </Form>
         </Card>
       </div>
     </div>

@@ -1,28 +1,44 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import HostBottomNav from "@/components/HostBottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { vendorSchema, type VendorFormData } from "@/lib/validations";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
 
 const AddVendor = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    vendorName: '',
-    vendorEmail: '',
-    category: '',
-    commission: '',
-    recommendation: '',
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<VendorFormData>({
+    resolver: zodResolver(vendorSchema),
+    defaultValues: {
+      vendorName: "",
+      vendorEmail: "",
+      category: "",
+      commission: "",
+      recommendation: "",
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: VendorFormData) => {
+    setIsSubmitting(true);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -37,33 +53,26 @@ const AddVendor = () => {
 
       const { error } = await supabase.from('vendors' as any).insert({
         user_id: user.id,
-        name: formData.vendorName,
-        email: formData.vendorEmail,
-        category: formData.category,
-        commission: parseFloat(formData.commission),
-        description: formData.recommendation,
+        name: data.vendorName.trim(),
+        email: data.vendorEmail.trim(),
+        category: data.category,
+        commission: parseFloat(data.commission),
+        description: data.recommendation.trim(),
       });
 
       if (error) {
-        console.error('Vendor insert error:', error);
         throw error;
       }
 
       toast.success("Vendor added successfully!");
       navigate('/host/vendors');
     } catch (error: any) {
-      console.error('Error adding vendor:', error);
       toast.error("Failed to add vendor", {
         description: error.message || "Please try again"
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
   };
 
   return (
@@ -83,90 +92,120 @@ const AddVendor = () => {
         </div>
 
         <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="vendorName" className="text-sm font-medium">Vendor Name</Label>
-              <Input
-                id="vendorName"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
                 name="vendorName"
-                value={formData.vendorName}
-                onChange={handleChange}
-                placeholder="Ocean Adventures"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Vendor Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ocean Adventures" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="vendorEmail" className="text-sm font-medium">Vendor Email</Label>
-              <Input
-                id="vendorEmail"
+              <FormField
+                control={form.control}
                 name="vendorEmail"
-                type="email"
-                value={formData.vendorEmail}
-                onChange={handleChange}
-                placeholder="contact@oceanadventures.com"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Vendor Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="contact@oceanadventures.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                required
-              >
-                <SelectTrigger id="category" className="rounded-xl">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="water-sports">Water Sports</SelectItem>
-                  <SelectItem value="transportation">Transportation</SelectItem>
-                  <SelectItem value="food-dining">Food & Dining</SelectItem>
-                  <SelectItem value="wellness">Wellness</SelectItem>
-                  <SelectItem value="photography">Photography</SelectItem>
-                  <SelectItem value="entertainment">Entertainment</SelectItem>
-                  <SelectItem value="tours">Tours & Activities</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="water-sports">Water Sports</SelectItem>
+                        <SelectItem value="transportation">Transportation</SelectItem>
+                        <SelectItem value="food-dining">Food & Dining</SelectItem>
+                        <SelectItem value="wellness">Wellness</SelectItem>
+                        <SelectItem value="photography">Photography</SelectItem>
+                        <SelectItem value="entertainment">Entertainment</SelectItem>
+                        <SelectItem value="tours">Tours & Activities</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="commission" className="text-sm font-medium">Proposed Commission (%)</Label>
-              <Input
-                id="commission"
+              <FormField
+                control={form.control}
                 name="commission"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.commission}
-                onChange={handleChange}
-                placeholder="20"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Proposed Commission (%)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="20"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Vendor must accept this rate. Typical range: 15–25%.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <p className="text-xs text-muted-foreground">
-                Vendor must accept this rate. Typical range: 15–25%.
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="recommendation" className="text-sm font-medium">Why recommend them?</Label>
-              <Textarea
-                id="recommendation"
+              <FormField
+                control={form.control}
                 name="recommendation"
-                value={formData.recommendation}
-                onChange={handleChange}
-                placeholder="Tell your guests why you recommend this vendor..."
-                rows={4}
-                required
-                className="rounded-xl resize-none"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Why recommend them?</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell your guests why you recommend this vendor..."
+                        rows={4}
+                        className="rounded-xl resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <Button type="submit" variant="gradient" className="w-full" size="lg">
-              Send Invitation
-            </Button>
-          </form>
+              <Button 
+                type="submit" 
+                variant="gradient" 
+                className="w-full" 
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Sending..." : "Send Invitation"}
+              </Button>
+            </form>
+          </Form>
         </Card>
       </div>
 
