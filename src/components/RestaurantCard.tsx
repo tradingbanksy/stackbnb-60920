@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { Star, Heart, MapPin } from "lucide-react";
+import { Star, Heart, MapPin, Navigation } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { formatDistance } from "@/services/geoapifyService";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -36,11 +37,19 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
     setIsFavorite(!isFavorite);
   };
 
+  // Cache API restaurant data before navigating
+  const handleClick = (e: React.MouseEvent) => {
+    if (restaurant.isFromApi) {
+      localStorage.setItem(`restaurant_${restaurant.id}`, JSON.stringify(restaurant));
+    }
+  };
+
   if (variant === 'vertical') {
     return (
       <Link
         to={`/restaurant/${restaurant.id}`}
         className="block group"
+        onClick={handleClick}
       >
         <div className="flex gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
           {/* Image */}
@@ -88,7 +97,14 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
             
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="h-3 w-3" />
-              <span className="line-clamp-1">{restaurant.neighborhood}</span>
+              <span className="line-clamp-1">{restaurant.neighborhood || restaurant.city}</span>
+              {restaurant.distance && (
+                <>
+                  <span>•</span>
+                  <Navigation className="h-3 w-3" />
+                  <span>{formatDistance(restaurant.distance)}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -101,6 +117,7 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
     <Link
       to={`/restaurant/${restaurant.id}`}
       className="flex-shrink-0 w-[200px] group"
+      onClick={handleClick}
     >
       <div className="space-y-2">
         {/* Image */}
@@ -152,15 +169,23 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
             {restaurant.name}
           </h3>
           <p className="text-xs text-muted-foreground line-clamp-1">
-            {restaurant.cuisine} • {restaurant.neighborhood}
+            {restaurant.cuisine} • {restaurant.neighborhood || restaurant.city}
           </p>
           <div className="flex items-center justify-between pt-0.5">
             <div className="flex items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-medium">{restaurant.rating}</span>
+              <span className="text-xs font-medium">{restaurant.rating?.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">({restaurant.reviewCount})</span>
             </div>
-            <span className="text-xs font-medium">{restaurant.priceRange}</span>
+            <div className="flex items-center gap-1">
+              {restaurant.distance && (
+                <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                  <Navigation className="h-3 w-3" />
+                  {formatDistance(restaurant.distance)}
+                </span>
+              )}
+              <span className="text-xs font-medium">{restaurant.priceRange}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -38,6 +38,8 @@ import {
   locationSuggestions,
   type Restaurant 
 } from "@/data/mockRestaurants";
+import { useNearbyPlaces } from "@/hooks/useNearbyPlaces";
+import { type GeoapifyPlace } from "@/services/geoapifyService";
 
 const getExperienceImage = (experience: any) => {
   const imageMap: Record<number, string> = {
@@ -63,6 +65,30 @@ const getExperienceImage = (experience: any) => {
   return imageMap[experience.id] || kayakingImg;
 };
 
+// Convert Geoapify place to Restaurant format
+const convertApiPlaceToRestaurant = (place: GeoapifyPlace): Restaurant => ({
+  id: place.id,
+  name: place.name,
+  cuisine: place.cuisine || 'Restaurant',
+  rating: place.rating || 4.0,
+  reviewCount: place.reviewCount || 0,
+  priceRange: place.priceRange || '$$',
+  address: place.address,
+  neighborhood: place.city,
+  city: place.city,
+  zipCode: place.zipCode,
+  phone: place.phone || '',
+  website: place.website,
+  hours: {},
+  description: `${place.name} located at ${place.address}`,
+  photos: place.photos.length > 0 ? place.photos : ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'],
+  features: [],
+  hasOutdoorSeating: false,
+  coordinates: { lat: place.lat, lng: place.lng },
+  distance: place.distance,
+  isFromApi: true,
+});
+
 const AppView = () => {
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
@@ -74,8 +100,6 @@ const AppView = () => {
   // Location search state
   const [searchCity, setSearchCity] = useState("");
   const [searchZip, setSearchZip] = useState("");
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ city: string; zip: string } | null>(null);
   
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
@@ -85,6 +109,16 @@ const AppView = () => {
     priceRange: [],
     outdoorSeating: false,
   });
+
+  // Geoapify API integration
+  const { 
+    places: apiPlaces, 
+    isLoading: isLoadingPlaces, 
+    userLocation: apiUserLocation,
+    detectLocation: detectApiLocation,
+    searchByLocation,
+    isLocationLoading 
+  } = useNearbyPlaces();
 
   useEffect(() => {
     fetchMyBusinesses();
@@ -126,48 +160,25 @@ const AppView = () => {
     });
   };
 
-  // Detect user location
+  // Detect user location using Geoapify API
   const detectLocation = () => {
-    setIsLoadingLocation(true);
-    
-    if (!navigator.geolocation) {
-      toast({ title: "Geolocation not supported", variant: "destructive", duration: 3000 });
-      setIsLoadingLocation(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        // Mock reverse geocoding - in production would use a geocoding API
-        // For demo, we'll set to Miami Beach since our mock data is primarily there
-        const mockCity = "Miami Beach";
-        const mockZip = "33139";
-        
-        setSearchCity(mockCity);
-        setSearchZip(mockZip);
-        setUserLocation({ city: mockCity, zip: mockZip });
-        setFilters(prev => ({ ...prev, nearMe: true }));
-        
-        toast({ title: `Location detected: ${mockCity}`, duration: 2000 });
-        setIsLoadingLocation(false);
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        toast({ 
-          title: "Could not detect location", 
-          description: "Please enter your city or ZIP code manually",
-          duration: 3000 
-        });
-        setIsLoadingLocation(false);
-      },
-      { timeout: 10000 }
-    );
+    detectApiLocation();
+    setFilters(prev => ({ ...prev, nearMe: true }));
   };
+
+  // Update search fields when API location changes
+  useEffect(() => {
+    if (apiUserLocation) {
+      setSearchCity(apiUserLocation.city);
+      setSearchZip(apiUserLocation.zipCode);
+    }
+  }, [apiUserLocation]);
 
   // Handle search
   const handleSearch = () => {
-    if (searchCity || searchZip) {
-      toast({ title: `Showing restaurants in ${searchCity || searchZip}`, duration: 2000 });
+    const query = searchCity || searchZip;
+    if (query) {
+      searchByLocation(query);
     }
   };
 
@@ -177,21 +188,29 @@ const AppView = () => {
       detectLocation();
     } else {
       setFilters(prev => ({ ...prev, nearMe: false }));
-      setUserLocation(null);
     }
   };
 
-  // Filter restaurants based on search and filters
-  const filteredRestaurants = useMemo(() => {
-    let results = [...mockRestaurants];
+  // Convert API places to Restaurant format
+  const apiRestaurants = useMemo(() => {
+    return apiPlaces.map(convertApiPlaceToRestaurant);
+  }, [apiPlaces]);
 
-    // Filter by location
-    if (searchCity || searchZip) {
+  // Filter restaurants based on search and filters - use API data when available
+  const filteredRestaurants = useMemo(() => {
+    // If we have API results, use them; otherwise fall back to mock data
+    let results: Restaurant[] = apiRestaurants.length > 0 
+      ? apiRestaurants 
+      : [...mockRestaurants];
+
+    // If using mock data and searching, filter by location
+    if (apiRestaurants.length === 0 && (searchCity || searchZip)) {
       results = filterRestaurantsByLocation(results, searchCity, searchZip);
     }
 
     // Apply filters
-    if (filters.openNow) {
+    if (filters.openNow && apiRestaurants.length === 0) {
+      // Only filter by open status for mock data (API data doesn't have hours)
       results = results.filter(r => isRestaurantOpen(r));
     }
 
@@ -208,7 +227,7 @@ const AppView = () => {
     }
 
     return results;
-  }, [searchCity, searchZip, filters]);
+  }, [searchCity, searchZip, filters, apiRestaurants]);
 
   // Get other experiences (non-dining)
   const popularExperiences = experiences.filter((exp: any) => 
@@ -250,7 +269,7 @@ const AppView = () => {
             onZipChange={setSearchZip}
             onSearch={handleSearch}
             onLocationDetect={detectLocation}
-            isLoadingLocation={isLoadingLocation}
+            isLoadingLocation={isLocationLoading}
           />
         </div>
       </header>
@@ -281,7 +300,7 @@ const AppView = () => {
             filters={filters}
             onFilterChange={setFilters}
             onNearMeClick={handleNearMeClick}
-            isLoadingLocation={isLoadingLocation}
+            isLoadingLocation={isLocationLoading}
           />
 
           <main className="pt-2 space-y-8 pb-8">

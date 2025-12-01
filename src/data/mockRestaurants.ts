@@ -11,6 +11,7 @@ export interface Restaurant {
   city: string;
   zipCode: string;
   phone: string;
+  website?: string;
   hours: {
     [key: string]: { open: string; close: string } | null;
   };
@@ -21,6 +22,8 @@ export interface Restaurant {
   reservationUrl?: string;
   reservationPlatform?: 'opentable' | 'resy' | 'yelp' | null;
   coordinates: { lat: number; lng: number };
+  distance?: number; // Distance in meters from user location
+  isFromApi?: boolean; // Flag to identify API-fetched restaurants
 }
 
 // Unique high-quality food images from Unsplash - each restaurant gets unique images

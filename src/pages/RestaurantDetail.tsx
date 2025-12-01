@@ -11,13 +11,15 @@ import {
   Heart,
   Share2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { mockRestaurants, isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
+import { formatDistance } from "@/services/geoapifyService";
 
 const RestaurantDetail = () => {
   const { id } = useParams();
@@ -28,7 +30,17 @@ const RestaurantDetail = () => {
   const [showReservationWebview, setShowReservationWebview] = useState(false);
 
   useEffect(() => {
-    const found = mockRestaurants.find(r => r.id === id);
+    // First try to find in mock data
+    let found = mockRestaurants.find(r => r.id === id);
+    
+    // If not found in mock data, check localStorage for API-fetched restaurants
+    if (!found && id?.startsWith('geo_')) {
+      const cachedRestaurant = localStorage.getItem(`restaurant_${id}`);
+      if (cachedRestaurant) {
+        found = JSON.parse(cachedRestaurant);
+      }
+    }
+    
     setRestaurant(found || null);
 
     // Check if favorited
@@ -240,15 +252,18 @@ const RestaurantDetail = () => {
         </div>
 
         {/* Features */}
-        <div className="flex flex-wrap gap-2">
-          {restaurant.features.map((feature, index) => (
-            <Badge key={index} variant="outline" className="text-xs">
-              {feature}
-            </Badge>
-          ))}
-        </div>
-
-        <Separator />
+        {restaurant.features && restaurant.features.length > 0 && (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {restaurant.features.map((feature, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {feature}
+                </Badge>
+              ))}
+            </div>
+            <Separator />
+          </>
+        )}
 
         {/* Description */}
         <p className="text-muted-foreground leading-relaxed">{restaurant.description}</p>
@@ -263,8 +278,14 @@ const RestaurantDetail = () => {
             <div>
               <p>{restaurant.address}</p>
               <p className="text-muted-foreground text-sm">
-                {restaurant.neighborhood}, {restaurant.city}
+                {restaurant.neighborhood || restaurant.city}{restaurant.neighborhood && restaurant.city ? `, ${restaurant.city}` : ''}
               </p>
+              {restaurant.distance && (
+                <p className="text-sm text-primary flex items-center gap-1 mt-1">
+                  <Navigation className="h-4 w-4" />
+                  {formatDistance(restaurant.distance)} away
+                </p>
+              )}
             </div>
           </div>
           <Button 
@@ -282,13 +303,29 @@ const RestaurantDetail = () => {
         {/* Contact */}
         <div className="space-y-3">
           <h2 className="font-semibold">Contact</h2>
-          <button 
-            onClick={handleCall}
-            className="flex items-center gap-3 w-full text-left hover:bg-muted/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
-          >
-            <Phone className="h-5 w-5 text-muted-foreground" />
-            <span className="text-primary">{restaurant.phone}</span>
-          </button>
+          {restaurant.phone && (
+            <button 
+              onClick={handleCall}
+              className="flex items-center gap-3 w-full text-left hover:bg-muted/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <Phone className="h-5 w-5 text-muted-foreground" />
+              <span className="text-primary">{restaurant.phone}</span>
+            </button>
+          )}
+          {restaurant.website && (
+            <a 
+              href={restaurant.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 w-full text-left hover:bg-muted/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <Globe className="h-5 w-5 text-muted-foreground" />
+              <span className="text-primary truncate">{restaurant.website.replace(/^https?:\/\//, '')}</span>
+            </a>
+          )}
+          {!restaurant.phone && !restaurant.website && (
+            <p className="text-sm text-muted-foreground">Contact information not available</p>
+          )}
         </div>
 
         <Separator />
