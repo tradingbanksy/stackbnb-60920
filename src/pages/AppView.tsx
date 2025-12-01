@@ -39,7 +39,7 @@ import {
   type Restaurant 
 } from "@/data/mockRestaurants";
 import { useNearbyPlaces } from "@/hooks/useNearbyPlaces";
-import { type GeoapifyPlace } from "@/services/geoapifyService";
+import { type GeoapifyPlace, type AutocompleteSuggestion } from "@/services/geoapifyService";
 
 const getExperienceImage = (experience: any) => {
   const imageMap: Record<number, string> = {
@@ -117,8 +117,13 @@ const AppView = () => {
     userLocation: apiUserLocation,
     detectLocation: detectApiLocation,
     searchByLocation,
+    searchByName,
+    setPlacesFromSelection,
     isLocationLoading 
   } = useNearbyPlaces();
+
+  // Selected restaurant from autocomplete
+  const [selectedRestaurant, setSelectedRestaurant] = useState<AutocompleteSuggestion | null>(null);
 
   useEffect(() => {
     fetchMyBusinesses();
@@ -177,9 +182,43 @@ const AppView = () => {
   // Handle search
   const handleSearch = () => {
     const query = searchCity || searchZip;
-    if (query) {
+    if (query && apiUserLocation) {
+      // If we have a location, search for restaurants by name in that area
+      searchByName(query, apiUserLocation.lat, apiUserLocation.lng);
+    } else if (query) {
+      // Otherwise search by location
       searchByLocation(query);
     }
+  };
+
+  // Handle restaurant selection from autocomplete
+  const handleRestaurantSelect = (suggestion: AutocompleteSuggestion) => {
+    setSelectedRestaurant(suggestion);
+    if (suggestion.lat && suggestion.lng) {
+      // Create a single place result for the selected restaurant
+      const selectedPlace: GeoapifyPlace = {
+        id: suggestion.id,
+        name: suggestion.name,
+        cuisine: suggestion.cuisine || 'Restaurant',
+        address: suggestion.address || suggestion.description,
+        city: suggestion.city || '',
+        zipCode: suggestion.zipCode || '',
+        lat: suggestion.lat,
+        lng: suggestion.lng,
+        categories: [],
+        rating: 4.0 + Math.random() * 0.9,
+        reviewCount: Math.floor(100 + Math.random() * 500),
+        priceRange: '$$',
+        photos: ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'],
+      };
+      setPlacesFromSelection([selectedPlace]);
+    }
+  };
+
+  // Handle location selection from autocomplete
+  const handleLocationSelect = (lat: number, lng: number, city: string, zipCode: string) => {
+    setSelectedRestaurant(null);
+    searchByLocation(city || zipCode);
   };
 
   // Handle Near Me filter
@@ -269,7 +308,10 @@ const AppView = () => {
             onZipChange={setSearchZip}
             onSearch={handleSearch}
             onLocationDetect={detectLocation}
+            onRestaurantSelect={handleRestaurantSelect}
+            onLocationSelect={handleLocationSelect}
             isLoadingLocation={isLocationLoading}
+            userLocation={apiUserLocation ? { lat: apiUserLocation.lat, lng: apiUserLocation.lng } : null}
           />
         </div>
       </header>

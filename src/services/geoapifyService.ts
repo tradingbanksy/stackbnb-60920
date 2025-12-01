@@ -285,3 +285,142 @@ export const geocodeLocation = async (query: string): Promise<{ lat: number; lng
     return null;
   }
 };
+
+// Autocomplete suggestion types
+export interface AutocompleteSuggestion {
+  id: string;
+  type: 'restaurant' | 'location';
+  name: string;
+  description: string;
+  lat?: number;
+  lng?: number;
+  city?: string;
+  zipCode?: string;
+  cuisine?: string;
+  address?: string;
+}
+
+// Autocomplete search for restaurants and locations
+export const autocompleteSearch = async (
+  query: string,
+  lat?: number,
+  lng?: number
+): Promise<AutocompleteSuggestion[]> => {
+  if (!query || query.length < 2) return [];
+  
+  try {
+    const suggestions: AutocompleteSuggestion[] = [];
+    
+    // Fetch restaurant suggestions
+    const restaurantUrl = lat && lng
+      ? `https://api.geoapify.com/v2/places?categories=catering.restaurant,catering.cafe,catering.fast_food,catering.bar&name=${encodeURIComponent(query)}&filter=circle:${lng},${lat},50000&bias=proximity:${lng},${lat}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
+      : `https://api.geoapify.com/v2/places?categories=catering.restaurant,catering.cafe,catering.fast_food,catering.bar&name=${encodeURIComponent(query)}&limit=5&apiKey=${GEOAPIFY_API_KEY}`;
+    
+    // Fetch location suggestions  
+    const locationUrl = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=3&apiKey=${GEOAPIFY_API_KEY}`;
+    
+    const [restaurantRes, locationRes] = await Promise.all([
+      fetch(restaurantUrl),
+      fetch(locationUrl)
+    ]);
+    
+    if (restaurantRes.ok) {
+      const restaurantData = await restaurantRes.json();
+      const restaurantSuggestions: AutocompleteSuggestion[] = restaurantData.features?.map((feature: any) => {
+        const props = feature.properties;
+        const raw = props.datasource?.raw || {};
+        const categories = props.categories || [];
+        const cuisine = raw.cuisine || getCuisineFromCategories(categories);
+        
+        return {
+          id: `rest_${props.place_id}`,
+          type: 'restaurant' as const,
+          name: props.name || 'Unknown Restaurant',
+          description: props.formatted || `${props.city || ''}, ${props.state || ''}`.trim(),
+          lat: props.lat,
+          lng: props.lon,
+          city: props.city,
+          zipCode: props.postcode,
+          cuisine,
+          address: props.formatted,
+        };
+      }) || [];
+      
+      suggestions.push(...restaurantSuggestions);
+    }
+    
+    if (locationRes.ok) {
+      const locationData = await locationRes.json();
+      const locationSuggestions: AutocompleteSuggestion[] = locationData.features?.map((feature: any) => {
+        const props = feature.properties;
+        return {
+          id: `loc_${props.place_id}`,
+          type: 'location' as const,
+          name: props.city || props.name || props.formatted,
+          description: `${props.state || ''}, ${props.country || ''}`.trim().replace(/^,\s*/, ''),
+          lat: props.lat,
+          lng: props.lon,
+          city: props.city || props.name,
+          zipCode: props.postcode || '',
+        };
+      }) || [];
+      
+      suggestions.push(...locationSuggestions);
+    }
+    
+    return suggestions;
+  } catch (error) {
+    console.error('Error in autocomplete search:', error);
+    return [];
+  }
+};
+
+// Search restaurants by name in a specific area
+export const searchRestaurantsByName = async (
+  query: string,
+  lat: number,
+  lng: number,
+  radius: number = 25000
+): Promise<GeoapifyPlace[]> => {
+  try {
+    const url = `https://api.geoapify.com/v2/places?categories=catering.restaurant,catering.cafe,catering.fast_food,catering.bar&name=${encodeURIComponent(query)}&filter=circle:${lng},${lat},${radius}&bias=proximity:${lng},${lat}&limit=20&apiKey=${GEOAPIFY_API_KEY}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Geoapify API error: ${response.status}`);
+    }
+    
+    const data: GeoapifyResponse = await response.json();
+    
+    return data.features.map((feature, index) => {
+      const props = feature.properties;
+      const raw = props.datasource?.raw || {};
+      const categories = props.categories || [];
+      const cuisine = raw.cuisine || getCuisineFromCategories(categories);
+      
+      return {
+        id: `geo_${props.place_id}`,
+        name: props.name || 'Unknown Restaurant',
+        cuisine,
+        address: props.formatted || `${props.housenumber || ''} ${props.street || ''}`.trim() || 'Address unavailable',
+        city: props.city || '',
+        zipCode: props.postcode || '',
+        phone: raw.phone || raw['contact:phone'] || undefined,
+        website: raw.website || raw['contact:website'] || undefined,
+        openingHours: raw.opening_hours ? [raw.opening_hours] : undefined,
+        lat: props.lat,
+        lng: props.lon,
+        distance: props.distance,
+        categories,
+        rating: 4.0 + Math.random() * 0.9,
+        reviewCount: Math.floor(100 + Math.random() * 500),
+        priceRange: ['$', '$$', '$$$'][Math.floor(Math.random() * 3)] as '$' | '$$' | '$$$',
+        photos: getPlaceholderPhotos(cuisine, index),
+      };
+    });
+  } catch (error) {
+    console.error('Error searching restaurants by name:', error);
+    return [];
+  }
+};
