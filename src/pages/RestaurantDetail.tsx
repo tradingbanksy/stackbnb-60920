@@ -10,8 +10,6 @@ import {
   Navigation,
   Heart,
   Share2,
-  ChevronLeft,
-  ChevronRight,
   Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +23,6 @@ const RestaurantDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showReservationWebview, setShowReservationWebview] = useState(false);
 
@@ -105,20 +102,6 @@ const RestaurantDetail = () => {
     }
   };
 
-  const nextPhoto = () => {
-    if (restaurant) {
-      setCurrentPhotoIndex((prev) => (prev + 1) % restaurant.photos.length);
-    }
-  };
-
-  const prevPhoto = () => {
-    if (restaurant) {
-      setCurrentPhotoIndex((prev) => 
-        prev === 0 ? restaurant.photos.length - 1 : prev - 1
-      );
-    }
-  };
-
   const getDayName = (index: number): string => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[index];
@@ -161,77 +144,57 @@ const RestaurantDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Photo Gallery - Compact like Yelp/Airbnb */}
+      {/* Photo Gallery - Horizontal scroll like Yelp/Airbnb */}
       <div className="relative">
-        <div className="aspect-[16/9] max-h-[240px] relative overflow-hidden">
-          <img
-            src={restaurant.photos[currentPhotoIndex]}
-            alt={restaurant.name}
-            className="w-full h-full object-cover"
-          />
-          
-          {/* Navigation arrows */}
-          {restaurant.photos.length > 1 && (
-            <>
-              <button
-                onClick={prevPhoto}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={nextPhoto}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </>
-          )}
+        {/* Back button - fixed above scroll */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-3 left-3 z-20 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </button>
 
-          {/* Photo indicators */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-            {restaurant.photos.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentPhotoIndex(index)}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  index === currentPhotoIndex ? 'bg-white' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Photo count badge */}
-          {restaurant.photos.length > 1 && (
-            <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-              {currentPhotoIndex + 1}/{restaurant.photos.length}
-            </div>
-          )}
-
-          {/* Back button */}
+        {/* Action buttons - fixed above scroll */}
+        <div className="absolute top-3 right-3 z-20 flex gap-2">
           <button
-            onClick={() => navigate(-1)}
-            className="absolute top-3 left-3 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
+            onClick={handleShare}
+            className="bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
           >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
+            <Share2 className="h-4 w-4 text-foreground" />
           </button>
-
-          {/* Action buttons */}
-          <div className="absolute top-3 right-3 flex gap-2">
-            <button
-              onClick={handleShare}
-              className="bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
-            >
-              <Share2 className="h-4 w-4 text-foreground" />
-            </button>
-            <button
-              onClick={toggleFavorite}
-              className="bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
-            </button>
-          </div>
+          <button
+            onClick={toggleFavorite}
+            className="bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
+          </button>
         </div>
+
+        {/* Scrollable photo strip */}
+        <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-1">
+          {restaurant.photos.map((photo, index) => (
+            <div 
+              key={index} 
+              className="flex-shrink-0 snap-start first:pl-0 last:pr-0"
+              style={{ width: restaurant.photos.length === 1 ? '100%' : '85%' }}
+            >
+              <div className="aspect-[4/3] max-h-[220px] overflow-hidden">
+                <img
+                  src={photo}
+                  alt={`${restaurant.name} photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Photo count indicator */}
+        {restaurant.photos.length > 1 && (
+          <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+            {restaurant.photos.length} photos
+          </div>
+        )}
       </div>
 
       {/* Content */}
