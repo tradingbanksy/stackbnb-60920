@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, Users, Check, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import stackdLogo from "@/assets/stackd-logo.png";
 
 const ExperienceDetails = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -26,11 +28,9 @@ const ExperienceDetails = () => {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Button variant="ghost" asChild className="mb-6">
-          <Link to="/storefront/beachhouse">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Experiences
-          </Link>
+        <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
         </Button>
 
         <div className="grid lg:grid-cols-3 gap-8">

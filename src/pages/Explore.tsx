@@ -47,13 +47,13 @@ const Explore = () => {
       
       <div className="relative max-w-7xl mx-auto px-4 py-8 space-y-6">
         {/* Back Button */}
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
           <span>Back</span>
-        </Link>
+        </button>
 
         {/* Hero Section with Centered 3D Search */}
         <div className="text-center space-y-4 pt-6 pb-4">

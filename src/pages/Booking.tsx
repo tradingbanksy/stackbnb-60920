@@ -32,11 +32,9 @@ const Booking = () => {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Button variant="ghost" asChild className="mb-6">
-          <Link to="/experience/sunset-kayak">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Experience
-          </Link>
+        <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
         </Button>
 
         <h1 className="text-3xl font-bold mb-8">Book Your Experience</h1>
