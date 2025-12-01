@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Search, Heart, User, MessageCircle, Calendar, Store, Sparkles } from "lucide-react";
+import { Heart, User, MessageCircle, Store, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,8 +27,20 @@ import cookingImg from "@/assets/experiences/cooking.jpg";
 import balloonImg from "@/assets/experiences/balloon.jpg";
 import wineImg from "@/assets/experiences/wine.jpg";
 
-const getExperienceImage = (experience) => {
-  const imageMap = {
+// Restaurant components
+import LocationSearch from "@/components/LocationSearch";
+import RestaurantFilters, { type FilterState } from "@/components/RestaurantFilters";
+import RestaurantCard from "@/components/RestaurantCard";
+import { 
+  mockRestaurants, 
+  isRestaurantOpen, 
+  filterRestaurantsByLocation,
+  locationSuggestions,
+  type Restaurant 
+} from "@/data/mockRestaurants";
+
+const getExperienceImage = (experience: any) => {
+  const imageMap: Record<number, string> = {
     1: kayakingImg,
     2: bikesImg,
     3: snorkelingImg,
@@ -59,6 +70,21 @@ const AppView = () => {
   });
   const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<'explore' | 'wishlists'>('explore');
+  
+  // Location search state
+  const [searchCity, setSearchCity] = useState("");
+  const [searchZip, setSearchZip] = useState("");
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ city: string; zip: string } | null>(null);
+  
+  // Filter state
+  const [filters, setFilters] = useState<FilterState>({
+    openNow: false,
+    nearMe: false,
+    topRated: false,
+    priceRange: [],
+    outdoorSeating: false,
+  });
 
   useEffect(() => {
     fetchMyBusinesses();
@@ -100,22 +126,109 @@ const AppView = () => {
     });
   };
 
-  // Filter to get restaurants
-  const nearbyRestaurants = experiences.filter(exp => 
-    exp.category.toLowerCase().includes('dining') || 
-    exp.category.toLowerCase().includes('food')
-  ).slice(0, 10);
+  // Detect user location
+  const detectLocation = () => {
+    setIsLoadingLocation(true);
+    
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocation not supported", variant: "destructive", duration: 3000 });
+      setIsLoadingLocation(false);
+      return;
+    }
 
-  // Get other experiences
-  const popularExperiences = experiences.filter(exp => 
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        // Mock reverse geocoding - in production would use a geocoding API
+        // For demo, we'll set to Miami Beach since our mock data is primarily there
+        const mockCity = "Miami Beach";
+        const mockZip = "33139";
+        
+        setSearchCity(mockCity);
+        setSearchZip(mockZip);
+        setUserLocation({ city: mockCity, zip: mockZip });
+        setFilters(prev => ({ ...prev, nearMe: true }));
+        
+        toast({ title: `Location detected: ${mockCity}`, duration: 2000 });
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast({ 
+          title: "Could not detect location", 
+          description: "Please enter your city or ZIP code manually",
+          duration: 3000 
+        });
+        setIsLoadingLocation(false);
+      },
+      { timeout: 10000 }
+    );
+  };
+
+  // Handle search
+  const handleSearch = () => {
+    if (searchCity || searchZip) {
+      toast({ title: `Showing restaurants in ${searchCity || searchZip}`, duration: 2000 });
+    }
+  };
+
+  // Handle Near Me filter
+  const handleNearMeClick = () => {
+    if (!filters.nearMe) {
+      detectLocation();
+    } else {
+      setFilters(prev => ({ ...prev, nearMe: false }));
+      setUserLocation(null);
+    }
+  };
+
+  // Filter restaurants based on search and filters
+  const filteredRestaurants = useMemo(() => {
+    let results = [...mockRestaurants];
+
+    // Filter by location
+    if (searchCity || searchZip) {
+      results = filterRestaurantsByLocation(results, searchCity, searchZip);
+    }
+
+    // Apply filters
+    if (filters.openNow) {
+      results = results.filter(r => isRestaurantOpen(r));
+    }
+
+    if (filters.topRated) {
+      results = results.filter(r => r.rating >= 4.7);
+    }
+
+    if (filters.priceRange.length > 0) {
+      results = results.filter(r => filters.priceRange.includes(r.priceRange));
+    }
+
+    if (filters.outdoorSeating) {
+      results = results.filter(r => r.hasOutdoorSeating);
+    }
+
+    return results;
+  }, [searchCity, searchZip, filters]);
+
+  // Get other experiences (non-dining)
+  const popularExperiences = experiences.filter((exp: any) => 
     !exp.category.toLowerCase().includes('dining') && 
     !exp.category.toLowerCase().includes('food')
   ).slice(0, 10);
 
   // Get favorited experiences
-  const favoritedExperiences = experiences.filter(exp => 
+  const favoritedExperiences = experiences.filter((exp: any) => 
     favorites.includes(exp.id)
   );
+
+  // Active filters count
+  const activeFiltersCount = [
+    filters.openNow,
+    filters.nearMe,
+    filters.topRated,
+    filters.priceRange.length > 0,
+    filters.outdoorSeating
+  ].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -129,35 +242,16 @@ const AppView = () => {
             </h1>
           </div>
           
-          {/* Enhanced Search Bar with City and Zip */}
-          <div className="relative group">
-            {/* Shadow layers for 3D effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full blur-sm opacity-20 group-hover:opacity-30 transition duration-300"></div>
-
-            {/* Main search container */}
-            <div className="relative bg-card rounded-full shadow-2xl border border-border/50 backdrop-blur-sm overflow-hidden hover:shadow-3xl transition-all duration-300">
-              <div className="flex items-center px-6 py-3 gap-3">
-                <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="City"
-                    className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
-                  />
-                  <div className="h-4 w-px bg-border"></div>
-                  <input
-                    type="text"
-                    placeholder="Zip"
-                    className="w-20 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
-                  />
-                </div>
-                <button className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-full p-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg">
-                  <Search className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+          {/* Location Search */}
+          <LocationSearch
+            city={searchCity}
+            zipCode={searchZip}
+            onCityChange={setSearchCity}
+            onZipChange={setSearchZip}
+            onSearch={handleSearch}
+            onLocationDetect={detectLocation}
+            isLoadingLocation={isLoadingLocation}
+          />
         </div>
       </header>
 
@@ -165,7 +259,11 @@ const AppView = () => {
       <Tabs defaultValue="explore" className="max-w-[450px] mx-auto">
         <div className="sticky top-[120px] z-30 bg-background/95 backdrop-blur-sm border-b border-border">
           <TabsList className="w-full justify-start rounded-none bg-transparent h-12 p-0">
-            <TabsTrigger value="explore" className="flex-1 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+            <TabsTrigger 
+              value="explore" 
+              className="flex-1 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              onClick={() => setViewMode('explore')}
+            >
               Explore
             </TabsTrigger>
             <TabsTrigger value="services" className="flex-1 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
@@ -178,7 +276,15 @@ const AppView = () => {
         </div>
 
         <TabsContent value="explore" className="mt-0">
-          <main className="pt-6 space-y-8 pb-8">
+          {/* Filters */}
+          <RestaurantFilters
+            filters={filters}
+            onFilterChange={setFilters}
+            onNearMeClick={handleNearMeClick}
+            isLoadingLocation={isLoadingLocation}
+          />
+
+          <main className="pt-2 space-y-8 pb-8">
             {viewMode === 'wishlists' ? (
               // Wishlists View
               <section className="space-y-3">
@@ -192,7 +298,7 @@ const AppView = () => {
                 </div>
                 {favorites.length > 0 && (
                   <div className="grid grid-cols-2 gap-4 px-4">
-                    {favoritedExperiences.map((experience) => (
+                    {favoritedExperiences.map((experience: any) => (
                       <Link
                         key={experience.id}
                         to={`/experience/${experience.id}`}
@@ -247,159 +353,163 @@ const AppView = () => {
             ) : (
               // Explore View
               <>
-            {/* My Businesses Row */}
-            {myBusinesses.length > 0 && (
-              <section className="space-y-3">
-                <div className="px-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">My Businesses</h2>
-                  <Link to="/host/vendors" className="text-sm text-primary hover:underline">
-                    View all
-                  </Link>
-                </div>
-                <ScrollArea className="w-full">
-                  <div className="flex gap-4 px-4 pb-2">
-                    {myBusinesses.map((business) => (
-                      <Link
-                        key={business.id}
-                        to={`/host/vendors`}
-                        className="flex-shrink-0 w-[160px] group"
-                      >
-                        <div className="space-y-2">
-                          <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border group-hover:scale-105 transition-transform">
-                            <Store className="h-12 w-12 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-sm line-clamp-1">{business.name}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{business.category}</p>
-                            <p className="text-xs text-primary">{business.commission}% commission</p>
-                          </div>
-                        </div>
+                {/* My Businesses Row */}
+                {myBusinesses.length > 0 && (
+                  <section className="space-y-3">
+                    <div className="px-4 flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">My Businesses</h2>
+                      <Link to="/host/vendors" className="text-sm text-primary hover:underline">
+                        View all
                       </Link>
-                    ))}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </section>
-            )}
-
-            {/* Restaurants Near You - Actual local restaurants */}
-            <section className="space-y-3">
-              <div className="px-4">
-                <h2 className="text-lg font-semibold">Restaurants Near You</h2>
-              </div>
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-4 px-4 pb-4">
-                  {[
-                    { id: 'r1', name: "The Ocean View", cuisine: "Seafood", rating: 4.8, price: "$$$", image: diningImg },
-                    { id: 'r2', name: "Sunset Grill", cuisine: "American", rating: 4.6, price: "$$", image: diningImg },
-                    { id: 'r3', name: "La Bella Italia", cuisine: "Italian", rating: 4.9, price: "$$$$", image: diningImg },
-                    { id: 'r4', name: "Spice Garden", cuisine: "Asian Fusion", rating: 4.7, price: "$$", image: diningImg },
-                    { id: 'r5', name: "The Steakhouse", cuisine: "Steakhouse", rating: 4.8, price: "$$$$", image: diningImg },
-                  ].map((restaurant) => (
-                    <div
-                      key={restaurant.id}
-                      className="flex-shrink-0 w-[200px] group cursor-pointer"
-                    >
-                      <div className="space-y-2">
-                        <div className="relative aspect-square overflow-hidden rounded-xl">
-                          <div
-                            className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
-                            style={{
-                              backgroundImage: `url(${restaurant.image})`,
-                            }}
-                          />
-                        </div>
-
-                        <div className="space-y-0.5">
-                          <h3 className="font-semibold text-sm leading-tight line-clamp-1">
-                            {restaurant.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {restaurant.cuisine}
-                          </p>
-                          <div className="flex items-center justify-between pt-0.5">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs">★</span>
-                              <span className="text-xs font-medium">{restaurant.rating}</span>
-                            </div>
-                            <span className="text-xs font-medium">{restaurant.price}</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
-                  ))}
-                </div>
-                <ScrollBar orientation="horizontal" className="h-3" />
-              </ScrollArea>
-            </section>
-
-            {/* Popular Experiences Row */}
-            <section className="space-y-3">
-              <div className="px-4">
-                <h2 className="text-lg font-semibold">Popular Experiences</h2>
-              </div>
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-4 px-4 pb-4">
-                  {popularExperiences.map((experience) => (
-                    <Link
-                      key={experience.id}
-                      to={`/experience/${experience.id}`}
-                      className="flex-shrink-0 w-[200px] group"
-                    >
-                      <div className="space-y-2">
-                        <div className="relative aspect-square overflow-hidden rounded-xl">
-                          <div
-                            className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
-                            style={{
-                              backgroundImage: `url(${getExperienceImage(experience)})`,
-                            }}
-                          />
-                          
-                          <button
-                            onClick={(e) => toggleFavorite(experience.id, e)}
-                            className="absolute top-2 right-2 z-10 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+                    <ScrollArea className="w-full">
+                      <div className="flex gap-4 px-4 pb-2">
+                        {myBusinesses.map((business) => (
+                          <Link
+                            key={business.id}
+                            to={`/host/vendors`}
+                            className="flex-shrink-0 w-[160px] group"
                           >
-                            <Heart
-                              className={`h-5 w-5 transition-all drop-shadow-md ${
-                                favorites.includes(experience.id)
-                                  ? "fill-red-500 text-red-500"
-                                  : "fill-black/50 text-white stroke-white stroke-2"
-                              }`}
-                            />
-                          </button>
-
-                          {experience.rating >= 4.8 && (
-                            <div className="absolute top-2 left-2 z-10">
-                              <Badge className="bg-white/95 text-foreground backdrop-blur-sm shadow-sm text-[10px] px-2 py-0.5 border-0">
-                                Guest favorite
-                              </Badge>
+                            <div className="space-y-2">
+                              <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border group-hover:scale-105 transition-transform">
+                                <Store className="h-12 w-12 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-sm line-clamp-1">{business.name}</h3>
+                                <p className="text-xs text-muted-foreground line-clamp-1">{business.category}</p>
+                                <p className="text-xs text-primary">{business.commission}% commission</p>
+                              </div>
                             </div>
-                          )}
-                        </div>
-
-                        <div className="space-y-0.5">
-                          <h3 className="font-semibold text-sm leading-tight line-clamp-1">
-                            {experience.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {experience.vendor}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            ★ {experience.rating} · {experience.duration}
-                          </p>
-                          <div className="pt-0.5">
-                            <span className="text-sm font-semibold">${experience.price}</span>
-                            <span className="text-xs text-muted-foreground"> per person</span>
-                          </div>
-                        </div>
+                          </Link>
+                        ))}
                       </div>
-                    </Link>
-                  ))}
-                </div>
-                <ScrollBar orientation="horizontal" className="h-3" />
-              </ScrollArea>
-            </section>
-            </>
+                      <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
+                  </section>
+                )}
+
+                {/* Restaurants Near You */}
+                <section className="space-y-3">
+                  <div className="px-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold">Restaurants Near You</h2>
+                      {(searchCity || searchZip) && (
+                        <p className="text-xs text-muted-foreground">
+                          {filteredRestaurants.length} results {searchCity && `in ${searchCity}`}
+                        </p>
+                      )}
+                    </div>
+                    {activeFiltersCount > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {filteredRestaurants.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <p className="text-muted-foreground">No restaurants found</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Try adjusting your filters or search location
+                      </p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="w-full whitespace-nowrap">
+                      <div className="flex gap-4 px-4 pb-4">
+                        {filteredRestaurants.map((restaurant) => (
+                          <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+                        ))}
+                      </div>
+                      <ScrollBar orientation="horizontal" className="h-3" />
+                    </ScrollArea>
+                  )}
+                </section>
+
+                {/* All Restaurants (vertical list when filtered) */}
+                {(searchCity || searchZip || activeFiltersCount > 0) && filteredRestaurants.length > 0 && (
+                  <section className="space-y-3">
+                    <div className="px-4">
+                      <h2 className="text-lg font-semibold">All Results</h2>
+                    </div>
+                    <div className="px-2">
+                      {filteredRestaurants.map((restaurant) => (
+                        <RestaurantCard 
+                          key={`list-${restaurant.id}`} 
+                          restaurant={restaurant} 
+                          variant="vertical"
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Popular Experiences Row */}
+                <section className="space-y-3">
+                  <div className="px-4">
+                    <h2 className="text-lg font-semibold">Popular Experiences</h2>
+                  </div>
+                  <ScrollArea className="w-full whitespace-nowrap">
+                    <div className="flex gap-4 px-4 pb-4">
+                      {popularExperiences.map((experience: any) => (
+                        <Link
+                          key={experience.id}
+                          to={`/experience/${experience.id}`}
+                          className="flex-shrink-0 w-[200px] group"
+                        >
+                          <div className="space-y-2">
+                            <div className="relative aspect-square overflow-hidden rounded-xl">
+                              <div
+                                className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                                style={{
+                                  backgroundImage: `url(${getExperienceImage(experience)})`,
+                                }}
+                              />
+                              
+                              <button
+                                onClick={(e) => toggleFavorite(experience.id, e)}
+                                className="absolute top-2 right-2 z-10 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+                              >
+                                <Heart
+                                  className={`h-5 w-5 transition-all drop-shadow-md ${
+                                    favorites.includes(experience.id)
+                                      ? "fill-red-500 text-red-500"
+                                      : "fill-black/50 text-white stroke-white stroke-2"
+                                  }`}
+                                />
+                              </button>
+
+                              {experience.rating >= 4.8 && (
+                                <div className="absolute top-2 left-2 z-10">
+                                  <Badge className="bg-white/95 text-foreground backdrop-blur-sm shadow-sm text-[10px] px-2 py-0.5 border-0">
+                                    Guest favorite
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-0.5">
+                              <h3 className="font-semibold text-sm leading-tight line-clamp-1">
+                                {experience.name}
+                              </h3>
+                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                {experience.vendor}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                ★ {experience.rating} · {experience.duration}
+                              </p>
+                              <div className="pt-0.5">
+                                <span className="text-sm font-semibold">${experience.price}</span>
+                                <span className="text-xs text-muted-foreground"> per person</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                    <ScrollBar orientation="horizontal" className="h-3" />
+                  </ScrollArea>
+                </section>
+              </>
             )}
           </main>
         </TabsContent>
