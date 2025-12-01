@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { Search, MapPin, X, Loader2 } from "lucide-react";
-import { locationSuggestions } from "@/data/mockRestaurants";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Search, MapPin, X, Loader2, Utensils } from "lucide-react";
+import { autocompleteSearch, type AutocompleteSuggestion } from "@/services/geoapifyService";
 
 interface LocationSearchProps {
   city: string;
@@ -9,15 +9,10 @@ interface LocationSearchProps {
   onZipChange: (zip: string) => void;
   onSearch: () => void;
   onLocationDetect: () => void;
+  onRestaurantSelect?: (suggestion: AutocompleteSuggestion) => void;
+  onLocationSelect?: (lat: number, lng: number, city: string, zipCode: string) => void;
   isLoadingLocation?: boolean;
-}
-
-interface Suggestion {
-  type: 'city' | 'zip';
-  value: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 const LocationSearch = ({
@@ -27,12 +22,24 @@ const LocationSearch = ({
   onZipChange,
   onSearch,
   onLocationDetect,
-  isLoadingLocation
+  onRestaurantSelect,
+  onLocationSelect,
+  isLoadingLocation,
+  userLocation
 }: LocationSearchProps) => {
+  const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [activeInput, setActiveInput] = useState<'city' | 'zip' | null>(null);
+  const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update query when city changes externally
+  useEffect(() => {
+    if (city && !query) {
+      setQuery(city);
+    }
+  }, [city]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,60 +51,86 @@ const LocationSearch = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filterSuggestions = (value: string, type: 'city' | 'zip') => {
-    if (!value.trim()) {
+  const fetchSuggestions = useCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
       setSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
-    const filtered = locationSuggestions.filter(s => {
-      if (type === 'city') {
-        return s.type === 'city' && s.value.toLowerCase().includes(value.toLowerCase());
-      } else {
-        return s.type === 'zip' && s.value.startsWith(value);
-      }
-    }).slice(0, 5);
+    setIsSearching(true);
+    try {
+      const results = await autocompleteSearch(
+        searchQuery,
+        userLocation?.lat,
+        userLocation?.lng
+      );
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    } catch (error) {
+      console.error('Autocomplete error:', error);
+      setSuggestions([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [userLocation]);
 
-    setSuggestions(filtered as Suggestion[]);
-    setShowSuggestions(filtered.length > 0);
+  const handleInputChange = (value: string) => {
+    setQuery(value);
+    
+    // Debounce API calls
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    debounceRef.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
   };
 
-  const handleCityInput = (value: string) => {
-    onCityChange(value);
-    setActiveInput('city');
-    filterSuggestions(value, 'city');
-  };
-
-  const handleZipInput = (value: string) => {
-    onZipChange(value);
-    setActiveInput('zip');
-    filterSuggestions(value, 'zip');
-  };
-
-  const selectSuggestion = (suggestion: Suggestion) => {
-    if (suggestion.type === 'city') {
-      onCityChange(suggestion.value);
-      if (suggestion.zipCode) onZipChange(suggestion.zipCode);
+  const selectSuggestion = (suggestion: AutocompleteSuggestion) => {
+    if (suggestion.type === 'restaurant') {
+      setQuery(suggestion.name);
+      onCityChange(suggestion.city || '');
+      onZipChange(suggestion.zipCode || '');
+      onRestaurantSelect?.(suggestion);
     } else {
-      onZipChange(suggestion.value);
-      if (suggestion.city) onCityChange(suggestion.city);
+      setQuery(suggestion.name);
+      onCityChange(suggestion.name);
+      onZipChange(suggestion.zipCode || '');
+      if (suggestion.lat && suggestion.lng) {
+        onLocationSelect?.(suggestion.lat, suggestion.lng, suggestion.name, suggestion.zipCode || '');
+      }
     }
     setShowSuggestions(false);
     onSearch();
   };
 
   const clearSearch = () => {
+    setQuery('');
     onCityChange('');
     onZipChange('');
     setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setShowSuggestions(false);
       onSearch();
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
     }
   };
+
+  const handleSearchClick = () => {
+    setShowSuggestions(false);
+    onSearch();
+  };
+
+  // Group suggestions by type
+  const restaurantSuggestions = suggestions.filter(s => s.type === 'restaurant');
+  const locationSuggestions = suggestions.filter(s => s.type === 'location');
 
   return (
     <div ref={wrapperRef} className="relative group">
@@ -113,32 +146,20 @@ const LocationSearch = ({
           <div className="flex-1 flex items-center gap-2">
             <input
               type="text"
-              placeholder="City"
-              value={city}
-              onChange={(e) => handleCityInput(e.target.value)}
-              onFocus={() => {
-                setActiveInput('city');
-                filterSuggestions(city, 'city');
-              }}
+              placeholder="Search restaurants, cuisines, or cities..."
+              value={query}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onFocus={() => query.length >= 2 && fetchSuggestions(query)}
               onKeyDown={handleKeyDown}
               className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground min-w-0"
             />
-            <div className="h-4 w-px bg-border"></div>
-            <input
-              type="text"
-              placeholder="Zip"
-              value={zipCode}
-              onChange={(e) => handleZipInput(e.target.value)}
-              onFocus={() => {
-                setActiveInput('zip');
-                filterSuggestions(zipCode, 'zip');
-              }}
-              onKeyDown={handleKeyDown}
-              className="w-16 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
-            />
           </div>
 
-          {(city || zipCode) && (
+          {isSearching && (
+            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+          )}
+
+          {query && !isSearching && (
             <button
               onClick={clearSearch}
               className="p-1.5 hover:bg-muted rounded-full transition-colors"
@@ -161,7 +182,7 @@ const LocationSearch = ({
           </button>
 
           <button 
-            onClick={onSearch}
+            onClick={handleSearchClick}
             className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-full p-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
           >
             <Search className="h-4 w-4" />
@@ -171,25 +192,68 @@ const LocationSearch = ({
 
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl shadow-xl border border-border overflow-hidden z-50">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              onClick={() => selectSuggestion(suggestion)}
-              className="w-full px-4 py-3 text-left hover:bg-muted flex items-center gap-3 transition-colors"
-            >
-              <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium">{suggestion.value}</p>
-                <p className="text-xs text-muted-foreground">
-                  {suggestion.type === 'city' 
-                    ? `${suggestion.state}` 
-                    : `${suggestion.city}, ${suggestion.state}`
-                  }
-                </p>
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl shadow-xl border border-border overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+          {/* Restaurant suggestions */}
+          {restaurantSuggestions.length > 0 && (
+            <div>
+              <div className="px-4 py-2 bg-muted/50 border-b border-border">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Restaurants</p>
               </div>
-            </button>
-          ))}
+              {restaurantSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion.id}
+                  onClick={() => selectSuggestion(suggestion)}
+                  className="w-full px-4 py-3 text-left hover:bg-muted flex items-start gap-3 transition-colors border-b border-border/50 last:border-0"
+                >
+                  <div className="p-2 rounded-full bg-orange-500/10 flex-shrink-0">
+                    <Utensils className="h-4 w-4 text-orange-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{suggestion.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {suggestion.cuisine && <span className="text-orange-500">{suggestion.cuisine}</span>}
+                      {suggestion.cuisine && suggestion.description && ' • '}
+                      {suggestion.description}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* Location suggestions */}
+          {locationSuggestions.length > 0 && (
+            <div>
+              <div className="px-4 py-2 bg-muted/50 border-b border-border">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Locations</p>
+              </div>
+              {locationSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion.id}
+                  onClick={() => selectSuggestion(suggestion)}
+                  className="w-full px-4 py-3 text-left hover:bg-muted flex items-start gap-3 transition-colors border-b border-border/50 last:border-0"
+                >
+                  <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{suggestion.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{suggestion.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* No results message */}
+      {showSuggestions && suggestions.length === 0 && query.length >= 2 && !isSearching && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl shadow-xl border border-border overflow-hidden z-50">
+          <div className="px-4 py-6 text-center">
+            <p className="text-sm text-muted-foreground">No results found for "{query}"</p>
+            <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+          </div>
         </div>
       )}
     </div>

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   fetchNearbyPlaces, 
   reverseGeocode, 
   geocodeLocation,
+  searchRestaurantsByName,
   type GeoapifyPlace 
 } from '@/services/geoapifyService';
 import { toast } from '@/hooks/use-toast';
@@ -14,6 +15,8 @@ interface UseNearbyPlacesResult {
   userLocation: { lat: number; lng: number; city: string; zipCode: string } | null;
   detectLocation: () => void;
   searchByLocation: (query: string) => Promise<void>;
+  searchByName: (query: string, lat: number, lng: number) => Promise<void>;
+  setPlacesFromSelection: (places: GeoapifyPlace[]) => void;
   isLocationLoading: boolean;
 }
 
@@ -30,12 +33,12 @@ export const useNearbyPlaces = (): UseNearbyPlacesResult => {
   const [isLocationLoading, setIsLocationLoading] = useState(false);
 
   // Fetch places when we have coordinates
-  const fetchPlaces = useCallback(async (lat: number, lng: number) => {
+  const fetchPlaces = useCallback(async (lat: number, lng: number, radius: number = 10000) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const nearbyPlaces = await fetchNearbyPlaces(lat, lng, 5000, 20);
+      const nearbyPlaces = await fetchNearbyPlaces(lat, lng, radius, 20);
       setPlaces(nearbyPlaces);
       
       if (nearbyPlaces.length === 0) {
@@ -145,6 +148,42 @@ export const useNearbyPlaces = (): UseNearbyPlacesResult => {
     }
   }, [fetchPlaces]);
 
+  // Search restaurants by name within a location
+  const searchByName = useCallback(async (query: string, lat: number, lng: number) => {
+    if (!query.trim()) return;
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const results = await searchRestaurantsByName(query, lat, lng);
+      setPlaces(results);
+      
+      if (results.length === 0) {
+        toast({ 
+          title: `No results for "${query}"`, 
+          description: "Try a different search term",
+          duration: 3000 
+        });
+      } else {
+        toast({ 
+          title: `Found ${results.length} results for "${query}"`, 
+          duration: 2000 
+        });
+      }
+    } catch (err) {
+      setError('Failed to search restaurants');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Set places from external selection (e.g., autocomplete)
+  const setPlacesFromSelection = useCallback((newPlaces: GeoapifyPlace[]) => {
+    setPlaces(newPlaces);
+  }, []);
+
   return {
     places,
     isLoading,
@@ -152,6 +191,8 @@ export const useNearbyPlaces = (): UseNearbyPlacesResult => {
     userLocation,
     detectLocation,
     searchByLocation,
+    searchByName,
+    setPlacesFromSelection,
     isLocationLoading,
   };
 };
