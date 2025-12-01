@@ -171,7 +171,7 @@ const RestaurantDetail = () => {
         </div>
 
         {/* Scrollable photo strip */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-0.5">
+        <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style={{ gap: '0.5px' }}>
           {restaurant.photos.map((photo, index) => (
             <div 
               key={index} 
