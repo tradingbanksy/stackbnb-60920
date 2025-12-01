@@ -163,9 +163,9 @@ export const fetchNearbyPlaces = async (
         lng: props.lon,
         distance: props.distance,
         categories,
-        rating: 4.0 + Math.random() * 0.9, // Geoapify doesn't provide ratings, using placeholder
-        reviewCount: Math.floor(100 + Math.random() * 500), // Placeholder
-        priceRange: ['$', '$$', '$$$'][Math.floor(Math.random() * 3)] as '$' | '$$' | '$$$',
+        rating: undefined, // Geoapify doesn't provide ratings
+        reviewCount: undefined, // Geoapify doesn't provide review counts
+        priceRange: undefined, // Geoapify doesn't provide price info
         photos: getPlaceholderPhotos(cuisine, index),
       };
     });
@@ -311,61 +311,66 @@ export const autocompleteSearch = async (
   try {
     const suggestions: AutocompleteSuggestion[] = [];
     
-    // Fetch restaurant suggestions
-    const restaurantUrl = lat && lng
-      ? `https://api.geoapify.com/v2/places?categories=catering.restaurant,catering.cafe,catering.fast_food,catering.bar&name=${encodeURIComponent(query)}&filter=circle:${lng},${lat},50000&bias=proximity:${lng},${lat}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
-      : `https://api.geoapify.com/v2/places?categories=catering.restaurant,catering.cafe,catering.fast_food,catering.bar&name=${encodeURIComponent(query)}&limit=5&apiKey=${GEOAPIFY_API_KEY}`;
-    
-    // Fetch location suggestions  
-    const locationUrl = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=3&apiKey=${GEOAPIFY_API_KEY}`;
-    
-    const [restaurantRes, locationRes] = await Promise.all([
-      fetch(restaurantUrl),
-      fetch(locationUrl)
-    ]);
-    
-    if (restaurantRes.ok) {
-      const restaurantData = await restaurantRes.json();
-      const restaurantSuggestions: AutocompleteSuggestion[] = restaurantData.features?.map((feature: any) => {
-        const props = feature.properties;
-        const raw = props.datasource?.raw || {};
-        const categories = props.categories || [];
-        const cuisine = raw.cuisine || getCuisineFromCategories(categories);
-        
-        return {
-          id: `rest_${props.place_id}`,
-          type: 'restaurant' as const,
-          name: props.name || 'Unknown Restaurant',
-          description: props.formatted || `${props.city || ''}, ${props.state || ''}`.trim(),
-          lat: props.lat,
-          lng: props.lon,
-          city: props.city,
-          zipCode: props.postcode,
-          cuisine,
-          address: props.formatted,
-        };
-      }) || [];
+    // Only fetch restaurant suggestions if we have a location (API requires filter/bias)
+    if (lat && lng) {
+      const restaurantUrl = `https://api.geoapify.com/v2/places?categories=catering.restaurant,catering.cafe,catering.fast_food,catering.bar&name=${encodeURIComponent(query)}&filter=circle:${lng},${lat},50000&bias=proximity:${lng},${lat}&limit=5&apiKey=${GEOAPIFY_API_KEY}`;
       
-      suggestions.push(...restaurantSuggestions);
+      try {
+        const restaurantRes = await fetch(restaurantUrl);
+        if (restaurantRes.ok) {
+          const restaurantData = await restaurantRes.json();
+          const restaurantSuggestions: AutocompleteSuggestion[] = restaurantData.features?.map((feature: any) => {
+            const props = feature.properties;
+            const raw = props.datasource?.raw || {};
+            const categories = props.categories || [];
+            const cuisine = raw.cuisine || getCuisineFromCategories(categories);
+            
+            return {
+              id: `rest_${props.place_id}`,
+              type: 'restaurant' as const,
+              name: props.name || 'Unknown Restaurant',
+              description: props.formatted || `${props.city || ''}, ${props.state || ''}`.trim(),
+              lat: props.lat,
+              lng: props.lon,
+              city: props.city,
+              zipCode: props.postcode,
+              cuisine,
+              address: props.formatted,
+            };
+          }) || [];
+          
+          suggestions.push(...restaurantSuggestions);
+        }
+      } catch (err) {
+        console.error('Restaurant search error:', err);
+      }
     }
     
-    if (locationRes.ok) {
-      const locationData = await locationRes.json();
-      const locationSuggestions: AutocompleteSuggestion[] = locationData.features?.map((feature: any) => {
-        const props = feature.properties;
-        return {
-          id: `loc_${props.place_id}`,
-          type: 'location' as const,
-          name: props.city || props.name || props.formatted,
-          description: `${props.state || ''}, ${props.country || ''}`.trim().replace(/^,\s*/, ''),
-          lat: props.lat,
-          lng: props.lon,
-          city: props.city || props.name,
-          zipCode: props.postcode || '',
-        };
-      }) || [];
-      
-      suggestions.push(...locationSuggestions);
+    // Always fetch location suggestions
+    const locationUrl = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=5&apiKey=${GEOAPIFY_API_KEY}`;
+    
+    try {
+      const locationRes = await fetch(locationUrl);
+      if (locationRes.ok) {
+        const locationData = await locationRes.json();
+        const locationSuggestions: AutocompleteSuggestion[] = locationData.features?.map((feature: any) => {
+          const props = feature.properties;
+          return {
+            id: `loc_${props.place_id}`,
+            type: 'location' as const,
+            name: props.city || props.name || props.formatted,
+            description: `${props.state || ''}, ${props.country || ''}`.trim().replace(/^,\s*/, ''),
+            lat: props.lat,
+            lng: props.lon,
+            city: props.city || props.name,
+            zipCode: props.postcode || '',
+          };
+        }) || [];
+        
+        suggestions.push(...locationSuggestions);
+      }
+    } catch (err) {
+      console.error('Location search error:', err);
     }
     
     return suggestions;
@@ -413,9 +418,9 @@ export const searchRestaurantsByName = async (
         lng: props.lon,
         distance: props.distance,
         categories,
-        rating: 4.0 + Math.random() * 0.9,
-        reviewCount: Math.floor(100 + Math.random() * 500),
-        priceRange: ['$', '$$', '$$$'][Math.floor(Math.random() * 3)] as '$' | '$$' | '$$$',
+        rating: undefined, // Geoapify doesn't provide ratings
+        reviewCount: undefined, // Geoapify doesn't provide review counts
+        priceRange: undefined, // Geoapify doesn't provide price info
         photos: getPlaceholderPhotos(cuisine, index),
       };
     });

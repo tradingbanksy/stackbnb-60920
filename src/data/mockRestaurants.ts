@@ -3,25 +3,25 @@ export interface Restaurant {
   id: string;
   name: string;
   cuisine: string;
-  rating: number;
-  reviewCount: number;
-  priceRange: '$' | '$$' | '$$$' | '$$$$';
+  rating?: number;
+  reviewCount?: number;
+  priceRange?: '$' | '$$' | '$$$' | '$$$$';
   address: string;
-  neighborhood: string;
+  neighborhood?: string;
   city: string;
   zipCode: string;
-  phone: string;
+  phone?: string;
   website?: string;
   hours: {
     [key: string]: { open: string; close: string } | null;
   };
-  description: string;
+  description?: string;
   photos: string[];
-  features: string[];
-  hasOutdoorSeating: boolean;
+  features?: string[];
+  hasOutdoorSeating?: boolean;
   reservationUrl?: string;
   reservationPlatform?: 'opentable' | 'resy' | 'yelp' | null;
-  coordinates: { lat: number; lng: number };
+  coordinates?: { lat: number; lng: number };
   distance?: number; // Distance in meters from user location
   isFromApi?: boolean; // Flag to identify API-fetched restaurants
 }

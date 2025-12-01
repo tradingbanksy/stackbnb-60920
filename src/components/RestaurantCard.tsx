@@ -77,23 +77,30 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-sm line-clamp-1">{restaurant.name}</h3>
-              <Badge 
-                variant={isOpen ? "default" : "secondary"} 
-                className="text-[10px] shrink-0 px-1.5 py-0"
-              >
-                {isOpen ? "Open" : "Closed"}
-              </Badge>
+              {Object.keys(restaurant.hours || {}).length > 0 && (
+                <Badge 
+                  variant={isOpen ? "default" : "secondary"} 
+                  className="text-[10px] shrink-0 px-1.5 py-0"
+                >
+                  {isOpen ? "Open" : "Closed"}
+                </Badge>
+              )}
             </div>
             
             <p className="text-xs text-muted-foreground">
-              {restaurant.cuisine} • {restaurant.priceRange}
+              {restaurant.cuisine}
+              {restaurant.priceRange && ` • ${restaurant.priceRange}`}
             </p>
             
-            <div className="flex items-center gap-1 text-xs">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium">{restaurant.rating}</span>
-              <span className="text-muted-foreground">({restaurant.reviewCount})</span>
-            </div>
+            {restaurant.rating !== undefined && (
+              <div className="flex items-center gap-1 text-xs">
+                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium">{restaurant.rating.toFixed(1)}</span>
+                {restaurant.reviewCount !== undefined && (
+                  <span className="text-muted-foreground">({restaurant.reviewCount})</span>
+                )}
+              </div>
+            )}
             
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="h-3 w-3" />
@@ -142,19 +149,30 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
             />
           </button>
 
-          {/* Open/Closed badge */}
-          <Badge 
-            className={`absolute top-2 left-2 text-[10px] px-2 py-0.5 ${
-              isOpen 
-                ? 'bg-green-500/90 text-white border-0' 
-                : 'bg-black/70 text-white border-0'
-            }`}
-          >
-            {isOpen ? "Open Now" : "Closed"}
-          </Badge>
+          {/* Open/Closed badge - only show if we have hours data */}
+          {Object.keys(restaurant.hours || {}).length > 0 && (
+            <Badge 
+              className={`absolute top-2 left-2 text-[10px] px-2 py-0.5 ${
+                isOpen 
+                  ? 'bg-green-500/90 text-white border-0' 
+                  : 'bg-black/70 text-white border-0'
+              }`}
+            >
+              {isOpen ? "Open Now" : "Closed"}
+            </Badge>
+          )}
 
-          {/* Rating overlay */}
-          {restaurant.rating >= 4.8 && (
+          {/* From API badge */}
+          {restaurant.isFromApi && (
+            <Badge 
+              className="absolute top-2 left-2 text-[10px] px-2 py-0.5 bg-blue-500/90 text-white border-0"
+            >
+              Live Data
+            </Badge>
+          )}
+
+          {/* Rating overlay - only show for high ratings */}
+          {restaurant.rating !== undefined && restaurant.rating >= 4.8 && (
             <div className="absolute bottom-2 left-2">
               <Badge className="bg-white/95 text-foreground backdrop-blur-sm shadow-sm text-[10px] px-2 py-0.5 border-0">
                 Top Rated
@@ -173,9 +191,17 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
           </p>
           <div className="flex items-center justify-between pt-0.5">
             <div className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-medium">{restaurant.rating?.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground">({restaurant.reviewCount})</span>
+              {restaurant.rating !== undefined ? (
+                <>
+                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs font-medium">{restaurant.rating.toFixed(1)}</span>
+                  {restaurant.reviewCount !== undefined && (
+                    <span className="text-xs text-muted-foreground">({restaurant.reviewCount})</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground">No ratings</span>
+              )}
             </div>
             <div className="flex items-center gap-1">
               {restaurant.distance && (
@@ -184,7 +210,9 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
                   {formatDistance(restaurant.distance)}
                 </span>
               )}
-              <span className="text-xs font-medium">{restaurant.priceRange}</span>
+              {restaurant.priceRange && (
+                <span className="text-xs font-medium">{restaurant.priceRange}</span>
+              )}
             </div>
           </div>
         </div>
