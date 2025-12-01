@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Briefcase, User, Search, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { experiences } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -66,7 +66,7 @@ const getExperienceImage = (experience) => {
 
 const Home = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, userRole } = useUser();
+  const { isAuthenticated, role } = useAuthContext();
   const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,14 +80,14 @@ const Home = () => {
 
   // Redirect authenticated users to their dashboard
   useEffect(() => {
-    if (isLoggedIn && userRole) {
-      if (userRole === "host") {
+    if (isAuthenticated && role) {
+      if (role === "host") {
         navigate("/host/dashboard");
-      } else if (userRole === "vendor") {
+      } else if (role === "vendor") {
         navigate("/vendor/dashboard");
       }
     }
-  }, [isLoggedIn, userRole, navigate]);
+  }, [isAuthenticated, role, navigate]);
 
   const filteredExperiences = experiences.filter((exp) => {
     const matchesCategory = selectedCategory === "all" || exp.category === selectedCategory;

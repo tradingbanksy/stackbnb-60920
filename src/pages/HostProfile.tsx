@@ -7,7 +7,7 @@ import { useUser } from "@/contexts/UserContext";
 
 const HostProfile = () => {
   const navigate = useNavigate();
-  const { logout, hostSignupData, propertyData } = useUser();
+  const { hostSignupData, propertyData } = useUser();
 
   const firstName = hostSignupData.firstName || "John";
   const lastName = hostSignupData.lastName || "Doe";
@@ -60,11 +60,7 @@ const HostProfile = () => {
   ];
 
   const handleMenuClick = (action: string) => {
-    if (action === "/signout") {
-      navigate(action);
-    } else if (action !== "#") {
-      navigate(action);
-    }
+    navigate(action);
   };
 
   return (

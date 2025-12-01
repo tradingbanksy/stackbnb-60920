@@ -6,13 +6,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import stackdLogo from "@/assets/stackd-logo.png";
 
 const VendorBusinessDetails = () => {
   const navigate = useNavigate();
-  const { businessData, updateBusinessData, completeSignup } = useUser();
+  const { businessData, updateBusinessData, clearSignupData } = useUser();
+  const { setUserRole } = useAuthContext();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -57,12 +59,27 @@ const VendorBusinessDetails = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
       updateBusinessData(formData);
-      completeSignup('vendor');
+      
+      // Set user role in database
+      const { error } = await setUserRole('vendor');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Clear signup data after successful registration
+      clearSignupData();
+      
       toast({
         title: "Account created!",
         description: "Welcome to stackd",

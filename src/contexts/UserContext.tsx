@@ -57,11 +57,9 @@ interface GuestData {
   cvv: string;
 }
 
-type UserRole = 'host' | 'vendor' | null;
-
+// Note: Authentication is handled by AuthContext using Supabase sessions
+// This context only manages signup flow data and booking data
 interface UserContextType {
-  isLoggedIn: boolean;
-  userRole: UserRole;
   hostSignupData: HostSignupData;
   propertyData: PropertyData;
   vendorSignupData: VendorSignupData;
@@ -74,9 +72,7 @@ interface UserContextType {
   updateBusinessData: (data: Partial<BusinessData>) => void;
   updateBookingData: (data: Partial<BookingData>) => void;
   updateGuestData: (data: Partial<GuestData>) => void;
-  completeSignup: (role: UserRole) => void;
-  logout: () => void;
-  hasCompletedSignup: boolean;
+  clearSignupData: () => void;
 }
 
 const initialHostSignupData: HostSignupData = {
@@ -139,21 +135,7 @@ const initialGuestData: GuestData = {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const stored = localStorage.getItem('isLoggedIn');
-    return stored === 'true';
-  });
-
-  const [userRole, setUserRole] = useState<UserRole>(() => {
-    const stored = localStorage.getItem('userRole');
-    return (stored as UserRole) || null;
-  });
-
-  const [hasCompletedSignup, setHasCompletedSignup] = useState<boolean>(() => {
-    const stored = localStorage.getItem('hasCompletedSignup');
-    return stored === 'true';
-  });
-
+  // Signup flow data - stored in localStorage for multi-step form persistence
   const [hostSignupData, setHostSignupData] = useState<HostSignupData>(() => {
     const stored = localStorage.getItem('hostSignupData');
     return stored ? JSON.parse(stored) : initialHostSignupData;
@@ -184,19 +166,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return stored ? JSON.parse(stored) : initialGuestData;
   });
 
-  // Persist to localStorage
+  // Clean up old vulnerable localStorage keys on mount
   useEffect(() => {
-    localStorage.setItem('isLoggedIn', String(isLoggedIn));
-  }, [isLoggedIn]);
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('hasCompletedSignup');
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('userRole', userRole || '');
-  }, [userRole]);
-
-  useEffect(() => {
-    localStorage.setItem('hasCompletedSignup', String(hasCompletedSignup));
-  }, [hasCompletedSignup]);
-
+  // Persist signup flow data to localStorage
   useEffect(() => {
     localStorage.setItem('hostSignupData', JSON.stringify(hostSignupData));
   }, [hostSignupData]);
@@ -245,24 +222,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setGuestData(prev => ({ ...prev, ...data }));
   };
 
-  const completeSignup = (role: UserRole) => {
-    setIsLoggedIn(true);
-    setUserRole(role);
-    setHasCompletedSignup(true);
-  };
-
-  const logout = () => {
-    setIsLoggedIn(false);
-    setUserRole(null);
-    setHasCompletedSignup(false);
+  const clearSignupData = () => {
     setHostSignupData(initialHostSignupData);
     setPropertyData(initialPropertyData);
     setVendorSignupData(initialVendorSignupData);
     setBusinessData(initialBusinessData);
-    // Don't clear booking/guest data on logout
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('hasCompletedSignup');
     localStorage.removeItem('hostSignupData');
     localStorage.removeItem('propertyData');
     localStorage.removeItem('vendorSignupData');
@@ -272,8 +236,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   return (
     <UserContext.Provider 
       value={{ 
-        isLoggedIn,
-        userRole,
         hostSignupData, 
         propertyData,
         vendorSignupData,
@@ -286,9 +248,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         updateBusinessData,
         updateBookingData,
         updateGuestData,
-        completeSignup,
-        logout,
-        hasCompletedSignup
+        clearSignupData,
       }}
     >
       {children}

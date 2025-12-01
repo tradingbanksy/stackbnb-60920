@@ -2,16 +2,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 
 const SignOut = () => {
   const navigate = useNavigate();
-  const { logout } = useUser();
+  const { signOut } = useAuthContext();
+  const { clearSignupData } = useUser();
   const { toast } = useToast();
 
-  const handleSignOut = () => {
-    logout();
+  const handleSignOut = async () => {
+    await signOut();
+    clearSignupData();
     toast({
       title: "Signed out",
       description: "You've been successfully signed out",

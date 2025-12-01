@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import stackdLogo from "@/assets/stackd-logo.png";
 
 const HostPropertyInfo = () => {
   const navigate = useNavigate();
-  const { propertyData, updatePropertyData, completeSignup } = useUser();
+  const { propertyData, updatePropertyData, clearSignupData } = useUser();
+  const { setUserRole } = useAuthContext();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -58,12 +60,27 @@ const HostPropertyInfo = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
       updatePropertyData(formData);
-      completeSignup('host');
+      
+      // Set user role in database
+      const { error } = await setUserRole('host');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Clear signup data after successful registration
+      clearSignupData();
+      
       toast({
         title: "Account created!",
         description: "Welcome to stackd",

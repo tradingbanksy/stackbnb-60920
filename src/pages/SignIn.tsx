@@ -2,39 +2,39 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useUser } from "@/contexts/UserContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import stackdLogo from "@/assets/stackd-logo.png";
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { completeSignup, isLoggedIn, userRole } = useUser();
+  const { isAuthenticated, role, isLoading } = useAuthContext();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: '' as 'host' | 'vendor' | '',
   });
 
   // Redirect if already logged in
-  if (isLoggedIn && userRole) {
-    if (userRole === 'host') {
+  if (!isLoading && isAuthenticated && role) {
+    if (role === 'host') {
       navigate('/host/dashboard', { replace: true });
-    } else if (userRole === 'vendor') {
+    } else if (role === 'vendor') {
       navigate('/vendor/dashboard', { replace: true });
     }
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password || !formData.role) {
+    if (!formData.email || !formData.password) {
       toast({
         title: "Missing information",
         description: "Please fill in all fields",
@@ -43,22 +43,39 @@ const SignIn = () => {
       return;
     }
 
-    // Simulate login
-    completeSignup(formData.role);
-    
-    toast({
-      title: "Welcome back!",
-      description: "You've successfully signed in",
-    });
+    setIsSubmitting(true);
 
-    // Redirect based on role
-    setTimeout(() => {
-      if (formData.role === 'host') {
-        navigate('/host/dashboard');
-      } else {
-        navigate('/vendor/dashboard');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Sign in failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
-    }, 500);
+
+      if (data.user) {
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in",
+        });
+        // The AuthContext will handle the redirect based on role
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +84,14 @@ const SignIn = () => {
       [e.target.name]: e.target.value
     }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -104,6 +129,7 @@ const SignIn = () => {
               onChange={handleChange}
               placeholder="john@example.com"
               required
+              disabled={isSubmitting}
             />
           </div>
           
@@ -116,28 +142,18 @@ const SignIn = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Sign in as</Label>
-            <Select
-              value={formData.role}
-              onValueChange={(value: 'host' | 'vendor') => setFormData(prev => ({ ...prev, role: value }))}
-              required
-            >
-              <SelectTrigger id="role" className="rounded-xl">
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="host">Host</SelectItem>
-                <SelectItem value="vendor">Vendor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button type="submit" variant="gradient" className="w-full" size="lg">
-            Sign In
+          <Button 
+            type="submit" 
+            variant="gradient" 
+            className="w-full" 
+            size="lg"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>
 
           <div className="text-center">

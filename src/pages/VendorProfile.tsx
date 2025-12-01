@@ -7,7 +7,7 @@ import { useUser } from "@/contexts/UserContext";
 
 const VendorProfile = () => {
   const navigate = useNavigate();
-  const { logout, vendorSignupData, businessData } = useUser();
+  const { vendorSignupData, businessData } = useUser();
 
   const contactName = vendorSignupData.contactName || "John Smith";
   const businessName = vendorSignupData.businessName || "Ocean Adventures";
@@ -53,11 +53,7 @@ const VendorProfile = () => {
   ];
 
   const handleMenuClick = (action: string) => {
-    if (action === "/signout") {
-      navigate(action);
-    } else if (action !== "#") {
-      navigate(action);
-    }
+    navigate(action);
   };
 
   return (
