@@ -16,6 +16,8 @@ const ChangePassword = () => {
     confirmPassword: '',
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -29,7 +31,29 @@ const ChangePassword = () => {
       return;
     }
 
+    setIsLoading(true);
+
     try {
+      // First, get the current user's email
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user?.email) {
+        toast.error("Unable to verify user. Please sign in again.");
+        return;
+      }
+
+      // Verify current password by attempting to sign in
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: formData.currentPassword
+      });
+
+      if (verifyError) {
+        toast.error("Current password is incorrect");
+        return;
+      }
+
+      // Current password verified, now update to new password
       const { error } = await supabase.auth.updateUser({
         password: formData.newPassword
       });
@@ -44,6 +68,8 @@ const ChangePassword = () => {
       });
     } catch (error: any) {
       toast.error(error.message || "Failed to update password");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,8 +136,8 @@ const ChangePassword = () => {
               />
             </div>
 
-            <Button type="submit" variant="gradient" className="w-full" size="lg">
-              Update Password
+            <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? "Verifying..." : "Update Password"}
             </Button>
           </form>
         </Card>
