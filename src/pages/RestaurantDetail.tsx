@@ -161,9 +161,9 @@ const RestaurantDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Photo Gallery */}
+      {/* Photo Gallery - Compact like Yelp/Airbnb */}
       <div className="relative">
-        <div className="aspect-[4/3] relative overflow-hidden">
+        <div className="aspect-[16/9] max-h-[240px] relative overflow-hidden">
           <img
             src={restaurant.photos[currentPhotoIndex]}
             alt={restaurant.name}
@@ -175,53 +175,60 @@ const RestaurantDetail = () => {
             <>
               <button
                 onClick={prevPhoto}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={nextPhoto}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-colors"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </>
           )}
 
           {/* Photo indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
             {restaurant.photos.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentPhotoIndex(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
                   index === currentPhotoIndex ? 'bg-white' : 'bg-white/50'
                 }`}
               />
             ))}
           </div>
 
+          {/* Photo count badge */}
+          {restaurant.photos.length > 1 && (
+            <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+              {currentPhotoIndex + 1}/{restaurant.photos.length}
+            </div>
+          )}
+
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-colors"
+            className="absolute top-3 left-3 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
 
           {/* Action buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className="absolute top-3 right-3 flex gap-2">
             <button
               onClick={handleShare}
-              className="bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-colors"
+              className="bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
             >
-              <Share2 className="h-5 w-5 text-foreground" />
+              <Share2 className="h-4 w-4 text-foreground" />
             </button>
             <button
               onClick={toggleFavorite}
-              className="bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-colors"
+              className="bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
             >
-              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
+              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
             </button>
           </div>
         </div>
