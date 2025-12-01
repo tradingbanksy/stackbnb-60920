@@ -49,6 +49,7 @@ import AppView from "./pages/AppView";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import TripPlannerChat from "./pages/TripPlannerChat";
+import RestaurantDetail from "./pages/RestaurantDetail";
 
 
 // Protected route component for hosts
@@ -106,6 +107,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/profile" element={<Profile />} />
     <Route path="/trip-planner-chat" element={<TripPlannerChat />} />
+    <Route path="/restaurant/:id" element={<RestaurantDetail />} />
     
     {/* Legacy routes */}
     <Route path="/storefront/:id" element={<Storefront />} />
