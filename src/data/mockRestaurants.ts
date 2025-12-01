@@ -23,47 +23,87 @@ export interface Restaurant {
   coordinates: { lat: number; lng: number };
 }
 
-// High-quality food images from Unsplash
-const restaurantImages = {
-  seafood: [
+// Unique high-quality food images from Unsplash - each restaurant gets unique images
+const uniqueRestaurantPhotos: Record<string, string[]> = {
+  r1: [ // Ocean View Grill - Seafood
     'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800',
     'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800',
     'https://images.unsplash.com/photo-1534604973900-c43ab4c2e0ab?w=800',
   ],
-  italian: [
-    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800',
-    'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800',
-    'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=800',
-  ],
-  american: [
+  r2: [ // Sunset Grill & Bar - American
     'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800',
     'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800',
     'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=800',
   ],
-  asian: [
+  r3: [ // La Bella Italia - Italian
+    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800',
+    'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800',
+    'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=800',
+  ],
+  r4: [ // Sakura Garden - Japanese
     'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=800',
     'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800',
     'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800',
   ],
-  mexican: [
+  r5: [ // Casa del Sol - Mexican
     'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
     'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=800',
     'https://images.unsplash.com/photo-1624300629298-e9f71eb07fa3?w=800',
   ],
-  steakhouse: [
+  r6: [ // Prime 112 - Steakhouse
     'https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=800',
     'https://images.unsplash.com/photo-1558030006-450675393462?w=800',
     'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800',
   ],
-  cafe: [
-    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
-    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800',
-    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800',
+  r7: [ // Blue Marlin Fish House - Seafood (unique images)
+    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
+    'https://images.unsplash.com/photo-1485921325833-c519f76c4927?w=800',
+    'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800',
   ],
-  mediterranean: [
+  r8: [ // Café Méditerranée - Mediterranean
     'https://images.unsplash.com/photo-1544025162-d76694265947?w=800',
     'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800',
     'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=800',
+  ],
+  r9: [ // Nobu Malibu - Japanese (unique images)
+    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800',
+    'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800',
+    'https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=800',
+  ],
+  r10: [ // Neptune's Net - Seafood (unique images)
+    'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800',
+    'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800',
+    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
+  ],
+  r11: [ // Le Bernardin - French Seafood
+    'https://images.unsplash.com/photo-1514326640560-7d063ef2aed5?w=800',
+    'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800',
+    'https://images.unsplash.com/photo-1551248429-40975aa4de74?w=800',
+  ],
+  r12: [ // Joe's Pizza - Italian (unique images)
+    'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800',
+    'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800',
+    'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800',
+  ],
+  r13: [ // George's at the Cove - California
+    'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800',
+    'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800',
+    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800',
+  ],
+  r14: [ // Phil's BBQ - BBQ
+    'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=800',
+    'https://images.unsplash.com/photo-1544025162-d76694265947?w=800',
+    'https://images.unsplash.com/photo-1558030137-a56c1b004294?w=800',
+  ],
+  r15: [ // Gracias Madre - Vegan Mexican
+    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
+    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+    'https://images.unsplash.com/photo-1540914124281-342587941389?w=800',
+  ],
+  r16: [ // Tartine Bakery - Bakery/Cafe
+    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
+    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800',
+    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800',
   ],
 };
 
@@ -91,7 +131,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "10:00 AM", close: "10:00 PM" },
     },
     description: "Experience the finest seafood with breathtaking oceanfront views. Our award-winning chef creates daily specials using the freshest catch from local fishermen. Perfect for romantic dinners or celebrating special occasions.",
-    photos: restaurantImages.seafood,
+    photos: uniqueRestaurantPhotos.r1,
     features: ["Outdoor Seating", "Waterfront", "Full Bar", "Live Music Fri-Sat"],
     hasOutdoorSeating: true,
     reservationUrl: "https://www.opentable.com/r/ocean-view-grill",
@@ -120,7 +160,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "7:00 AM", close: "10:00 PM" },
     },
     description: "A local favorite since 1985, Sunset Grill offers classic American comfort food with a modern twist. Famous for our all-day breakfast and craft cocktails. Dog-friendly patio available!",
-    photos: restaurantImages.american,
+    photos: uniqueRestaurantPhotos.r2,
     features: ["Outdoor Seating", "Pet Friendly", "All-Day Breakfast", "Craft Cocktails"],
     hasOutdoorSeating: true,
     reservationPlatform: null,
@@ -148,7 +188,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "4:00 PM", close: "9:00 PM" },
     },
     description: "Authentic Northern Italian cuisine prepared by Chef Marco, who trained in Bologna. Our hand-made pasta and extensive wine list have earned us multiple culinary awards. Reservations highly recommended.",
-    photos: restaurantImages.italian,
+    photos: uniqueRestaurantPhotos.r3,
     features: ["Romantic", "Wine Bar", "Private Dining", "Chef's Table"],
     hasOutdoorSeating: false,
     reservationUrl: "https://resy.com/cities/mia/la-bella-italia",
@@ -177,7 +217,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "1:00 PM", close: "9:00 PM" },
     },
     description: "Traditional Japanese cuisine featuring omakase, sushi, and robata grill. Our fish is flown in daily from Tokyo's Tsukiji market. Experience authentic Japan in the heart of Miami.",
-    photos: restaurantImages.asian,
+    photos: uniqueRestaurantPhotos.r4,
     features: ["Omakase", "Sake Bar", "Private Tatami Rooms", "Vegan Options"],
     hasOutdoorSeating: false,
     reservationUrl: "https://www.opentable.com/r/sakura-garden",
@@ -206,7 +246,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "10:00 AM", close: "10:00 PM" },
     },
     description: "Vibrant Mexican cantina serving authentic regional dishes and the best margaritas in town. Our tableside guacamole is legendary. Weekend brunch features live mariachi music!",
-    photos: restaurantImages.mexican,
+    photos: uniqueRestaurantPhotos.r5,
     features: ["Outdoor Seating", "Live Music", "Tequila Bar", "Weekend Brunch"],
     hasOutdoorSeating: true,
     reservationPlatform: null,
@@ -234,7 +274,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "12:00 PM", close: "11:00 PM" },
     },
     description: "The original South Beach steakhouse and celebrity hot-spot. USDA Prime dry-aged steaks, legendary side dishes, and an award-winning wine program. Where Miami's elite come to dine.",
-    photos: restaurantImages.steakhouse,
+    photos: uniqueRestaurantPhotos.r6,
     features: ["Celebrity Hotspot", "Private Dining", "Valet Parking", "Full Bar"],
     hasOutdoorSeating: true,
     reservationUrl: "https://resy.com/cities/mia/prime-112",
@@ -263,7 +303,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "12:00 PM", close: "8:00 PM" },
     },
     description: "Casual waterfront dining with the freshest fish-of-the-day. Family-owned for 30 years, we pride ourselves on generous portions and friendly service. Best fish tacos in North Miami!",
-    photos: restaurantImages.seafood,
+    photos: uniqueRestaurantPhotos.r7,
     features: ["Outdoor Seating", "Waterfront", "Family Friendly", "Fish Market"],
     hasOutdoorSeating: true,
     reservationPlatform: null,
@@ -291,7 +331,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "8:00 AM", close: "9:00 PM" },
     },
     description: "A charming bistro offering flavors from across the Mediterranean - from Greek to Lebanese to Spanish. Beautiful garden patio and impressive mezze selection. Perfect for leisurely weekend brunches.",
-    photos: restaurantImages.mediterranean,
+    photos: uniqueRestaurantPhotos.r8,
     features: ["Outdoor Seating", "Garden Patio", "Vegetarian Friendly", "Brunch"],
     hasOutdoorSeating: true,
     reservationUrl: "https://www.yelp.com/biz/cafe-mediterranee-miami-beach",
@@ -321,7 +361,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "12:00 PM", close: "10:00 PM" },
     },
     description: "The iconic beachfront outpost of Chef Nobu Matsuhisa's empire. Watch the sunset over the Pacific while enjoying world-famous black cod miso and innovative Japanese-Peruvian fusion cuisine.",
-    photos: restaurantImages.asian,
+    photos: uniqueRestaurantPhotos.r9,
     features: ["Oceanfront", "Celebrity Hotspot", "Sunset Views", "Valet Parking"],
     hasOutdoorSeating: true,
     reservationUrl: "https://resy.com/cities/la/nobu-malibu",
@@ -350,7 +390,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "10:00 AM", close: "8:00 PM" },
     },
     description: "Legendary roadside seafood shack where bikers, surfers, and celebrities rub elbows over fresh clam chowder and fish and chips. A true Malibu institution since 1956.",
-    photos: restaurantImages.seafood,
+    photos: uniqueRestaurantPhotos.r10,
     features: ["Outdoor Seating", "Cash Only", "Biker Friendly", "Ocean Views"],
     hasOutdoorSeating: true,
     reservationPlatform: null,
@@ -379,7 +419,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: null,
     },
     description: "Three Michelin-starred temple of seafood by Chef Eric Ripert. Impeccable French technique meets the finest ingredients from around the world. The tasting menu is a transcendent culinary experience.",
-    photos: restaurantImages.seafood,
+    photos: uniqueRestaurantPhotos.r11,
     features: ["Michelin Star", "Tasting Menu", "Wine Pairing", "Private Dining"],
     hasOutdoorSeating: false,
     reservationUrl: "https://resy.com/cities/ny/le-bernardin",
@@ -408,7 +448,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "10:00 AM", close: "4:00 AM" },
     },
     description: "The quintessential New York slice since 1975. No-frills counter service and the city's most perfect thin-crust pizza. Ask any local - this is the real deal.",
-    photos: restaurantImages.italian,
+    photos: uniqueRestaurantPhotos.r12,
     features: ["Late Night", "Counter Service", "Cash Preferred", "Iconic NYC"],
     hasOutdoorSeating: false,
     reservationPlatform: null,
@@ -437,7 +477,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "10:00 AM", close: "9:00 PM" },
     },
     description: "Award-winning California cuisine with spectacular views of La Jolla Cove. Three distinct dining experiences: Ocean Terrace, Level2, and the intimate California Modern downstairs.",
-    photos: restaurantImages.mediterranean,
+    photos: uniqueRestaurantPhotos.r13,
     features: ["Outdoor Seating", "Ocean Views", "Rooftop Terrace", "Local Produce"],
     hasOutdoorSeating: true,
     reservationUrl: "https://www.opentable.com/r/georges-at-the-cove",
@@ -466,7 +506,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "10:00 AM", close: "2:00 AM" },
     },
     description: "Tijuana-style street tacos that have achieved cult status. The adobada cooked on a vertical spit is legendary. Expect lines - they're worth it.",
-    photos: restaurantImages.mexican,
+    photos: uniqueRestaurantPhotos.r14,
     features: ["Late Night", "Counter Service", "Authentic Street Tacos", "Cash Preferred"],
     hasOutdoorSeating: true,
     reservationPlatform: null,
@@ -495,7 +535,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "11:00 AM", close: "3:00 PM" },
     },
     description: "The most famous barbecue in America. Aaron Franklin's brisket has achieved legendary status. Get in line early (very early) or pre-order online. Worth every minute of the wait.",
-    photos: restaurantImages.american,
+    photos: uniqueRestaurantPhotos.r15,
     features: ["Outdoor Seating", "Pre-Order Available", "BYOB", "James Beard Winner"],
     hasOutdoorSeating: true,
     reservationPlatform: null,
@@ -523,7 +563,7 @@ export const mockRestaurants: Restaurant[] = [
       sunday: { open: "5:00 PM", close: "10:00 PM" },
     },
     description: "Chef Tyson Cole's groundbreaking Japanese farmhouse dining. Innovative omakase and stunning individual dishes in a converted 1920s bungalow. Austin's ultimate special occasion restaurant.",
-    photos: restaurantImages.asian,
+    photos: uniqueRestaurantPhotos.r16,
     features: ["Omakase", "James Beard Winner", "Sake Program", "Garden Patio"],
     hasOutdoorSeating: true,
     reservationUrl: "https://resy.com/cities/atx/uchi",
