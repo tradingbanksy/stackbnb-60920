@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Briefcase, User, Search, Star } from "lucide-react";
+import { Briefcase, User, Search, Star, Heart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { experiences } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo.png";
 import MinimalDock from "@/components/ui/minimal-dock";
@@ -71,6 +72,29 @@ const Home = () => {
   const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [favorites, setFavorites] = useState<number[]>(() => {
+    const saved = localStorage.getItem("favorites");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const toggleFavorite = (id: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFavorites((prev) => {
+      const newFavorites = prev.includes(id)
+        ? prev.filter((fav) => fav !== id)
+        : [...prev, id];
+      
+      localStorage.setItem("favorites", JSON.stringify(newFavorites));
+      
+      toast({
+        title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
+        duration: 2000,
+      });
+      
+      return newFavorites;
+    });
+  };
 
   // Redirect mobile users to app view
   useEffect(() => {
@@ -222,15 +246,19 @@ const Home = () => {
                       }}
                     />
 
-                    {/* Category Badge */}
-                    <div className="absolute top-2 right-2 z-20">
-                      <Badge
-                        variant="secondary"
-                        className="bg-white/95 text-foreground backdrop-blur-sm shadow-md text-xs px-2 py-0.5"
-                      >
-                        <span className="mr-0.5">{experience.categoryIcon}</span>
-                      </Badge>
-                    </div>
+                    {/* Heart/Favorite Button */}
+                    <button
+                      onClick={(e) => toggleFavorite(experience.id, e)}
+                      className="absolute top-2 right-2 z-20 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+                    >
+                      <Heart
+                        className={`h-5 w-5 transition-all drop-shadow-md ${
+                          favorites.includes(experience.id)
+                            ? "fill-red-500 text-red-500"
+                            : "fill-black/50 text-white stroke-white stroke-2"
+                        }`}
+                      />
+                    </button>
 
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
