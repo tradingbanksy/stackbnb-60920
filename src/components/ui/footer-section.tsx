@@ -18,8 +18,8 @@ function Footerdemo() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div className="relative">
             <div className="flex items-center gap-2 mb-4">
-              <img src={stackdLogo} alt="stackd" className="h-8 w-8" />
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              <img src={stackdLogo} alt="stackd" className="h-10 w-10 drop-shadow-lg" />
+              <h2 className="text-2xl font-bold font-display bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
                 stackd
               </h2>
             </div>
