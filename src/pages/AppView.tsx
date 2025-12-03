@@ -663,8 +663,8 @@ const AppView = () => {
             to="/trip-planner-chat"
             className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-[10px]">Messages</span>
+            <Sparkles className="h-5 w-5" />
+            <span className="text-[10px]">AI</span>
           </Link>
 
           <Link 
