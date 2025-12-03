@@ -163,7 +163,7 @@ const Home = () => {
             </div>
 
             <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground max-w-4xl mx-auto leading-tight">
-              Stack your earnings through local partnerships
+              Grow your affiliate income
             </h2>
 
             <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto">
