@@ -155,7 +155,7 @@ const Home = () => {
               </h1>
             </div>
 
-            <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-black max-w-4xl mx-auto leading-tight">
+            <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground max-w-4xl mx-auto leading-tight">
               Stack your earnings through local partnerships
             </h2>
 
