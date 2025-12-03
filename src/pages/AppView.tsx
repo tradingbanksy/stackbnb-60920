@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import stackdLogo from "@/assets/stackd-logo.png";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -293,11 +294,15 @@ const AppView = () => {
       {/* Centered Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-[450px] mx-auto px-4 py-4 space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <img src={stackdLogo} alt="stackd" className="h-10 w-10" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-              stackd
-            </h1>
+          <div className="flex items-center justify-between">
+            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <img src={stackdLogo} alt="stackd" className="h-10 w-10" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                stackd
+              </h1>
+            </div>
+            <div className="w-[88px]" /> {/* Spacer to balance the layout */}
           </div>
           
           {/* Location Search */}
