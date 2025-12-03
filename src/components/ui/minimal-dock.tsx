@@ -12,7 +12,7 @@ interface DockItem {
 
 const dockItems: DockItem[] = [
   { id: 'search', icon: <Search size={20} />, label: 'Explore', href: '/appview' },
-  { id: 'favorites', icon: <Heart size={20} />, label: 'Wishlists', href: '/appview' },
+  { id: 'favorites', icon: <Heart size={20} />, label: 'Wishlists', href: '/wishlists' },
 ];
 
 interface DockItemProps {
