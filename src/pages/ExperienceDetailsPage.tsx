@@ -25,27 +25,28 @@ import balloonImg from "@/assets/experiences/balloon.jpg";
 import wineImg from "@/assets/experiences/wine.jpg";
 
 const getExperienceImages = (experienceId: number): string[] => {
+  // Each experience shows only contextually relevant images
   const imageMap: Record<number, string[]> = {
-    1: [kayakingImg, boatImg, snorkelingImg],
-    2: [bikesImg, hikingImg, photographyImg],
-    3: [snorkelingImg, kayakingImg, scubaImg],
-    4: [photographyImg, yogaImg, spaImg],
-    5: [spaImg, yogaImg, diningImg],
-    6: [diningImg, wineImg, cookingImg],
-    7: [atvImg, ziplineImg, hikingImg],
-    8: [boatImg, kayakingImg, fishingImg],
-    9: [ziplineImg, atvImg, hikingImg],
-    10: [horsebackImg, hikingImg, photographyImg],
-    11: [scubaImg, snorkelingImg, kayakingImg],
-    12: [hikingImg, photographyImg, yogaImg],
-    13: [parasailingImg, boatImg, kayakingImg],
-    14: [yogaImg, spaImg, hikingImg],
-    15: [fishingImg, boatImg, kayakingImg],
-    16: [cookingImg, diningImg, wineImg],
-    17: [balloonImg, photographyImg, hikingImg],
-    18: [wineImg, diningImg, cookingImg],
+    1: [kayakingImg, kayakingImg, boatImg],           // Kayak Tour - water activities
+    2: [bikesImg, bikesImg, bikesImg],                // Bike Rental - cycling only
+    3: [snorkelingImg, snorkelingImg, scubaImg],      // Snorkeling - underwater
+    4: [photographyImg, photographyImg, photographyImg], // Photography
+    5: [spaImg, spaImg, yogaImg],                     // Spa - wellness
+    6: [diningImg, wineImg, cookingImg],              // Food & Wine Tour - food related
+    7: [atvImg, atvImg, atvImg],                      // ATV Adventure
+    8: [boatImg, boatImg, fishingImg],                // Boat Rental - water
+    9: [ziplineImg, ziplineImg, ziplineImg],          // Zipline - canopy
+    10: [horsebackImg, horsebackImg, horsebackImg],   // Horseback Riding
+    11: [scubaImg, scubaImg, snorkelingImg],          // Scuba Diving - underwater
+    12: [hikingImg, hikingImg, hikingImg],            // Hiking Expedition
+    13: [parasailingImg, parasailingImg, parasailingImg], // Parasailing
+    14: [yogaImg, yogaImg, spaImg],                   // Yoga - wellness
+    15: [fishingImg, fishingImg, boatImg],            // Fishing Charter - water/fishing
+    16: [cookingImg, cookingImg, diningImg],          // Cooking Class - food
+    17: [balloonImg, balloonImg, balloonImg],         // Hot Air Balloon
+    18: [wineImg, wineImg, diningImg],                // Wine Tasting - beverage/food
   };
-  return imageMap[experienceId] || [kayakingImg, boatImg, snorkelingImg];
+  return imageMap[experienceId] || [kayakingImg, kayakingImg, kayakingImg];
 };
 
 const ExperienceDetails = () => {
