@@ -148,6 +148,14 @@ const ExperienceDetails = () => {
   const navigate = useNavigate();
   
   const experience = experiences.find(exp => exp.id === Number(id));
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/appview');
+    }
+  };
   
   if (!experience) {
     return (
@@ -169,7 +177,7 @@ const ExperienceDetails = () => {
         <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
           <div className="px-4 py-3 flex items-center gap-3">
             <button
-              onClick={() => navigate(-1)}
+              onClick={handleBack}
               className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />

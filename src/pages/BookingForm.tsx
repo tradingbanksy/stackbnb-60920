@@ -17,6 +17,14 @@ const BookingForm = () => {
   const { toast } = useToast();
   
   const experience = experiences.find(exp => exp.id === Number(id));
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/appview');
+    }
+  };
   
   const [formData, setFormData] = useState({
     date: '',
@@ -84,7 +92,7 @@ const BookingForm = () => {
         {/* Header */}
         <div className="px-4 py-4 border-b bg-card">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

@@ -20,6 +20,15 @@ const MAX_MESSAGE_LENGTH = 2000;
 const TripPlannerChat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/appview');
+    }
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -159,7 +168,7 @@ const TripPlannerChat = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

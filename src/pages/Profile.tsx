@@ -23,6 +23,14 @@ const Profile = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/appview');
+    }
+  };
+
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -126,7 +134,7 @@ const Profile = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

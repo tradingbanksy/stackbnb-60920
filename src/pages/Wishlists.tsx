@@ -62,6 +62,14 @@ const Wishlists = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/appview');
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/signin");
@@ -250,7 +258,7 @@ const Wishlists = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold flex-1">Wishlists</h1>
