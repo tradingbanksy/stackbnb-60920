@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { Home, Search, Mail, User, Heart, Star } from 'lucide-react';
+import { Search, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface DockItem {
@@ -11,11 +11,8 @@ interface DockItem {
 }
 
 const dockItems: DockItem[] = [
-  { id: 'home', icon: <Home size={20} />, label: 'Home', href: '/' },
   { id: 'search', icon: <Search size={20} />, label: 'Explore', href: '/appview' },
   { id: 'favorites', icon: <Heart size={20} />, label: 'Wishlists', href: '/appview' },
-  { id: 'mail', icon: <Mail size={20} />, label: 'Messages', href: '/trip-planner' },
-  { id: 'profile', icon: <User size={20} />, label: 'Profile', href: '/profile' },
 ];
 
 interface DockItemProps {
