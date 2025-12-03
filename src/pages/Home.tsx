@@ -163,29 +163,39 @@ const Home = () => {
               A smarter way for hosts to partner locally, grow revenue, and streamline guest bookings.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-              <Link 
-                to="/signup/host"
-                className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
-              >
-                <Briefcase className="h-4 w-4" />
-                Get Started as Host
-              </Link>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-2">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                <Link 
+                  to="/signup/host"
+                  className="relative flex items-center bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
+                >
+                  Get Started as Host
+                </Link>
+              </div>
 
-              <Link 
-                to="/signup/vendor"
-                className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
-              >
-                <User className="h-4 w-4" />
-                I'm a Vendor
-              </Link>
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                <Link 
+                  to="/signup/vendor"
+                  className="relative flex items-center bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
+                >
+                  I'm a Vendor
+                </Link>
+              </div>
               
-              <Link 
-                to="/appview"
-                className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
-              >
-                Preview App View
-              </Link>
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                <Link 
+                  to="/appview"
+                  className="relative flex items-center bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
+                >
+                  Preview App View
+                </Link>
+              </div>
             </div>
 
             <p className="text-sm text-muted-foreground pt-4">
