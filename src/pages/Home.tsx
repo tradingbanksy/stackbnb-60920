@@ -10,6 +10,7 @@ import { experiences } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo.png";
+import MinimalDock from "@/components/ui/minimal-dock";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -108,6 +109,11 @@ const Home = () => {
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background/50 to-background/70" />
+
+        {/* Minimal Dock - Top Right */}
+        <div className="absolute top-4 right-4 z-50">
+          <MinimalDock />
+        </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
           <div className="text-center space-y-8">
