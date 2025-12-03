@@ -144,16 +144,21 @@ const RestaurantDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Header with Back Button */}
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-[450px] mx-auto px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <span className="font-semibold truncate">{restaurant.name}</span>
+        </div>
+      </header>
+
       {/* Photo Gallery - Horizontal scroll like Yelp/Airbnb */}
       <div className="relative">
-        {/* Back button - fixed above scroll */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-3 left-3 z-20 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-foreground" />
-        </button>
-
         {/* Action buttons - fixed above scroll */}
         <div className="absolute top-3 right-3 z-20 flex gap-2">
           <button
