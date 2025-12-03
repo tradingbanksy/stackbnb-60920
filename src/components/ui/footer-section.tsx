@@ -56,10 +56,10 @@ function Footerdemo() {
               <Link to="/appview" className="block transition-colors hover:text-primary">
                 Explore Experiences
               </Link>
-              <Link to="/signup/host" className="block transition-colors hover:text-primary">
+              <Link to="/for-hosts" className="block transition-colors hover:text-primary">
                 For Hosts
               </Link>
-              <Link to="/signup/vendor" className="block transition-colors hover:text-primary">
+              <Link to="/for-vendors" className="block transition-colors hover:text-primary">
                 For Vendors
               </Link>
               <Link to="/signin" className="block transition-colors hover:text-primary">
