@@ -1,10 +1,11 @@
+import React, { useEffect, useRef } from "react";
 import { ArrowLeft, Store, Users, DollarSign, BarChart3, Calendar, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import stackdLogo from "@/assets/stackd-logo.png";
 
 const ForHosts = () => {
   const navigate = useNavigate();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -14,161 +15,501 @@ const ForHosts = () => {
     }
   };
 
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const setSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = document.body.scrollHeight;
+    };
+    setSize();
+
+    type Particle = {
+      x: number;
+      y: number;
+      speed: number;
+      opacity: number;
+      fadeDelay: number;
+      fadeStart: number;
+      fadingOut: boolean;
+    };
+
+    let particles: Particle[] = [];
+    let raf = 0;
+
+    const count = () => Math.floor((canvas.width * canvas.height) / 10000);
+
+    const make = (): Particle => {
+      const fadeDelay = Math.random() * 600 + 100;
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        speed: Math.random() / 5 + 0.1,
+        opacity: 0.7,
+        fadeDelay,
+        fadeStart: Date.now() + fadeDelay,
+        fadingOut: false,
+      };
+    };
+
+    const reset = (p: Particle) => {
+      p.x = Math.random() * canvas.width;
+      p.y = Math.random() * canvas.height;
+      p.speed = Math.random() / 5 + 0.1;
+      p.opacity = 0.7;
+      p.fadeDelay = Math.random() * 600 + 100;
+      p.fadeStart = Date.now() + p.fadeDelay;
+      p.fadingOut = false;
+    };
+
+    const init = () => {
+      particles = [];
+      for (let i = 0; i < count(); i++) particles.push(make());
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        p.y -= p.speed;
+        if (p.y < 0) reset(p);
+        if (!p.fadingOut && Date.now() > p.fadeStart) p.fadingOut = true;
+        if (p.fadingOut) {
+          p.opacity -= 0.008;
+          if (p.opacity <= 0) reset(p);
+        }
+        ctx.fillStyle = `rgba(250, 250, 250, ${p.opacity})`;
+        ctx.fillRect(p.x, p.y, 0.6, Math.random() * 2 + 1);
+      });
+      raf = requestAnimationFrame(draw);
+    };
+
+    const onResize = () => {
+      setSize();
+      init();
+    };
+
+    window.addEventListener("resize", onResize);
+    init();
+    raf = requestAnimationFrame(draw);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const features = [
     {
       icon: Users,
       title: "Manage Vendor Relationships",
-      description: "Keep all your local vendor partnerships organized in one place. Easily add, remove, and track vendors you work with."
+      description: "Keep all your local vendor partnerships organized in one place."
     },
     {
       icon: DollarSign,
       title: "Track Commissions",
-      description: "Monitor your affiliate earnings in real-time. See which partnerships generate the most revenue for your business."
+      description: "Monitor your affiliate earnings in real-time."
     },
     {
       icon: BarChart3,
       title: "Analytics Dashboard",
-      description: "Get insights into booking trends, popular experiences, and guest preferences to optimize your recommendations."
+      description: "Get insights into booking trends and guest preferences."
     },
     {
       icon: Calendar,
-      title: "Seamless Booking Integration",
-      description: "Your guests can easily book experiences you recommend, creating a frictionless experience that keeps them coming back."
+      title: "Seamless Booking",
+      description: "Your guests can easily book experiences you recommend."
     },
     {
       icon: Shield,
       title: "Trusted Network",
-      description: "All vendors on stackd are vetted for quality, ensuring your guests have amazing experiences every time."
+      description: "All vendors are vetted for quality experiences."
     },
     {
       icon: Store,
       title: "Custom Storefront",
-      description: "Create a personalized storefront showcasing your curated selection of local experiences for your guests."
+      description: "Create a personalized selection for your guests."
     }
   ];
 
+  const steps = [
+    { num: "01", title: "Create Your Account", desc: "Sign up and set up your profile with property details." },
+    { num: "02", title: "Connect with Vendors", desc: "Browse and add trusted local vendors to your network." },
+    { num: "03", title: "Share with Guests", desc: "Share your custom storefront link with guests." },
+    { num: "04", title: "Earn Commissions", desc: "Track bookings and earn affiliate commissions automatically." }
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={handleBack} className="p-2 hover:bg-accent rounded-full transition-colors">
+    <div className="minimal-page">
+      <style>{`
+        @import url('https://fonts.cdnfonts.com/css/hubot-sans');
+        
+        .minimal-page {
+          --bg: #0a0a0a;
+          --fg: #fafafa;
+          --muted: #a1a1aa;
+          --border: #27272a;
+          --card-bg: #111111;
+          
+          min-height: 100vh;
+          background: var(--bg);
+          color: var(--fg);
+          font-family: 'Hubot Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, sans-serif;
+          position: relative;
+          overflow-x: hidden;
+        }
+        
+        .particle-canvas {
+          position: fixed;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          mix-blend-mode: screen;
+          opacity: 0.5;
+          z-index: 0;
+        }
+        
+        .page-content {
+          position: relative;
+          z-index: 1;
+        }
+        
+        .minimal-header {
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          padding: 20px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid var(--border);
+          background: rgba(10, 10, 10, 0.9);
+          backdrop-filter: blur(12px);
+        }
+        
+        .back-btn {
+          padding: 8px;
+          border-radius: 8px;
+          color: var(--muted);
+          transition: all 0.2s;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+        .back-btn:hover {
+          background: var(--card-bg);
+          color: var(--fg);
+        }
+        
+        .brand-link {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+        }
+        .brand-text {
+          font-size: 20px;
+          font-weight: 600;
+          background: linear-gradient(135deg, #f97316, #ec4899);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .hero-section {
+          padding: 80px 24px;
+          text-align: center;
+          border-bottom: 1px solid var(--border);
+        }
+        
+        .hero-icon {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #f97316, #ec4899);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .hero-kicker {
+          font-size: 12px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--muted);
+          margin-bottom: 16px;
+        }
+        
+        .hero-title {
+          font-weight: 600;
+          font-size: clamp(36px, 8vw, 72px);
+          line-height: 1;
+          margin: 0 0 24px;
+          color: var(--fg);
+        }
+        
+        .hero-subtitle {
+          font-size: clamp(16px, 2.5vw, 20px);
+          color: var(--muted);
+          max-width: 600px;
+          margin: 0 auto 32px;
+          line-height: 1.5;
+        }
+        
+        .btn-group {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          justify-content: center;
+          align-items: center;
+        }
+        @media (min-width: 640px) {
+          .btn-group {
+            flex-direction: row;
+          }
+        }
+        
+        .btn-primary {
+          height: 48px;
+          padding: 0 24px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #f97316, #ec4899);
+          color: white;
+          font-size: 15px;
+          font-weight: 500;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+        }
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.5);
+        }
+        
+        .btn-outline {
+          height: 48px;
+          padding: 0 24px;
+          border-radius: 12px;
+          background: transparent;
+          color: var(--fg);
+          font-size: 15px;
+          font-weight: 500;
+          border: 1px solid var(--border);
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+        }
+        .btn-outline:hover {
+          background: var(--card-bg);
+          border-color: var(--muted);
+        }
+        
+        .features-section {
+          padding: 80px 24px;
+          border-bottom: 1px solid var(--border);
+        }
+        
+        .section-title {
+          font-size: 28px;
+          font-weight: 600;
+          text-align: center;
+          margin-bottom: 48px;
+        }
+        
+        .features-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+          .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        @media (min-width: 1024px) {
+          .features-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+        
+        .feature-card {
+          padding: 32px;
+          background: var(--card-bg);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          transition: all 0.3s;
+        }
+        .feature-card:hover {
+          border-color: var(--muted);
+          transform: translateY(-4px);
+        }
+        
+        .feature-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #f97316, #ec4899);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 16px;
+        }
+        
+        .feature-title {
+          font-size: 18px;
+          font-weight: 600;
+          margin-bottom: 8px;
+        }
+        
+        .feature-desc {
+          font-size: 14px;
+          color: var(--muted);
+          line-height: 1.5;
+        }
+        
+        .steps-section {
+          padding: 80px 24px;
+          border-bottom: 1px solid var(--border);
+        }
+        
+        .steps-container {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        
+        .step-item {
+          display: flex;
+          gap: 24px;
+          align-items: flex-start;
+          padding: 24px 0;
+          border-bottom: 1px solid var(--border);
+        }
+        .step-item:last-child {
+          border-bottom: none;
+        }
+        
+        .step-num {
+          font-size: 14px;
+          font-weight: 600;
+          color: #f97316;
+          min-width: 32px;
+        }
+        
+        .step-content h3 {
+          font-size: 18px;
+          font-weight: 600;
+          margin-bottom: 8px;
+        }
+        
+        .step-content p {
+          font-size: 14px;
+          color: var(--muted);
+          line-height: 1.5;
+        }
+        
+        .cta-section {
+          padding: 80px 24px;
+          text-align: center;
+          background: linear-gradient(180deg, transparent, rgba(249, 115, 22, 0.05));
+        }
+        
+        .cta-title {
+          font-size: 32px;
+          font-weight: 600;
+          margin-bottom: 16px;
+        }
+        
+        .cta-desc {
+          font-size: 16px;
+          color: var(--muted);
+          max-width: 500px;
+          margin: 0 auto 32px;
+          line-height: 1.5;
+        }
+      `}</style>
+
+      <canvas ref={canvasRef} className="particle-canvas" />
+
+      <div className="page-content">
+        {/* Header */}
+        <header className="minimal-header">
+          <button onClick={handleBack} className="back-btn">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="brand-link">
             <img src={stackdLogo} alt="stackd" className="h-8 w-8" />
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-              stackd
-            </span>
+            <span className="brand-text">stackd</span>
           </Link>
           <div className="w-9" />
-        </div>
-      </header>
+        </header>
 
-      {/* Hero Section */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl text-center space-y-6">
-          <div className="h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+        {/* Hero Section */}
+        <section className="hero-section">
+          <div className="hero-icon">
             <Store className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold">For Airbnb Hosts</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Organize and maintain your affiliate relationships effortlessly. Track commissions and manage partnerships all in one organized dashboard.
+          <div className="hero-kicker">For Airbnb Hosts</div>
+          <h1 className="hero-title">Grow your<br />affiliate income.</h1>
+          <p className="hero-subtitle">
+            Organize vendor relationships, track commissions, and manage partnerships all in one organized dashboard.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              asChild
-            >
-              <Link to="/signup/host">Get Started as Host</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/host/auth">Sign In</Link>
-            </Button>
+          <div className="btn-group">
+            <Link to="/signup/host" className="btn-primary">Get Started as Host</Link>
+            <Link to="/host/auth" className="btn-outline">Sign In</Link>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Features Grid */}
-      <section className="py-16 px-4 bg-accent/30">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Hosts Love stackd</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Features Grid */}
+        <section className="features-section">
+          <h2 className="section-title">Why Hosts Love stackd</h2>
+          <div className="features-grid">
             {features.map((feature, index) => (
-              <div key={index} className="bg-card p-6 rounded-xl border border-border space-y-4">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+              <div key={index} className="feature-card">
+                <div className="feature-icon">
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <h3 className="feature-title">{feature.title}</h3>
+                <p className="feature-desc">{feature.description}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How It Works */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-          <div className="space-y-8">
-            <div className="flex gap-4 items-start">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
-                1
+        {/* How It Works */}
+        <section className="steps-section">
+          <h2 className="section-title">How It Works</h2>
+          <div className="steps-container">
+            {steps.map((step, index) => (
+              <div key={index} className="step-item">
+                <span className="step-num">{step.num}</span>
+                <div className="step-content">
+                  <h3>{step.title}</h3>
+                  <p>{step.desc}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Create Your Account</h3>
-                <p className="text-muted-foreground">Sign up as a host and set up your profile with your property details and location.</p>
-              </div>
-            </div>
-            <div className="flex gap-4 items-start">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Connect with Local Vendors</h3>
-                <p className="text-muted-foreground">Browse and add trusted local vendors to your network. Build relationships that benefit your guests.</p>
-              </div>
-            </div>
-            <div className="flex gap-4 items-start">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Share with Your Guests</h3>
-                <p className="text-muted-foreground">Share your custom storefront link with guests so they can easily book curated experiences.</p>
-              </div>
-            </div>
-            <div className="flex gap-4 items-start">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
-                4
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Earn Commissions</h3>
-                <p className="text-muted-foreground">Track bookings and earn affiliate commissions automatically for every experience booked through your storefront.</p>
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 bg-gradient-to-br from-orange-500/10 to-pink-500/10">
-        <div className="container mx-auto max-w-2xl text-center space-y-6">
-          <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
-          <p className="text-muted-foreground">
-            Join hundreds of Airbnb hosts who are already earning extra income by recommending amazing local experiences.
+        {/* CTA Section */}
+        <section className="cta-section">
+          <h2 className="cta-title">Ready to Get Started?</h2>
+          <p className="cta-desc">
+            Join hundreds of Airbnb hosts already earning extra income by recommending amazing local experiences.
           </p>
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-            asChild
-          >
-            <Link to="/signup/host">Create Your Host Account</Link>
-          </Button>
-        </div>
-      </section>
+          <Link to="/signup/host" className="btn-primary">Create Your Host Account</Link>
+        </section>
+      </div>
     </div>
   );
 };
