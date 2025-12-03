@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { FaUtensils, FaStar, FaCamera, FaGlassCheers, FaLeaf } from 'react-icons/fa';
 
 interface PhotoOption {
@@ -10,6 +10,7 @@ interface PhotoOption {
 interface InteractiveSelectorProps {
   photos: string[];
   titles?: string[];
+  icons?: ReactNode[];
 }
 
 const defaultIcons = [
@@ -20,7 +21,7 @@ const defaultIcons = [
   <FaLeaf size={20} className="text-white" />,
 ];
 
-const InteractiveSelector = ({ photos, titles }: InteractiveSelectorProps) => {
+const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [animatedOptions, setAnimatedOptions] = useState<number[]>([]);
   
@@ -102,7 +103,7 @@ const InteractiveSelector = ({ photos, titles }: InteractiveSelectorProps) => {
                 className="min-w-[36px] max-w-[36px] h-[36px] flex items-center justify-center rounded-full backdrop-blur-sm shadow-md border border-white/20 flex-shrink-0 transition-all duration-200"
                 style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
               >
-                {defaultIcons[index % defaultIcons.length]}
+                {icons?.[index] || defaultIcons[index % defaultIcons.length]}
               </div>
               <div className="text-white whitespace-pre relative overflow-hidden">
                 <div 

@@ -5,6 +5,9 @@ import { ArrowLeft, Star, Clock, Users, CheckCircle } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import InteractiveSelector from "@/components/ui/interactive-selector";
+import { FaWater, FaBicycle, FaSwimmer, FaCamera, FaSpa, FaWineGlass, FaMotorcycle, FaShip, FaTree, FaHorse, FaMask, FaMountain, FaParachuteBox, FaPray, FaFish, FaUtensils, FaCloudSun, FaGlassCheers } from 'react-icons/fa';
+
+// Base images
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -24,29 +27,120 @@ import cookingImg from "@/assets/experiences/cooking.jpg";
 import balloonImg from "@/assets/experiences/balloon.jpg";
 import wineImg from "@/assets/experiences/wine.jpg";
 
-const getExperienceImages = (experienceId: number): string[] => {
-  // Each experience shows only contextually relevant images
-  const imageMap: Record<number, string[]> = {
-    1: [kayakingImg, kayakingImg, boatImg],           // Kayak Tour - water activities
-    2: [bikesImg, bikesImg, bikesImg],                // Bike Rental - cycling only
-    3: [snorkelingImg, snorkelingImg, scubaImg],      // Snorkeling - underwater
-    4: [photographyImg, photographyImg, photographyImg], // Photography
-    5: [spaImg, spaImg, yogaImg],                     // Spa - wellness
-    6: [diningImg, wineImg, cookingImg],              // Food & Wine Tour - food related
-    7: [atvImg, atvImg, atvImg],                      // ATV Adventure
-    8: [boatImg, boatImg, fishingImg],                // Boat Rental - water
-    9: [ziplineImg, ziplineImg, ziplineImg],          // Zipline - canopy
-    10: [horsebackImg, horsebackImg, horsebackImg],   // Horseback Riding
-    11: [scubaImg, scubaImg, snorkelingImg],          // Scuba Diving - underwater
-    12: [hikingImg, hikingImg, hikingImg],            // Hiking Expedition
-    13: [parasailingImg, parasailingImg, parasailingImg], // Parasailing
-    14: [yogaImg, yogaImg, spaImg],                   // Yoga - wellness
-    15: [fishingImg, fishingImg, boatImg],            // Fishing Charter - water/fishing
-    16: [cookingImg, cookingImg, diningImg],          // Cooking Class - food
-    17: [balloonImg, balloonImg, balloonImg],         // Hot Air Balloon
-    18: [wineImg, wineImg, diningImg],                // Wine Tasting - beverage/food
+// Variant images
+import kayaking2Img from "@/assets/experiences/kayaking-2.jpg";
+import kayaking3Img from "@/assets/experiences/kayaking-3.jpg";
+import snorkeling2Img from "@/assets/experiences/snorkeling-2.jpg";
+import snorkeling3Img from "@/assets/experiences/snorkeling-3.jpg";
+import scuba2Img from "@/assets/experiences/scuba-2.jpg";
+import scuba3Img from "@/assets/experiences/scuba-3.jpg";
+import hiking2Img from "@/assets/experiences/hiking-2.jpg";
+import hiking3Img from "@/assets/experiences/hiking-3.jpg";
+import balloon2Img from "@/assets/experiences/balloon-2.jpg";
+import balloon3Img from "@/assets/experiences/balloon-3.jpg";
+import parasailing2Img from "@/assets/experiences/parasailing-2.jpg";
+import parasailing3Img from "@/assets/experiences/parasailing-3.jpg";
+
+// Experience configuration with unique images, titles, and icons
+const experienceConfig: Record<number, { images: string[]; titles: string[]; icons: React.ReactNode[] }> = {
+  1: { // Kayak Tour
+    images: [kayakingImg, kayaking2Img, kayaking3Img],
+    titles: ["Sunset Paddle", "Bay Exploration", "Aerial View"],
+    icons: [<FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />]
+  },
+  2: { // Bike Rental
+    images: [bikesImg, bikesImg, bikesImg],
+    titles: ["Beach Cruisers", "Coastal Path", "Scenic Route"],
+    icons: [<FaBicycle size={20} className="text-white" />, <FaBicycle size={20} className="text-white" />, <FaBicycle size={20} className="text-white" />]
+  },
+  3: { // Snorkeling
+    images: [snorkelingImg, snorkeling2Img, snorkeling3Img],
+    titles: ["Crystal Waters", "Coral Reef", "Snorkel Gear"],
+    icons: [<FaSwimmer size={20} className="text-white" />, <FaSwimmer size={20} className="text-white" />, <FaSwimmer size={20} className="text-white" />]
+  },
+  4: { // Photography
+    images: [photographyImg, photographyImg, photographyImg],
+    titles: ["Golden Hour", "Beach Portrait", "Scenic Shot"],
+    icons: [<FaCamera size={20} className="text-white" />, <FaCamera size={20} className="text-white" />, <FaCamera size={20} className="text-white" />]
+  },
+  5: { // Spa
+    images: [spaImg, yogaImg, spaImg],
+    titles: ["Massage Suite", "Relaxation", "Treatment Room"],
+    icons: [<FaSpa size={20} className="text-white" />, <FaSpa size={20} className="text-white" />, <FaSpa size={20} className="text-white" />]
+  },
+  6: { // Food & Wine Tour
+    images: [diningImg, wineImg, cookingImg],
+    titles: ["Gourmet Dish", "Wine Tasting", "Local Cuisine"],
+    icons: [<FaUtensils size={20} className="text-white" />, <FaWineGlass size={20} className="text-white" />, <FaUtensils size={20} className="text-white" />]
+  },
+  7: { // ATV Adventure
+    images: [atvImg, atvImg, atvImg],
+    titles: ["Jungle Trail", "Off-Road Action", "Muddy Fun"],
+    icons: [<FaMotorcycle size={20} className="text-white" />, <FaMotorcycle size={20} className="text-white" />, <FaMotorcycle size={20} className="text-white" />]
+  },
+  8: { // Boat Rental
+    images: [boatImg, fishingImg, boatImg],
+    titles: ["Private Charter", "Ocean Cruise", "Island Hop"],
+    icons: [<FaShip size={20} className="text-white" />, <FaShip size={20} className="text-white" />, <FaShip size={20} className="text-white" />]
+  },
+  9: { // Zipline
+    images: [ziplineImg, ziplineImg, ziplineImg],
+    titles: ["Canopy Flight", "Forest View", "Adventure"],
+    icons: [<FaTree size={20} className="text-white" />, <FaTree size={20} className="text-white" />, <FaTree size={20} className="text-white" />]
+  },
+  10: { // Horseback
+    images: [horsebackImg, horsebackImg, horsebackImg],
+    titles: ["Beach Ride", "Sunset Trail", "Gentle Horse"],
+    icons: [<FaHorse size={20} className="text-white" />, <FaHorse size={20} className="text-white" />, <FaHorse size={20} className="text-white" />]
+  },
+  11: { // Scuba
+    images: [scubaImg, scuba2Img, scuba3Img],
+    titles: ["Deep Dive", "Shipwreck", "Dive Gear"],
+    icons: [<FaMask size={20} className="text-white" />, <FaMask size={20} className="text-white" />, <FaMask size={20} className="text-white" />]
+  },
+  12: { // Hiking
+    images: [hikingImg, hiking2Img, hiking3Img],
+    titles: ["Summit Trail", "Group Hike", "Peak View"],
+    icons: [<FaMountain size={20} className="text-white" />, <FaMountain size={20} className="text-white" />, <FaMountain size={20} className="text-white" />]
+  },
+  13: { // Parasailing
+    images: [parasailingImg, parasailing2Img, parasailing3Img],
+    titles: ["High Flying", "Ocean View", "Tropical Coast"],
+    icons: [<FaParachuteBox size={20} className="text-white" />, <FaParachuteBox size={20} className="text-white" />, <FaParachuteBox size={20} className="text-white" />]
+  },
+  14: { // Yoga
+    images: [yogaImg, spaImg, yogaImg],
+    titles: ["Beach Yoga", "Meditation", "Sunset Flow"],
+    icons: [<FaPray size={20} className="text-white" />, <FaPray size={20} className="text-white" />, <FaPray size={20} className="text-white" />]
+  },
+  15: { // Fishing
+    images: [fishingImg, boatImg, fishingImg],
+    titles: ["Big Catch", "Charter Boat", "Deep Sea"],
+    icons: [<FaFish size={20} className="text-white" />, <FaFish size={20} className="text-white" />, <FaFish size={20} className="text-white" />]
+  },
+  16: { // Cooking Class
+    images: [cookingImg, diningImg, cookingImg],
+    titles: ["Chef Demo", "Plated Dish", "Kitchen Action"],
+    icons: [<FaUtensils size={20} className="text-white" />, <FaUtensils size={20} className="text-white" />, <FaUtensils size={20} className="text-white" />]
+  },
+  17: { // Hot Air Balloon
+    images: [balloonImg, balloon2Img, balloon3Img],
+    titles: ["Sunrise Flight", "Valley View", "Basket View"],
+    icons: [<FaCloudSun size={20} className="text-white" />, <FaCloudSun size={20} className="text-white" />, <FaCloudSun size={20} className="text-white" />]
+  },
+  18: { // Wine Tasting
+    images: [wineImg, diningImg, wineImg],
+    titles: ["Vineyard Toast", "Food Pairing", "Cellar Tour"],
+    icons: [<FaGlassCheers size={20} className="text-white" />, <FaGlassCheers size={20} className="text-white" />, <FaGlassCheers size={20} className="text-white" />]
+  },
+};
+
+const getExperienceConfig = (experienceId: number) => {
+  return experienceConfig[experienceId] || {
+    images: [kayakingImg, kayaking2Img, kayaking3Img],
+    titles: ["Adventure View", "Action Shot", "Scenic Beauty"],
+    icons: [<FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />]
   };
-  return imageMap[experienceId] || [kayakingImg, kayakingImg, kayakingImg];
 };
 
 const ExperienceDetails = () => {
@@ -86,10 +180,16 @@ const ExperienceDetails = () => {
 
         {/* Interactive Photo Selector */}
         <div className="mb-4">
-          <InteractiveSelector 
-            photos={getExperienceImages(experience.id)} 
-            titles={["Adventure View", "Action Shot", "Scenic Beauty"]}
-          />
+          {(() => {
+            const config = getExperienceConfig(experience.id);
+            return (
+              <InteractiveSelector 
+                photos={config.images} 
+                titles={config.titles}
+                icons={config.icons}
+              />
+            );
+          })()}
         </div>
 
         <div className="px-4 py-6 space-y-6">
