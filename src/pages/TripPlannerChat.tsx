@@ -1,33 +1,16 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import ReactMarkdown from "react-markdown";
+import TripPlannerChatUI from "@/components/ui/trip-planner-chat-ui";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-// Input validation constants
 const MAX_MESSAGE_LENGTH = 2000;
 
 const TripPlannerChat = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/appview');
-    }
-  };
-
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -35,22 +18,11 @@ const TripPlannerChat = () => {
         "🌴 Hello! I'm JC, your AI travel assistant. I can help you discover amazing restaurants and excursions for your trip. Where are you planning to visit?",
     },
   ]);
-  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom whenever messages change
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const sendMessage = async () => {
-    const trimmedInput = input.trim();
+  const sendMessage = async (trimmedInput: string) => {
     if (!trimmedInput || isLoading) return;
 
-    // Client-side validation
     if (trimmedInput.length > MAX_MESSAGE_LENGTH) {
       toast({
         title: "Message too long",
@@ -60,7 +32,6 @@ const TripPlannerChat = () => {
       return;
     }
 
-    setInput("");
     setMessages((prev) => [...prev, { role: "user", content: trimmedInput }]);
     setIsLoading(true);
 
@@ -122,7 +93,6 @@ const TripPlannerChat = () => {
         description: errorMessage,
         variant: "destructive",
       });
-      // Remove the empty assistant message if there was an error
       setMessages((prev) => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage?.role === "assistant" && lastMessage.content === "") {
@@ -136,90 +106,11 @@ const TripPlannerChat = () => {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-      <div className="max-w-[375px] mx-auto w-full flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-bold">Trip Planner</h1>
-          <div className="w-10" />
-        </div>
-
-        {/* Chat area */}
-        <ScrollArea ref={scrollRef} className="flex-1 p-4">
-          <div className="space-y-4">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`flex ${
-                  m.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <Card
-                  className={`max-w-[80%] p-3 text-sm ${
-                    m.role === "user"
-                      ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white"
-                      : "bg-muted"
-                  }`}
-                >
-                  <div
-                    className={
-                      m.role === "assistant"
-                        ? "prose prose-sm prose-neutral dark:prose-invert"
-                        : ""
-                    }
-                  >
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
-                  </div>
-                </Card>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <Card className="max-w-[80%] p-3 bg-muted">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </Card>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-
-        {/* Input bar */}
-        <div className="p-4 border-t">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about restaurants or activities..."
-              disabled={isLoading}
-              maxLength={MAX_MESSAGE_LENGTH}
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={isLoading || !input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-          <p className="text-xs text-muted-foreground mt-1 text-right">
-            {input.length}/{MAX_MESSAGE_LENGTH}
-          </p>
-        </div>
-      </div>
-    </div>
+    <TripPlannerChatUI
+      messages={messages}
+      isLoading={isLoading}
+      onSendMessage={sendMessage}
+    />
   );
 };
 
