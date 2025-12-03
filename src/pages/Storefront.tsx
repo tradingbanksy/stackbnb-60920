@@ -63,8 +63,8 @@ const Storefront = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
-              <img src={stackdLogo} alt="stackd logo" className="h-8 w-8" />
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <img src={stackdLogo} alt="stackd logo" className="h-8 w-8 drop-shadow-lg" />
+              <span className="text-xl font-bold font-display bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
                 stackd
               </span>
             </Link>

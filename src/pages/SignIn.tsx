@@ -107,8 +107,8 @@ const SignIn = () => {
         <Card className="w-full p-8 space-y-6">
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-3 mb-4">
-            <img src={stackdLogo} alt="stackd logo" className="h-10 w-10" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            <img src={stackdLogo} alt="stackd logo" className="h-10 w-10 drop-shadow-lg" />
+            <h1 className="text-3xl font-bold font-display bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
               stackd
             </h1>
           </Link>

@@ -215,10 +215,14 @@ const ForVendors = () => {
           gap: 8px;
           text-decoration: none;
         }
+        .brand-link img {
+          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        }
         .brand-text {
+          font-family: 'Orbitron', sans-serif;
           font-size: 20px;
-          font-weight: 600;
-          background: linear-gradient(135deg, #f97316, #ec4899);
+          font-weight: 700;
+          background: linear-gradient(135deg, #f97316, #ec4899, #a855f7);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
