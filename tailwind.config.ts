@@ -16,7 +16,7 @@ export default {
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         display: ['Orbitron', 'Roboto', 'sans-serif'],
-        headline: ['Syne', 'sans-serif'],
+        headline: ['Archivo Black', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
