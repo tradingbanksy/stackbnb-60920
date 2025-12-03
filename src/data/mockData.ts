@@ -1,3 +1,35 @@
+// Experience images
+import kayaking from '@/assets/experiences/kayaking.jpg';
+import kayaking2 from '@/assets/experiences/kayaking-2.jpg';
+import kayaking3 from '@/assets/experiences/kayaking-3.jpg';
+import bikes from '@/assets/experiences/bikes.jpg';
+import snorkeling from '@/assets/experiences/snorkeling.jpg';
+import snorkeling2 from '@/assets/experiences/snorkeling-2.jpg';
+import snorkeling3 from '@/assets/experiences/snorkeling-3.jpg';
+import photography from '@/assets/experiences/photography.jpg';
+import spa from '@/assets/experiences/spa.jpg';
+import wine from '@/assets/experiences/wine.jpg';
+import atv from '@/assets/experiences/atv.jpg';
+import boat from '@/assets/experiences/boat.jpg';
+import zipline from '@/assets/experiences/zipline.jpg';
+import horseback from '@/assets/experiences/horseback.jpg';
+import scuba from '@/assets/experiences/scuba.jpg';
+import scuba2 from '@/assets/experiences/scuba-2.jpg';
+import scuba3 from '@/assets/experiences/scuba-3.jpg';
+import hiking from '@/assets/experiences/hiking.jpg';
+import hiking2 from '@/assets/experiences/hiking-2.jpg';
+import hiking3 from '@/assets/experiences/hiking-3.jpg';
+import parasailing from '@/assets/experiences/parasailing.jpg';
+import parasailing2 from '@/assets/experiences/parasailing-2.jpg';
+import parasailing3 from '@/assets/experiences/parasailing-3.jpg';
+import yoga from '@/assets/experiences/yoga.jpg';
+import fishing from '@/assets/experiences/fishing.jpg';
+import cooking from '@/assets/experiences/cooking.jpg';
+import balloon from '@/assets/experiences/balloon.jpg';
+import balloon2 from '@/assets/experiences/balloon-2.jpg';
+import balloon3 from '@/assets/experiences/balloon-3.jpg';
+import dining from '@/assets/experiences/dining.jpg';
+
 export const dashboardStats = [
   { 
     label: "Total Earnings", 
@@ -215,7 +247,24 @@ export const categories = [
   "Tours & Activities"
 ];
 
-export const experiences = [
+export interface Experience {
+  id: number;
+  name: string;
+  vendor: string;
+  vendorId: number;
+  category: string;
+  categoryIcon: string;
+  price: number;
+  duration: string;
+  maxGuests: number;
+  rating: number;
+  reviewCount: number;
+  description: string;
+  included: string[];
+  images: string[];
+}
+
+export const experiences: Experience[] = [
   {
     id: 1,
     name: "Sunset Kayak Tour",
@@ -236,7 +285,7 @@ export const experiences = [
       "Professional photos",
       "Small group (max 6 people)"
     ],
-    image: "/placeholder.svg"
+    images: [kayaking, kayaking2, kayaking3]
   },
   {
     id: 2,
@@ -258,7 +307,7 @@ export const experiences = [
       "Local attractions map",
       "24-hour support"
     ],
-    image: "/placeholder.svg"
+    images: [bikes, hiking, hiking2]
   },
   {
     id: 3,
@@ -280,7 +329,7 @@ export const experiences = [
       "Light refreshments",
       "Marine life guide"
     ],
-    image: "/placeholder.svg"
+    images: [snorkeling, snorkeling2, snorkeling3]
   },
   {
     id: 4,
@@ -302,7 +351,7 @@ export const experiences = [
       "Print-ready files",
       "Location scouting"
     ],
-    image: "/placeholder.svg"
+    images: [photography, hiking3, balloon]
   },
   {
     id: 5,
@@ -324,7 +373,7 @@ export const experiences = [
       "Champagne and chocolates",
       "Private treatment room"
     ],
-    image: "/placeholder.svg"
+    images: [spa, yoga, dining]
   },
   {
     id: 6,
@@ -346,7 +395,7 @@ export const experiences = [
       "Historical walking tour",
       "Recipe cards"
     ],
-    image: "/placeholder.svg"
+    images: [wine, cooking, dining]
   },
   {
     id: 7,
@@ -368,7 +417,7 @@ export const experiences = [
       "Refreshments and snacks",
       "Action photos"
     ],
-    image: "/placeholder.svg"
+    images: [atv, hiking, hiking2]
   },
   {
     id: 8,
@@ -390,7 +439,7 @@ export const experiences = [
       "Cooler with ice",
       "Bluetooth sound system"
     ],
-    image: "/placeholder.svg"
+    images: [boat, kayaking, fishing]
   },
   {
     id: 9,
@@ -412,7 +461,7 @@ export const experiences = [
       "Jungle nature walk",
       "Photo opportunities"
     ],
-    image: "/placeholder.svg"
+    images: [zipline, hiking3, atv]
   },
   {
     id: 10,
@@ -434,7 +483,7 @@ export const experiences = [
       "Beach sunset views",
       "Photo session"
     ],
-    image: "/placeholder.svg"
+    images: [horseback, hiking, balloon2]
   },
   {
     id: 11,
@@ -456,7 +505,7 @@ export const experiences = [
       "4 open water dives",
       "Certification card"
     ],
-    image: "/placeholder.svg"
+    images: [scuba, scuba2, scuba3]
   },
   {
     id: 12,
@@ -478,7 +527,7 @@ export const experiences = [
       "Water and snacks",
       "First aid support"
     ],
-    image: "/placeholder.svg"
+    images: [hiking, hiking2, hiking3]
   },
   {
     id: 13,
@@ -500,7 +549,7 @@ export const experiences = [
       "GoPro footage available",
       "Experienced crew"
     ],
-    image: "/placeholder.svg"
+    images: [parasailing, parasailing2, parasailing3]
   },
   {
     id: 14,
@@ -522,7 +571,7 @@ export const experiences = [
       "Beachfront location",
       "Certified instructor"
     ],
-    image: "/placeholder.svg"
+    images: [yoga, spa, hiking]
   },
   {
     id: 15,
@@ -544,7 +593,7 @@ export const experiences = [
       "Cooler for your catch",
       "Fish cleaning service"
     ],
-    image: "/placeholder.svg"
+    images: [fishing, boat, kayaking2]
   },
   {
     id: 16,
@@ -566,7 +615,7 @@ export const experiences = [
       "Recipe booklet",
       "Eat what you cook"
     ],
-    image: "/placeholder.svg"
+    images: [cooking, wine, dining]
   },
   {
     id: 17,
@@ -588,7 +637,7 @@ export const experiences = [
       "Flight certificate",
       "Hotel pickup included"
     ],
-    image: "/placeholder.svg"
+    images: [balloon, balloon2, balloon3]
   },
   {
     id: 18,
@@ -610,7 +659,7 @@ export const experiences = [
       "Vineyard tours",
       "Round-trip transport"
     ],
-    image: "/placeholder.svg"
+    images: [wine, cooking, dining]
   }
 ];
 
