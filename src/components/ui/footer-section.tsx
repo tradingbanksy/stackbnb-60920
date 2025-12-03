@@ -26,20 +26,24 @@ function Footerdemo() {
             <p className="mb-6 text-muted-foreground">
               Join our newsletter for the latest updates on local experiences and exclusive partner offers.
             </p>
-            <form className="relative" onSubmit={(e) => e.preventDefault()}>
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="pr-12 backdrop-blur-sm"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white transition-transform hover:scale-105"
-              >
-                <Send className="h-4 w-4" />
-                <span className="sr-only">Subscribe</span>
-              </Button>
+            <form className="relative group" onSubmit={(e) => e.preventDefault()}>
+              <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition duration-300"></div>
+              <div className="relative">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="pr-12 backdrop-blur-sm bg-card/80"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="absolute right-1 top-1 h-8 w-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white transition-transform hover:scale-105"
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Subscribe</span>
+                </Button>
+              </div>
             </form>
             <div className="absolute -right-4 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
           </div>
