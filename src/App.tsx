@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider } from "./contexts/UserContext";
 import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
@@ -253,18 +254,25 @@ const AppRoutes = () => (
 );
 
 const App = () => (
-  <AuthProvider>
-    <UserProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </UserProvider>
-  </AuthProvider>
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="light"
+    enableSystem={false}
+    disableTransitionOnChange
+  >
+    <AuthProvider>
+      <UserProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </UserProvider>
+    </AuthProvider>
+  </ThemeProvider>
 );
 
 export default App;

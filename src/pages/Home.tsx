@@ -13,6 +13,7 @@ import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo.png";
 import MinimalDock from "@/components/ui/minimal-dock";
 import { Footerdemo } from "@/components/ui/footer-section";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -134,6 +135,11 @@ const Home = () => {
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background/50 to-background/70" />
+
+        {/* Theme Toggle - Top Left */}
+        <div className="absolute top-4 left-4 z-50">
+          <ThemeToggle />
+        </div>
 
         {/* Minimal Dock - Top Right */}
         <div className="absolute top-4 right-4 z-50">

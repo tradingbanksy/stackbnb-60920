@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,15 +15,8 @@ import { Facebook, Instagram, Linkedin, Moon, Send, Sun, Twitter } from "lucide-
 import stackdLogo from "@/assets/stackd-logo.png"
 
 function Footerdemo() {
-  const [isDarkMode, setIsDarkMode] = React.useState(false)
-
-  React.useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }, [isDarkMode])
+  const { theme, setTheme } = useTheme()
+  const isDarkMode = theme === "dark"
 
   return (
     <footer className="relative border-t bg-background text-foreground transition-colors duration-300">
@@ -152,7 +146,7 @@ function Footerdemo() {
               <Switch
                 id="dark-mode"
                 checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
+                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
               />
               <Moon className="h-4 w-4" />
               <Label htmlFor="dark-mode" className="sr-only">
