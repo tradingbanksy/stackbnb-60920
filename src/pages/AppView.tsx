@@ -660,7 +660,7 @@ const AppView = () => {
           </button>
 
           <Link 
-            to="/trip-planner-chat"
+            to="/trip-planner"
             className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Sparkles className="h-5 w-5" />
