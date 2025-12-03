@@ -164,17 +164,28 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-              <Button asChild variant="gradient" size="lg">
-                <Link to="/signup/host">Get Started as Host</Link>
-              </Button>
+              <Link 
+                to="/signup/host"
+                className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
+              >
+                <Briefcase className="h-4 w-4" />
+                Get Started as Host
+              </Link>
 
-              <Button asChild variant="gradient" size="lg">
-                <Link to="/signup/vendor">I'm a Vendor</Link>
-              </Button>
+              <Link 
+                to="/signup/vendor"
+                className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
+              >
+                <User className="h-4 w-4" />
+                I'm a Vendor
+              </Link>
               
-              <Button asChild variant="outline" size="lg">
-                <Link to="/appview">Preview App View</Link>
-              </Button>
+              <Link 
+                to="/appview"
+                className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-6 py-3 border border-border/50 shadow-md hover:bg-card hover:shadow-lg transition-all duration-300 text-foreground font-medium"
+              >
+                Preview App View
+              </Link>
             </div>
 
             <p className="text-sm text-muted-foreground pt-4">
