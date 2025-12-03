@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo.png";
 import MinimalDock from "@/components/ui/minimal-dock";
+import { Footerdemo } from "@/components/ui/footer-section";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -295,6 +296,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footerdemo />
     </div>
   );
 };
