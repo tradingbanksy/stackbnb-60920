@@ -141,7 +141,7 @@ export default function TripPlannerChatUI({
         <div className="flex-1 flex flex-col items-center justify-center px-4">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-semibold text-foreground">
-              🌴 JC Trip Planner
+              Hi, I'm JC..
             </h1>
             <p className="mt-2 text-muted-foreground">
               Discover amazing restaurants and excursions for your trip.
