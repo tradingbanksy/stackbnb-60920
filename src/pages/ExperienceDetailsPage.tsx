@@ -71,15 +71,17 @@ const ExperienceDetails = () => {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-4 py-4 border-b">
-          <button 
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </button>
-        </div>
+        <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+          <div className="px-4 py-3 flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <span className="font-semibold">Experience</span>
+          </div>
+        </header>
 
         {/* Interactive Photo Selector */}
         <div className="mb-4">

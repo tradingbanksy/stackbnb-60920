@@ -154,7 +154,7 @@ const RestaurantDetail = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <span className="font-semibold truncate">{restaurant.name}</span>
+          <span className="font-semibold">Restaurant</span>
         </div>
       </header>
 
