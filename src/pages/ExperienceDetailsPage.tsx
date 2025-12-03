@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Star, Clock, Users, CheckCircle } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
-import { ThreeDPhotoCarousel } from "@/components/ui/3d-carousel";
+import InteractiveSelector from "@/components/ui/interactive-selector";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -81,9 +81,12 @@ const ExperienceDetails = () => {
           </button>
         </div>
 
-        {/* 3D Photo Carousel */}
+        {/* Interactive Photo Selector */}
         <div className="mb-4">
-          <ThreeDPhotoCarousel images={getExperienceImages(experience.id)} />
+          <InteractiveSelector 
+            photos={getExperienceImages(experience.id)} 
+            titles={["Adventure View", "Action Shot", "Scenic Beauty"]}
+          />
         </div>
 
         <div className="px-4 py-6 space-y-6">

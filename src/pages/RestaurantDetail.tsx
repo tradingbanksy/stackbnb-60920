@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { mockRestaurants, isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { formatDistance } from "@/services/geoapifyService";
-import { ThreeDPhotoCarousel } from "@/components/ui/3d-carousel";
+import InteractiveSelector from "@/components/ui/interactive-selector";
 
 const RestaurantDetail = () => {
   const { id } = useParams();
@@ -158,7 +158,7 @@ const RestaurantDetail = () => {
         </div>
       </header>
 
-      {/* 3D Photo Carousel */}
+      {/* Interactive Photo Selector */}
       <div className="relative">
         {/* Action buttons */}
         <div className="absolute top-3 right-3 z-20 flex gap-2">
@@ -176,7 +176,10 @@ const RestaurantDetail = () => {
           </button>
         </div>
 
-        <ThreeDPhotoCarousel images={restaurant.photos} />
+        <InteractiveSelector 
+          photos={restaurant.photos} 
+          titles={restaurant.photos.map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
+        />
       </div>
 
       {/* Content */}

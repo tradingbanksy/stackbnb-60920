@@ -1,0 +1,141 @@
+import React, { useState, useEffect } from 'react';
+import { FaUtensils, FaStar, FaCamera, FaGlassCheers, FaLeaf } from 'react-icons/fa';
+
+interface PhotoOption {
+  title: string;
+  description?: string;
+  image: string;
+}
+
+interface InteractiveSelectorProps {
+  photos: string[];
+  titles?: string[];
+}
+
+const defaultIcons = [
+  <FaUtensils size={20} className="text-white" />,
+  <FaStar size={20} className="text-white" />,
+  <FaCamera size={20} className="text-white" />,
+  <FaGlassCheers size={20} className="text-white" />,
+  <FaLeaf size={20} className="text-white" />,
+];
+
+const InteractiveSelector = ({ photos, titles }: InteractiveSelectorProps) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [animatedOptions, setAnimatedOptions] = useState<number[]>([]);
+  
+  const options: PhotoOption[] = photos.map((photo, index) => ({
+    title: titles?.[index] || `Photo ${index + 1}`,
+    image: photo,
+  }));
+
+  const handleOptionClick = (index: number) => {
+    if (index !== activeIndex) {
+      setActiveIndex(index);
+    }
+  };
+
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+    
+    options.forEach((_, i) => {
+      const timer = setTimeout(() => {
+        setAnimatedOptions(prev => [...prev, i]);
+      }, 180 * i);
+      timers.push(timer);
+    });
+    
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, [options.length]);
+
+  if (photos.length === 0) return null;
+
+  return (
+    <div className="relative flex flex-col items-center justify-center py-4 bg-background">
+      {/* Options Container */}
+      <div 
+        className="flex w-full max-w-[450px] h-[280px] mx-auto items-stretch overflow-hidden relative rounded-xl"
+        style={{ minWidth: '300px' }}
+      >
+        {options.map((option, index) => (
+          <div
+            key={index}
+            className="relative flex flex-col justify-end overflow-hidden transition-all duration-700 ease-in-out cursor-pointer"
+            style={{
+              backgroundImage: `url('${option.image}')`,
+              backgroundSize: activeIndex === index ? 'cover' : 'cover',
+              backgroundPosition: 'center',
+              backfaceVisibility: 'hidden',
+              opacity: animatedOptions.includes(index) ? 1 : 0,
+              transform: animatedOptions.includes(index) ? 'translateX(0)' : 'translateX(-60px)',
+              minWidth: '40px',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: activeIndex === index ? 'hsl(var(--primary))' : 'hsl(var(--border))',
+              backgroundColor: 'hsl(var(--muted))',
+              boxShadow: activeIndex === index 
+                ? '0 20px 60px rgba(0,0,0,0.50)' 
+                : '0 10px 30px rgba(0,0,0,0.30)',
+              flex: activeIndex === index ? '7 1 0%' : '1 1 0%',
+              zIndex: activeIndex === index ? 10 : 1,
+              willChange: 'flex-grow, box-shadow, background-size'
+            }}
+            onClick={() => handleOptionClick(index)}
+          >
+            {/* Shadow overlay */}
+            <div 
+              className="absolute left-0 right-0 pointer-events-none transition-all duration-700 ease-in-out"
+              style={{
+                bottom: activeIndex === index ? '0' : '-40px',
+                height: '120px',
+                background: activeIndex === index 
+                  ? 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' 
+                  : 'transparent'
+              }}
+            />
+            
+            {/* Label with icon and info */}
+            <div className="absolute left-0 right-0 bottom-3 flex items-center justify-start h-10 z-10 pointer-events-none px-3 gap-2 w-full">
+              <div 
+                className="min-w-[36px] max-w-[36px] h-[36px] flex items-center justify-center rounded-full backdrop-blur-sm shadow-md border border-white/20 flex-shrink-0 transition-all duration-200"
+                style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+              >
+                {defaultIcons[index % defaultIcons.length]}
+              </div>
+              <div className="text-white whitespace-pre relative overflow-hidden">
+                <div 
+                  className="font-semibold text-sm transition-all duration-700 ease-in-out drop-shadow-lg"
+                  style={{
+                    opacity: activeIndex === index ? 1 : 0,
+                    transform: activeIndex === index ? 'translateX(0)' : 'translateX(25px)'
+                  }}
+                >
+                  {option.title}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Photo indicator */}
+      <div className="flex gap-1.5 mt-3">
+        {options.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => handleOptionClick(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              activeIndex === index 
+                ? 'bg-primary w-6' 
+                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default InteractiveSelector;
