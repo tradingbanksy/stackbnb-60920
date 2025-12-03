@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, User, MessageCircle, Store, Sparkles } from "lucide-react";
+import { Heart, User, MessageCircle, Store, Sparkles, Monitor } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -673,6 +673,14 @@ const AppView = () => {
           >
             <User className="h-5 w-5" />
             <span className="text-[10px]">Profile</span>
+          </Link>
+
+          <Link 
+            to="/"
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Monitor className="h-5 w-5" />
+            <span className="text-[10px]">Browser</span>
           </Link>
         </div>
       </nav>

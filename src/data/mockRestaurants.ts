@@ -79,24 +79,24 @@ export interface Restaurant {
   isFromApi?: boolean; // Flag to identify API-fetched restaurants
 }
 
-// Unique high-quality food images - each restaurant gets unique local images
+// Unique high-quality food images - each restaurant gets unique local images (NO DUPLICATES)
 const uniqueRestaurantPhotos: Record<string, string[]> = {
-  r1: [seafood1, seafood2, seafood3, interior1], // Ocean View Grill - Seafood
-  r2: [american1, american2, american3, interior2], // Sunset Grill & Bar - American
-  r3: [italian1, italian2, italian3, interior1], // La Bella Italia - Italian
-  r4: [japanese1, japanese2, japanese3, sushi1], // Sakura Garden - Japanese
-  r5: [mexican1, mexican2, mexican4, mexican5], // Casa del Sol - Mexican
-  r6: [steakhouse1, steakhouse2, steakhouse3, interior2], // Prime 112 - Steakhouse
-  r7: [seafood4, seafood5, seafood6, interior1], // Blue Marlin Fish House - Seafood
-  r8: [mediterranean1, mediterranean2, mediterranean3, vegan2], // Café Méditerranée - Mediterranean
-  r9: [japanese4, japanese5, japanese6, sushi2], // Nobu Malibu - Japanese
-  r10: [seafood7, seafood8, seafood4, interior2], // Neptune's Net - Seafood
-  r11: [french1, french2, french3, interior1], // Le Bernardin - French Seafood
-  r12: [pizza1, pizza2, pizza3, italian2], // Joe's Pizza - Italian
-  r13: [california1, california2, california3, interior2], // George's at the Cove - California
-  r14: [bbq1, bbq3, mediterranean1, interior1], // Tacos El Gordo - Mexican (was Phil's BBQ)
-  r15: [bbq1, bbq3, steakhouse1, interior2], // Franklin Barbecue - BBQ
-  r16: [japanese4, sushi1, sushi2, japanese5], // Uchi - Japanese
+  r1: [seafood1, seafood2, seafood3], // Ocean View Grill - Seafood
+  r2: [american1, american2, american3], // Sunset Grill & Bar - American
+  r3: [italian1, italian2, italian3], // La Bella Italia - Italian
+  r4: [japanese1, japanese2, japanese3], // Sakura Garden - Japanese
+  r5: [mexican1, mexican2, mexican4], // Casa del Sol - Mexican
+  r6: [steakhouse1, steakhouse2, steakhouse3], // Prime 112 - Steakhouse
+  r7: [seafood4, seafood5, seafood6], // Blue Marlin Fish House - Seafood
+  r8: [mediterranean1, mediterranean2, mediterranean3], // Café Méditerranée - Mediterranean
+  r9: [japanese4, japanese5, japanese6], // Nobu Malibu - Japanese
+  r10: [seafood7, seafood8, interior1], // Neptune's Net - Seafood
+  r11: [french1, french2, french3], // Le Bernardin - French Seafood
+  r12: [pizza1, pizza2, pizza3], // Joe's Pizza - Italian
+  r13: [california1, california2, california3], // George's at the Cove - California
+  r14: [mexican5, vegan1, interior2], // Tacos El Gordo - Mexican
+  r15: [bbq1, bbq3, sushi1], // Franklin Barbecue - BBQ
+  r16: [sushi2, vegan2, vegan3], // Uchi - Japanese
 };
 
 export const mockRestaurants: Restaurant[] = [
