@@ -153,20 +153,20 @@ const Home = () => {
           <MinimalDock />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 font-hubot">
           <div className="text-center space-y-8">
             <div className="inline-flex items-center gap-3 mb-4">
               <img src={stackdLogo} alt="stackd logo" className="h-14 w-14 sm:h-16 sm:w-16" />
-              <h1 className="text-5xl sm:text-6xl font-bold font-display bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+              <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
                 stackd
               </h1>
             </div>
 
-            <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground max-w-4xl mx-auto leading-tight">
+            <h2 className="text-4xl sm:text-6xl font-semibold tracking-tight text-foreground max-w-4xl mx-auto leading-tight">
               Grow your affiliate income
             </h2>
 
-            <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
               A smarter way for hosts to partner locally, grow revenue, and streamline guest bookings.
             </p>
 
