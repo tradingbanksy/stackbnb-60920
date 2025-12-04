@@ -33,6 +33,10 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default' }
       toast({ title: "Removed from favorites", duration: 2000 });
     } else {
       newFavorites = [...favorites, restaurant.id];
+      // Cache the restaurant data so it can be retrieved in wishlists
+      if (restaurant.isFromApi) {
+        localStorage.setItem(`restaurant_${restaurant.id}`, JSON.stringify(restaurant));
+      }
       toast({ title: "Added to favorites", duration: 2000 });
     }
     localStorage.setItem("restaurantFavorites", JSON.stringify(newFavorites));
