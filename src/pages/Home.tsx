@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Briefcase, User, Search, Star, Heart, Sparkles } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { experiences } from "@/data/mockData";
@@ -70,8 +70,10 @@ const getExperienceImage = (experience) => {
 
 const Home = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, role } = useAuthContext();
   const isMobile = useIsMobile();
+  const forceBrowserView = searchParams.get('view') === 'browser';
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<number[]>(() => {
@@ -98,12 +100,12 @@ const Home = () => {
     });
   };
 
-  // Redirect mobile users to app view
+  // Redirect mobile users to app view (unless they explicitly want browser view)
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && !forceBrowserView) {
       navigate("/appview", { replace: true });
     }
-  }, [isMobile, navigate]);
+  }, [isMobile, navigate, forceBrowserView]);
 
   // Redirect authenticated users to their dashboard
   useEffect(() => {

@@ -723,7 +723,7 @@ const AppView = () => {
           </Link>
 
           <Link 
-            to="/"
+            to="/?view=browser"
             className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Monitor className="h-5 w-5" />
