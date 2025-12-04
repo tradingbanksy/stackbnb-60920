@@ -13,6 +13,7 @@ interface LocationSearchProps {
   onLocationSelect?: (lat: number, lng: number, city: string, zipCode: string) => void;
   isLoadingLocation?: boolean;
   userLocation?: { lat: number; lng: number } | null;
+  placeholder?: string;
 }
 
 const LocationSearch = ({
@@ -25,7 +26,8 @@ const LocationSearch = ({
   onRestaurantSelect,
   onLocationSelect,
   isLoadingLocation,
-  userLocation
+  userLocation,
+  placeholder = "Search restaurants, cuisines, or cities..."
 }: LocationSearchProps) => {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -146,7 +148,7 @@ const LocationSearch = ({
           <div className="flex-1 flex items-center gap-2">
             <input
               type="text"
-              placeholder="Search restaurants, cuisines, or cities..."
+              placeholder={placeholder}
               value={query}
               onChange={(e) => handleInputChange(e.target.value)}
               onFocus={() => query.length >= 2 && fetchSuggestions(query)}

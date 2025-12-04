@@ -317,6 +317,7 @@ const AppView = () => {
             onLocationSelect={handleLocationSelect}
             isLoadingLocation={isLocationLoading}
             userLocation={apiUserLocation ? { lat: apiUserLocation.lat, lng: apiUserLocation.lng } : null}
+            placeholder="Where to?"
           />
         </div>
       </header>
