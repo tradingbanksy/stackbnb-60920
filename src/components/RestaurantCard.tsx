@@ -9,11 +9,13 @@ import { formatDistance } from "@/services/geoapifyService";
 interface RestaurantCardProps {
   restaurant: Restaurant;
   variant?: 'horizontal' | 'vertical' | 'grid';
+  size?: 'default' | 'small';
 }
 
-const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardProps) => {
+const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default' }: RestaurantCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const isOpen = isRestaurantOpen(restaurant);
+  const isSmall = size === 'small';
 
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
@@ -136,8 +138,8 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
       className={`${cardWidth} group`}
       onClick={handleClick}
     >
-      <div className="space-y-2">
-        {/* Image - Airbnb style square */}
+      <div className={isSmall ? "space-y-1" : "space-y-2"}>
+        {/* Image */}
         <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
           <img
             src={restaurant.photos[0]}
@@ -156,10 +158,10 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
           {/* Favorite button */}
           <button
             onClick={toggleFavorite}
-            className="absolute top-2 right-2 z-10 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+            className={`absolute top-1 right-1 z-10 ${isSmall ? 'p-0.5' : 'p-1.5'} rounded-full hover:scale-110 active:scale-95 transition-transform`}
           >
             <Heart
-              className={`h-5 w-5 drop-shadow-md ${
+              className={`${isSmall ? 'h-3.5 w-3.5' : 'h-5 w-5'} drop-shadow-md ${
                 isFavorite
                   ? "fill-red-500 text-red-500"
                   : "fill-black/50 text-white stroke-white stroke-2"
@@ -167,8 +169,8 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
             />
           </button>
 
-          {/* Open/Closed badge - only show if we have hours data */}
-          {Object.keys(restaurant.hours || {}).length > 0 && (
+          {/* Open/Closed badge - only show if we have hours data and not small */}
+          {!isSmall && Object.keys(restaurant.hours || {}).length > 0 && (
             <Badge 
               className={`absolute top-2 left-2 text-[10px] px-2 py-0.5 ${
                 isOpen 
@@ -183,37 +185,38 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
 
         {/* Content */}
         <div className="space-y-0.5">
-          <h3 className="font-semibold text-sm leading-tight line-clamp-1">
+          <h3 className={`font-semibold leading-tight line-clamp-1 ${isSmall ? 'text-xs' : 'text-sm'}`}>
             {restaurant.name}
           </h3>
-          <p className="text-xs text-muted-foreground line-clamp-1">
-            {restaurant.cuisine} • {restaurant.neighborhood || restaurant.city}
-          </p>
-          <div className="flex items-center justify-between pt-0.5">
-            <div className="flex items-center gap-1">
+          {!isSmall && (
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {restaurant.cuisine} • {restaurant.neighborhood || restaurant.city}
+            </p>
+          )}
+          <div className={`flex items-center ${isSmall ? 'gap-0.5' : 'justify-between pt-0.5'}`}>
+            <div className="flex items-center gap-0.5">
               {restaurant.rating !== undefined ? (
                 <>
-                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-medium">{restaurant.rating.toFixed(1)}</span>
-                  {restaurant.reviewCount !== undefined && (
-                    <span className="text-xs text-muted-foreground">({restaurant.reviewCount})</span>
-                  )}
+                  <Star className={`${isSmall ? 'h-2.5 w-2.5' : 'h-3.5 w-3.5'} fill-yellow-400 text-yellow-400`} />
+                  <span className={`${isSmall ? 'text-[10px]' : 'text-xs'} font-medium`}>{restaurant.rating.toFixed(1)}</span>
                 </>
               ) : (
-                <span className="text-xs text-muted-foreground">No ratings</span>
+                <span className={`${isSmall ? 'text-[10px]' : 'text-xs'} text-muted-foreground`}>No ratings</span>
               )}
             </div>
-            <div className="flex items-center gap-1">
-              {restaurant.distance && (
-                <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                  <Navigation className="h-3 w-3" />
-                  {formatDistance(restaurant.distance)}
-                </span>
-              )}
-              {restaurant.priceRange && (
-                <span className="text-xs font-medium">{restaurant.priceRange}</span>
-              )}
-            </div>
+            {!isSmall && (
+              <div className="flex items-center gap-1">
+                {restaurant.distance && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                    <Navigation className="h-3 w-3" />
+                    {formatDistance(restaurant.distance)}
+                  </span>
+                )}
+                {restaurant.priceRange && (
+                  <span className="text-xs font-medium">{restaurant.priceRange}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
