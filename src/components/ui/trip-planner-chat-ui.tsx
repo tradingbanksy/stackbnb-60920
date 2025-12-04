@@ -16,11 +16,30 @@ import {
   Sparkles,
   ArrowLeft,
   Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// Bionic reading: bold first part of each word
+function applyBionicReading(text: string): string {
+  return text.replace(/\b(\w+)\b/g, (word) => {
+    if (word.length <= 1) return word;
+    const boldLength = Math.ceil(word.length * 0.4);
+    const boldPart = word.slice(0, boldLength);
+    const rest = word.slice(boldLength);
+    return `**${boldPart}**${rest}`;
+  });
+}
 
 interface AutoResizeProps {
   minHeight: number;
@@ -75,6 +94,7 @@ export default function TripPlannerChatUI({
 }: TripPlannerChatUIProps) {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
+  const [bionicEnabled, setBionicEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 48,
@@ -133,7 +153,26 @@ export default function TripPlannerChatUI({
           <Sparkles className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Trip Planner</h1>
         </div>
-        <div className="w-10" />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setBionicEnabled(!bionicEnabled)}
+                className={cn(
+                  "transition-colors",
+                  bionicEnabled && "text-primary"
+                )}
+              >
+                {bionicEnabled ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{bionicEnabled ? "Disable" : "Enable"} Bionic Reading</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {!hasMessages ? (
@@ -259,7 +298,11 @@ export default function TripPlannerChatUI({
                           : ""
                       }
                     >
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                      <ReactMarkdown>
+                        {m.role === "assistant" && bionicEnabled 
+                          ? applyBionicReading(m.content) 
+                          : m.content}
+                      </ReactMarkdown>
                     </div>
                   </Card>
                 </div>
