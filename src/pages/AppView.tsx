@@ -551,13 +551,6 @@ const AppView = () => {
                                 />
                               </button>
 
-                              {experience.rating >= 4.8 && (
-                                <div className="absolute top-2 left-2 z-10">
-                                  <Badge className="bg-white/95 text-foreground backdrop-blur-sm shadow-sm text-[10px] px-2 py-0.5 border-0">
-                                    Guest favorite
-                                  </Badge>
-                                </div>
-                              )}
                             </div>
 
                             <div className="space-y-0.5">
