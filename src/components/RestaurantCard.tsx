@@ -127,16 +127,16 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
     );
   }
 
-  // Horizontal scroll card (default)
+  // Horizontal scroll card (default) - matches Popular Experiences size
   return (
     <Link
       to={`/restaurant/${restaurant.id}`}
-      className="flex-shrink-0 w-[140px] sm:w-[180px] md:w-[220px] lg:w-[260px] group"
+      className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] group"
       onClick={handleClick}
     >
       <div className="space-y-2">
-        {/* Image */}
-        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+        {/* Image - taller aspect ratio to match experiences */}
+        <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
           <img
             src={restaurant.photos[0]}
             alt={restaurant.name}
@@ -176,15 +176,6 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
             >
               {isOpen ? "Open Now" : "Closed"}
             </Badge>
-          )}
-
-          {/* Rating overlay - only show for high ratings */}
-          {restaurant.rating !== undefined && restaurant.rating >= 4.8 && (
-            <div className="absolute bottom-2 left-2">
-              <Badge className="bg-white/95 text-foreground backdrop-blur-sm shadow-sm text-[10px] px-2 py-0.5 border-0">
-                Top Rated
-              </Badge>
-            </div>
           )}
         </div>
 
