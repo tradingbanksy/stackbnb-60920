@@ -642,8 +642,60 @@ const AppView = () => {
         </TabsContent>
 
         <TabsContent value="about" className="mt-0">
-          <div className="px-4 py-8">
-            <p className="text-center text-muted-foreground">About content coming soon...</p>
+          <div className="px-4 py-8 space-y-8">
+            {/* Logo and Tagline */}
+            <div className="text-center space-y-3">
+              <img src={stackdLogo} alt="stackd" className="h-16 w-16 mx-auto" />
+              <h2 className="text-2xl font-bold">stackd</h2>
+              <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                Your one-stop platform for discovering local experiences, dining, and adventures.
+              </p>
+            </div>
+
+            {/* Mission */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Our Mission</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We connect travelers with unforgettable local experiences while empowering hosts and vendors to grow their businesses through meaningful partnerships.
+              </p>
+            </div>
+
+            {/* What We Offer */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">What We Offer</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Curated local restaurants and dining experiences</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Adventure activities and tours from trusted vendors</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>AI-powered trip planning assistance</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Seamless booking and reservation management</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-2 pt-4 border-t border-border">
+              <h3 className="font-semibold text-lg">Get in Touch</h3>
+              <p className="text-sm text-muted-foreground">
+                Have questions or feedback? We'd love to hear from you.
+              </p>
+              <p className="text-sm text-primary">support@stackd.com</p>
+            </div>
+
+            {/* Version */}
+            <div className="text-center pt-4">
+              <p className="text-xs text-muted-foreground">Version 1.0.0</p>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

@@ -8,7 +8,7 @@ import { formatDistance } from "@/services/geoapifyService";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
-  variant?: 'horizontal' | 'vertical';
+  variant?: 'horizontal' | 'vertical' | 'grid';
 }
 
 const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardProps) => {
@@ -127,11 +127,13 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
     );
   }
 
-  // Horizontal scroll card (default) - matches Experience cards sizing
+  // Card for horizontal scroll or grid
+  const cardWidth = variant === 'grid' ? 'w-full' : 'flex-shrink-0 w-[200px]';
+  
   return (
     <Link
       to={`/restaurant/${restaurant.id}`}
-      className="flex-shrink-0 w-[200px] group"
+      className={`${cardWidth} group`}
       onClick={handleClick}
     >
       <div className="space-y-2">
