@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, User, MessageCircle, Store, Sparkles, Monitor } from "lucide-react";
+import { Heart, User, MessageCircle, Store, Sparkles, Monitor, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -465,11 +465,14 @@ const AppView = () => {
                         </p>
                       )}
                     </div>
-                    {activeFiltersCount > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''}
-                      </Badge>
-                    )}
+                    <Link to="/restaurants" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+                      {activeFiltersCount > 0 && (
+                        <Badge variant="secondary" className="text-xs mr-1">
+                          {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                      <ChevronRight className="h-5 w-5" />
+                    </Link>
                   </div>
                   
                   {filteredRestaurants.length === 0 ? (
@@ -511,8 +514,11 @@ const AppView = () => {
 
                 {/* Popular Experiences Row */}
                 <section className="space-y-3">
-                  <div className="px-4">
+                  <div className="px-4 flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Popular Experiences</h2>
+                    <Link to="/experiences" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                      <ChevronRight className="h-5 w-5" />
+                    </Link>
                   </div>
                   <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex gap-4 px-4 pb-4">
