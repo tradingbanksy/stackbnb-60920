@@ -127,16 +127,16 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
     );
   }
 
-  // Horizontal scroll card (default) - matches Popular Experiences size
+  // Horizontal scroll card (default) - Airbnb style square cards
   return (
     <Link
       to={`/restaurant/${restaurant.id}`}
-      className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] group"
+      className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px] group"
       onClick={handleClick}
     >
       <div className="space-y-2">
-        {/* Image - taller aspect ratio to match experiences */}
-        <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
+        {/* Image - Airbnb style square */}
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
           <img
             src={restaurant.photos[0]}
             alt={restaurant.name}
