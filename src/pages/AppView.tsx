@@ -703,20 +703,18 @@ const AppView = () => {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50 shadow-lg">
         <div className="max-w-[450px] mx-auto flex justify-around items-center h-16">
-          <button
-            onClick={() => setViewMode('wishlists')}
-            className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 ${
-              viewMode === 'wishlists' ? 'text-foreground' : 'text-muted-foreground'
-            }`}
+          <Link
+            to="/wishlists"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Heart className={`h-5 w-5 ${viewMode === 'wishlists' ? 'fill-current' : ''}`} />
-            <span className={`text-[10px] ${viewMode === 'wishlists' ? 'font-medium' : ''}`}>Wishlists</span>
-            {favorites.length > 0 && (
+            <Heart className="h-5 w-5" />
+            <span className="text-[10px]">Wishlists</span>
+            {(favorites.length > 0 || JSON.parse(localStorage.getItem("restaurantFavorites") || "[]").length > 0) && (
               <div className="absolute top-1.5 right-1/4 h-4 w-4 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center">
-                {favorites.length}
+                {favorites.length + JSON.parse(localStorage.getItem("restaurantFavorites") || "[]").length}
               </div>
             )}
-          </button>
+          </Link>
 
           <Link 
             to="/trip-planner"
