@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, User, MessageCircle, Store, Sparkles, Monitor, ChevronRight } from "lucide-react";
+import { Heart, User, MessageCircle, Store, Sparkles, Monitor, ChevronRight, Megaphone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -582,9 +582,8 @@ const AppView = () => {
 
         <TabsContent value="services" className="mt-0">
           <div className="px-4 py-8 space-y-6">
-            <div className="text-center space-y-3">
+            <div className="text-center">
               <img src={stackdLogo} alt="stackd" className="h-48 w-48 mx-auto" />
-              <p className="text-muted-foreground">The seamless experience booking platform</p>
             </div>
 
             <div className="space-y-6">
@@ -619,7 +618,7 @@ const AppView = () => {
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="h-4 w-4 text-white" />
+                    <Megaphone className="h-4 w-4 text-white" />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">For Vendors</h3>
