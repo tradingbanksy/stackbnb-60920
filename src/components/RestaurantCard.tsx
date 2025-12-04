@@ -53,11 +53,19 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
       >
         <div className="flex gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
           {/* Image */}
-          <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+          <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
             <img
               src={restaurant.photos[0]}
               alt={restaurant.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              decoding="async"
+              style={{ 
+                imageRendering: 'crisp-edges',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+                transform: 'translateZ(0)'
+              }}
             />
             <button
               onClick={toggleFavorite}
@@ -134,7 +142,13 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
             alt={restaurant.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
-            style={{ imageRendering: 'auto' }}
+            decoding="async"
+            style={{ 
+              imageRendering: 'crisp-edges',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)'
+            }}
           />
           
           {/* Favorite button */}
