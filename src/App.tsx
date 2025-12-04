@@ -131,7 +131,7 @@ const AppRoutes = () => (
     <Route path="/restaurant/:id" element={<RestaurantDetail />} />
     <Route path="/restaurants" element={<AllRestaurants />} />
     <Route path="/experiences" element={<AllExperiences />} />
-    <Route path="/wishlists" element={<ProtectedRoute><Wishlists /></ProtectedRoute>} />
+    <Route path="/wishlists" element={<Wishlists />} />
     
     {/* Legacy routes */}
     <Route path="/storefront/:id" element={<Storefront />} />
