@@ -10,7 +10,7 @@ import { experiences } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-beach.jpg";
-import stackdLogo from "@/assets/stackd-logo.png";
+import stackdLogo from "@/assets/stackd-logo-new.png";
 import MinimalDock from "@/components/ui/minimal-dock";
 import { Footerdemo } from "@/components/ui/footer-section";
 import { ThemeToggle } from "@/components/ThemeToggle";
