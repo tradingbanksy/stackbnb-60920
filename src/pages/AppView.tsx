@@ -638,7 +638,7 @@ const AppView = () => {
           <div className="px-4 py-8 space-y-8">
             {/* Logo and Tagline */}
             <div className="text-center space-y-3">
-              <img src={stackdLogo} alt="stackd" className="h-16 w-16 mx-auto" />
+              <img src={stackdLogo} alt="stackd" className="h-48 w-48 mx-auto" />
               <p className="text-muted-foreground text-sm max-w-xs mx-auto">
                 Your one-stop platform for discovering local experiences, dining, and adventures.
               </p>
