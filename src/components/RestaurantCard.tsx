@@ -128,11 +128,13 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
     >
       <div className="space-y-2">
         {/* Image */}
-        <div className="relative aspect-square overflow-hidden rounded-xl">
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
           <img
             src={restaurant.photos[0]}
             alt={restaurant.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            style={{ imageRendering: 'auto' }}
           />
           
           {/* Favorite button */}
@@ -159,15 +161,6 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal' }: RestaurantCardPr
               }`}
             >
               {isOpen ? "Open Now" : "Closed"}
-            </Badge>
-          )}
-
-          {/* From API badge */}
-          {restaurant.isFromApi && (
-            <Badge 
-              className="absolute top-2 left-2 text-[10px] px-2 py-0.5 bg-blue-500/90 text-white border-0"
-            >
-              Live Data
             </Badge>
           )}
 
