@@ -68,7 +68,7 @@ const Wishlists = () => {
   const [newWishlistName, setNewWishlistName] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("experiences");
+  const [activeTab, setActiveTab] = useState("restaurants");
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -79,13 +79,16 @@ const Wishlists = () => {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/signin");
-      return;
-    }
-    fetchWishlists();
+    // Always load restaurant favorites (stored in localStorage)
     loadFavoriteRestaurants();
-  }, [isAuthenticated, navigate]);
+    
+    // Only fetch wishlists from Supabase if authenticated
+    if (isAuthenticated) {
+      fetchWishlists();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const loadFavoriteRestaurants = () => {
     const favoriteIds = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
