@@ -138,9 +138,9 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default' }
       className={`${cardWidth} group`}
       onClick={handleClick}
     >
-      <div className={isSmall ? "space-y-0.5" : "space-y-2"}>
+      <div className={isSmall ? "space-y-1" : "space-y-2"}>
         {/* Image */}
-        <div className={`relative overflow-hidden rounded-lg bg-muted ${isSmall ? 'aspect-[4/3] h-14' : 'aspect-square rounded-xl'}`}>
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
           <img
             src={restaurant.photos[0]}
             alt={restaurant.name}
