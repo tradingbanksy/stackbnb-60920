@@ -3,15 +3,13 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone } from "lucide-react";
+import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone, Monitor } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import heroImage from "@/assets/hero-beach.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import MinimalDock from "@/components/ui/minimal-dock";
-import { Footerdemo } from "@/components/ui/footer-section";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -33,20 +31,16 @@ import wineImg from "@/assets/experiences/wine.jpg";
 
 // Restaurant components
 import RestaurantCard from "@/components/RestaurantCard";
-import { 
-  mockRestaurants, 
-  filterRestaurantsByLocation,
-  type Restaurant 
-} from "@/data/mockRestaurants";
+import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
 
 const categories = [
-  { id: "all", name: "All Experiences", icon: "✨" },
-  { id: "Water Sports", name: "Water Sports", icon: "🌊" },
-  { id: "Tours & Activities", name: "Tours & Activities", icon: "🗺️" },
-  { id: "Transportation", name: "Transportation", icon: "🚴" },
-  { id: "Food & Dining", name: "Food & Dining", icon: "🍷" },
+  { id: "all", name: "All", icon: "✨" },
+  { id: "Water Sports", name: "Water", icon: "🌊" },
+  { id: "Tours & Activities", name: "Tours", icon: "🗺️" },
+  { id: "Transportation", name: "Transport", icon: "🚴" },
+  { id: "Food & Dining", name: "Food", icon: "🍷" },
   { id: "Wellness", name: "Wellness", icon: "💆" },
-  { id: "Photography", name: "Photography", icon: "📸" },
+  { id: "Photography", name: "Photo", icon: "📸" },
 ];
 
 const getExperienceImage = (experience: any) => {
@@ -143,333 +137,356 @@ const AppView2 = () => {
   ).slice(0, 10);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section - Landing Page Style */}
-      <section className="relative overflow-hidden">
-        {/* Background image with blur and overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center scale-105"
-          style={{ 
-            backgroundImage: `url(${heroImage})`,
-            filter: 'blur(2px)',
-          }}
-        />
-        <div className="absolute inset-0 bg-background/60 dark:bg-background/70" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
+    <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
+      {/* Phone Container - Centered & Constrained */}
+      <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative">
+        
+        {/* Hero Section - Compact Mobile */}
+        <div className="relative flex-shrink-0">
+          {/* Background image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ 
+              backgroundImage: `url(${heroImage})`,
+              filter: 'blur(1px)',
+            }}
+          />
+          <div className="absolute inset-0 bg-background/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
 
-        {/* Theme Toggle - Top Left */}
-        <div className="absolute top-6 left-6 z-50">
-          <ThemeToggle />
-        </div>
-
-        {/* AI Chat & Minimal Dock - Top Right */}
-        <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
-          <Link
-            to="/trip-planner"
-            className="p-2.5 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            title="AI Trip Planner"
-          >
-            <Sparkles className="h-5 w-5" />
-          </Link>
-          <MinimalDock />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
-          <div className="text-center space-y-8">
-            {/* Logo */}
-            <div className="mb-4">
-              <img src={stackdLogo} alt="stackd logo" className="h-48 w-48 sm:h-64 sm:w-64 lg:h-80 lg:w-80 drop-shadow-2xl mx-auto" />
+          {/* Header */}
+          <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
+            <ThemeToggle />
+            <div className="flex items-center gap-1.5">
+              <img src={stackdLogo} alt="stackd" className="h-8 w-8" />
+              <span className="text-lg font-bold bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent">
+                stackd
+              </span>
             </div>
+            <Link
+              to="/trip-planner"
+              className="p-2 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Link>
+          </div>
 
-            {/* Headline */}
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1]">
-              Discover Local Experiences
-            </h2>
-
-            {/* Subheadline */}
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Find amazing restaurants, adventures, and experiences near you.
+          {/* Hero Content */}
+          <div className="relative z-10 px-4 pb-4 pt-2 text-center">
+            <h1 className="text-xl font-bold text-foreground mb-1">
+              Discover Experiences
+            </h1>
+            <p className="text-xs text-muted-foreground mb-3">
+              Find amazing restaurants & adventures nearby
             </p>
 
-            {/* Search Box */}
-            <div className="max-w-2xl mx-auto pt-4">
-              <div className="relative group">
-                {/* Soft glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/30 to-purple-600/30 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition duration-300"></div>
-
-                {/* Main search container */}
-                <div className="relative bg-card rounded-full shadow-xl border border-border/30 backdrop-blur-md overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:border-purple-500/20">
-                  <div className="flex items-center px-6 py-4 gap-3">
-                    <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      placeholder="Search experiences, restaurants..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
-                    />
-                    <button className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white rounded-full p-3 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg">
-                      <Search className="h-4 w-4" />
-                    </button>
-                  </div>
+            {/* Search Bar */}
+            <div className="relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
+              <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm overflow-hidden">
+                <div className="flex items-center px-3 py-2 gap-2">
+                  <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <Input
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-0 bg-transparent text-sm h-7 shadow-none focus-visible:ring-0 px-0"
+                  />
+                  <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
+                    <Search className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Content Section */}
-      <section className="relative bg-background py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          
-          {/* Category Filters */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center flex-wrap">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`
-                  flex items-center gap-1.5 px-4 py-2 rounded-full border whitespace-nowrap text-sm
-                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
-                  ${
-                    selectedCategory === category.id
-                      ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white border-transparent shadow-lg"
-                      : "bg-card border-border/50 hover:border-purple-500/30 hover:shadow-md"
-                  }
-                `}
-              >
-                <span className="text-base">{category.icon}</span>
-                <span className="font-medium">{category.name}</span>
-              </button>
-            ))}
-          </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
+          <div className="px-3 py-3 space-y-5">
+            
+            {/* Category Filters - Horizontal Scroll */}
+            <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+              <div className="flex gap-2 w-max">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`
+                      flex items-center gap-1 px-3 py-1.5 rounded-full text-xs whitespace-nowrap
+                      transition-all duration-200 active:scale-95
+                      ${
+                        selectedCategory === category.id
+                          ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-md"
+                          : "bg-card border border-border/50"
+                      }
+                    `}
+                  >
+                    <span>{category.icon}</span>
+                    <span className="font-medium">{category.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          {/* My Businesses Section */}
-          {myBusinesses.length > 0 && (
-            <section className="space-y-4">
+            {/* My Businesses */}
+            {myBusinesses.length > 0 && (
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">My Businesses</h2>
+                  <Link to="/host/vendors" className="text-xs text-primary">
+                    View all
+                  </Link>
+                </div>
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                  <div className="flex gap-3 w-max">
+                    {myBusinesses.map((business) => (
+                      <Link
+                        key={business.id}
+                        to="/host/vendors"
+                        className="flex-shrink-0 w-28"
+                      >
+                        <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border">
+                          <Store className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs font-medium mt-1 line-clamp-1">{business.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{business.category}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Restaurants Near You */}
+            <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">My Businesses</h2>
-                <Link to="/host/vendors" className="text-sm text-primary hover:underline">
-                  View all
+                <h2 className="text-sm font-semibold">Restaurants Near You</h2>
+                <Link to="/restaurants" className="flex items-center text-muted-foreground">
+                  <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-              <ScrollArea className="w-full">
-                <div className="flex gap-4 pb-2">
-                  {myBusinesses.map((business) => (
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                <div className="flex gap-3 w-max pb-2">
+                  {restaurants.map((restaurant) => (
                     <Link
-                      key={business.id}
-                      to={`/host/vendors`}
-                      className="flex-shrink-0 w-[200px] group"
+                      key={restaurant.id}
+                      to={`/restaurant/${restaurant.id}`}
+                      className="flex-shrink-0 w-36"
                     >
-                      <div className="space-y-2">
-                        <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border group-hover:scale-105 transition-transform shadow-md">
-                          <Store className="h-16 w-16 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-sm line-clamp-1">{business.name}</h3>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{business.category}</p>
-                          <p className="text-xs text-primary">{business.commission}% commission</p>
+                      <div className="aspect-square rounded-xl overflow-hidden relative">
+                        <img
+                          src={restaurant.photos[0]}
+                          alt={restaurant.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                          <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
+                          <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                            <span>{restaurant.rating}</span>
+                            <span>•</span>
+                            <span>{restaurant.priceRange}</span>
+                          </div>
                         </div>
                       </div>
                     </Link>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </section>
-          )}
-
-          {/* Restaurants Near You */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Restaurants Near You</h2>
-              <Link to="/restaurants" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                <span className="text-sm">View all</span>
-                <ChevronRight className="h-5 w-5" />
-              </Link>
-            </div>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex gap-4 pb-4">
-                {restaurants.map((restaurant) => (
-                  <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-                ))}
               </div>
-              <ScrollBar orientation="horizontal" className="h-3" />
-            </ScrollArea>
-          </section>
+            </section>
 
-          {/* Popular Experiences */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Popular Experiences</h2>
-              <Link to="/experiences" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                <span className="text-sm">View all</span>
-                <ChevronRight className="h-5 w-5" />
-              </Link>
-            </div>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex gap-4 pb-4">
-                {popularExperiences.map((experience: any) => (
-                  <Link
-                    key={experience.id}
-                    to={`/experience/${experience.id}`}
-                    className="flex-shrink-0 w-[200px] group"
-                  >
-                    <div className="space-y-2">
-                      <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
-                        <div
-                          className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
-                          style={{
-                            backgroundImage: `url(${getExperienceImage(experience)})`,
-                          }}
+            {/* Popular Experiences */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">Popular Experiences</h2>
+                <Link to="/experiences" className="flex items-center text-muted-foreground">
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                <div className="flex gap-3 w-max pb-2">
+                  {popularExperiences.map((experience: any) => (
+                    <Link
+                      key={experience.id}
+                      to={`/experience/${experience.id}`}
+                      className="flex-shrink-0 w-36"
+                    >
+                      <div className="aspect-square rounded-xl overflow-hidden relative">
+                        <img
+                          src={getExperienceImage(experience)}
+                          alt={experience.name}
+                          className="w-full h-full object-cover"
                         />
-                        
                         <button
                           onClick={(e) => toggleFavorite(experience.id, e)}
-                          className="absolute top-2 right-2 z-10 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+                          className="absolute top-2 right-2 z-10"
                         >
                           <Heart
-                            className={`h-5 w-5 transition-all drop-shadow-md ${
+                            className={`h-5 w-5 drop-shadow-md ${
                               favorites.includes(experience.id)
                                 ? "fill-red-500 text-red-500"
-                                : "fill-black/50 text-white stroke-white stroke-2"
+                                : "fill-black/40 text-white"
                             }`}
                           />
                         </button>
-                      </div>
-
-                      <div className="space-y-0.5">
-                        <h3 className="font-semibold text-sm leading-tight line-clamp-1">
-                          {experience.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {experience.vendor}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          ★ {experience.rating} · {experience.duration}
-                        </p>
-                        <div className="pt-0.5">
-                          <span className="text-sm font-semibold">${experience.price}</span>
-                          <span className="text-xs text-muted-foreground"> per person</span>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                          <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
+                          <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                            <span>{experience.rating}</span>
+                            <span>•</span>
+                            <span>${experience.price}</span>
+                          </div>
                         </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* All Experiences Grid - 2 columns */}
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold">All Experiences</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {filteredExperiences.slice(0, 8).map((experience) => (
+                  <Link key={experience.id} to={`/experience/${experience.id}`} className="block">
+                    <div className="aspect-square rounded-xl overflow-hidden relative">
+                      <img
+                        src={getExperienceImage(experience)}
+                        alt={experience.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={(e) => toggleFavorite(experience.id, e)}
+                        className="absolute top-2 right-2 z-10"
+                      >
+                        <Heart
+                          className={`h-4 w-4 drop-shadow-md ${
+                            favorites.includes(experience.id)
+                              ? "fill-red-500 text-red-500"
+                              : "fill-black/40 text-white"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="mt-1.5">
+                      <p className="text-xs font-medium line-clamp-1">{experience.name}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">{experience.vendor}</p>
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                        <span>{experience.rating}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="font-medium">${experience.price}</span>
                       </div>
                     </div>
                   </Link>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" className="h-3" />
-            </ScrollArea>
-          </section>
-
-          {/* Experiences Grid */}
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold">All Experiences</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-12">
-              {filteredExperiences.map((experience) => (
-                <Link key={experience.id} to={`/experience/${experience.id}`} className="block group">
-                  <div className="space-y-2">
-                    {/* Image */}
-                    <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-                        style={{
-                          backgroundImage: `url(${getExperienceImage(experience)})`,
-                        }}
-                      />
-
-                      {/* Heart/Favorite Button */}
-                      <button
-                        onClick={(e) => toggleFavorite(experience.id, e)}
-                        className="absolute top-2 right-2 z-20 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
-                      >
-                        <Heart
-                          className={`h-5 w-5 transition-all drop-shadow-md ${
-                            favorites.includes(experience.id)
-                              ? "fill-red-500 text-red-500"
-                              : "fill-black/50 text-white stroke-white stroke-2"
-                          }`}
-                        />
-                      </button>
-
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="space-y-0.5">
-                      <div className="flex items-start justify-between gap-1">
-                        <h3 className="font-semibold text-sm leading-tight line-clamp-2 flex-1">{experience.name}</h3>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground">{experience.vendor}</p>
-
-                      {/* Stats */}
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <div className="flex items-center gap-0.5">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">{experience.rating}</span>
-                        </div>
-                        <span className="text-muted-foreground">({experience.reviewCount})</span>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-muted-foreground">{experience.duration}</span>
-                      </div>
-
-                      {/* Price */}
-                      <div className="pt-0.5">
-                        <span className="text-sm font-semibold">${experience.price}</span>
-                        <span className="text-muted-foreground text-xs"> per person</span>
-                      </div>
-                    </div>
-                  </div>
+              {filteredExperiences.length > 8 && (
+                <Link 
+                  to="/experiences" 
+                  className="block w-full py-2 text-center text-xs text-primary font-medium"
+                >
+                  View all {filteredExperiences.length} experiences
                 </Link>
-              ))}
-            </div>
-          </section>
+              )}
+            </section>
 
-          {/* Services Section */}
-          <section className="space-y-6 py-8 border-t border-border">
-            <div className="text-center">
-              <img src={stackdLogo} alt="stackd" className="h-32 w-32 mx-auto" />
-              <h2 className="text-2xl font-bold mt-4">Our Services</h2>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <div className="text-center space-y-3 p-6 bg-card rounded-xl border border-border">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center mx-auto">
-                  <User className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-semibold">For Customers</h3>
-                <p className="text-sm text-muted-foreground">
-                  Discover and book amazing local experiences with ease.
-                </p>
+            {/* Services Section */}
+            <section className="space-y-3 pt-2 border-t border-border">
+              <div className="text-center">
+                <img src={stackdLogo} alt="stackd" className="h-16 w-16 mx-auto" />
+                <h2 className="text-sm font-semibold mt-2">Our Services</h2>
               </div>
 
-              <div className="text-center space-y-3 p-6 bg-card rounded-xl border border-border">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center mx-auto">
-                  <Store className="h-6 w-6 text-white" />
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs font-semibold">For Customers</h3>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Discover and book amazing local experiences
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-semibold">For Airbnb Hosts</h3>
-                <p className="text-sm text-muted-foreground">
-                  Organize and maintain your affiliate relationships effortlessly.
-                </p>
-              </div>
 
-              <div className="text-center space-y-3 p-6 bg-card rounded-xl border border-border">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center mx-auto">
-                  <Megaphone className="h-6 w-6 text-white" />
+                <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <Store className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs font-semibold">For Airbnb Hosts</h3>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Organize affiliate relationships effortlessly
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-semibold">For Vendors</h3>
-                <p className="text-sm text-muted-foreground">
-                  Get additional advertising and promote your affiliate programs.
-                </p>
+
+                <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <Megaphone className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs font-semibold">For Vendors</h3>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Promote your affiliate programs
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+
+            {/* Footer spacer for bottom nav */}
+            <div className="h-4" />
+          </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <Footerdemo />
+        {/* Bottom Navigation - Fixed within container */}
+        <nav className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
+          <div className="flex justify-around items-center h-14">
+            <Link
+              to="/wishlists"
+              className="relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
+            >
+              <Heart className="h-5 w-5" />
+              <span className="text-[9px]">Wishlists</span>
+              {favorites.length > 0 && (
+                <div className="absolute top-1 right-1/4 h-3.5 w-3.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center">
+                  {favorites.length}
+                </div>
+              )}
+            </Link>
+
+            <Link 
+              to="/trip-planner"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
+            >
+              <Sparkles className="h-5 w-5" />
+              <span className="text-[9px]">AI</span>
+            </Link>
+
+            <Link 
+              to="/profile"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
+            >
+              <User className="h-5 w-5" />
+              <span className="text-[9px]">Profile</span>
+            </Link>
+
+            <Link 
+              to="/?view=browser"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
+            >
+              <Monitor className="h-5 w-5" />
+              <span className="text-[9px]">Browser</span>
+            </Link>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 };
