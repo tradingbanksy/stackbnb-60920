@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone, Monitor } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -197,117 +198,181 @@ const AppView2 = () => {
           </div>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
-          <div className="px-3 py-3 space-y-5">
-            
-            {/* Category Filters - Horizontal Scroll */}
-            <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-              <div className="flex gap-2 w-max">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`
-                      flex items-center gap-1 px-3 py-1.5 rounded-full text-xs whitespace-nowrap
-                      transition-all duration-200 active:scale-95
-                      ${
-                        selectedCategory === category.id
-                          ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-md"
-                          : "bg-card border border-border/50"
-                      }
-                    `}
-                  >
-                    <span>{category.icon}</span>
-                    <span className="font-medium">{category.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* Tabs */}
+        <Tabs defaultValue="explore" className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border">
+            <TabsList className="w-full justify-start rounded-none bg-transparent h-10 p-0">
+              <TabsTrigger 
+                value="explore" 
+                className="flex-1 rounded-none text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                Explore
+              </TabsTrigger>
+              <TabsTrigger 
+                value="services" 
+                className="flex-1 rounded-none text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                Services
+              </TabsTrigger>
+              <TabsTrigger 
+                value="about" 
+                className="flex-1 rounded-none text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              >
+                About
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-            {/* My Businesses */}
-            {myBusinesses.length > 0 && (
+          <TabsContent value="explore" className="flex-1 overflow-y-auto overflow-x-hidden pb-20 mt-0">
+            <div className="px-3 py-3 space-y-5">
+              
+              {/* Category Filters - Horizontal Scroll */}
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                <div className="flex gap-2 w-max">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`
+                        flex items-center gap-1 px-3 py-1.5 rounded-full text-xs whitespace-nowrap
+                        transition-all duration-200 active:scale-95
+                        ${
+                          selectedCategory === category.id
+                            ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-md"
+                            : "bg-card border border-border/50"
+                        }
+                      `}
+                    >
+                      <span>{category.icon}</span>
+                      <span className="font-medium">{category.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* My Businesses */}
+              {myBusinesses.length > 0 && (
+                <section className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">My Businesses</h2>
+                    <Link to="/host/vendors" className="text-xs text-primary">
+                      View all
+                    </Link>
+                  </div>
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                    <div className="flex gap-3 w-max">
+                      {myBusinesses.map((business) => (
+                        <Link
+                          key={business.id}
+                          to="/host/vendors"
+                          className="flex-shrink-0 w-28"
+                        >
+                          <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border">
+                            <Store className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                          <p className="text-xs font-medium mt-1 line-clamp-1">{business.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{business.category}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* Restaurants Near You */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">My Businesses</h2>
-                  <Link to="/host/vendors" className="text-xs text-primary">
-                    View all
+                  <h2 className="text-sm font-semibold">Restaurants Near You</h2>
+                  <Link to="/restaurants" className="flex items-center text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max">
-                    {myBusinesses.map((business) => (
+                  <div className="flex gap-3 w-max pb-2">
+                    {restaurants.map((restaurant) => (
                       <Link
-                        key={business.id}
-                        to="/host/vendors"
-                        className="flex-shrink-0 w-28"
+                        key={restaurant.id}
+                        to={`/restaurant/${restaurant.id}`}
+                        className="flex-shrink-0 w-36"
                       >
-                        <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border">
-                          <Store className="h-8 w-8 text-muted-foreground" />
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          <img
+                            src={restaurant.photos[0]}
+                            alt={restaurant.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                              <span>{restaurant.rating}</span>
+                              <span>•</span>
+                              <span>{restaurant.priceRange}</span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-xs font-medium mt-1 line-clamp-1">{business.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{business.category}</p>
                       </Link>
                     ))}
                   </div>
                 </div>
               </section>
-            )}
 
-            {/* Restaurants Near You */}
-            <section className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">Restaurants Near You</h2>
-                <Link to="/restaurants" className="flex items-center text-muted-foreground">
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </div>
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                <div className="flex gap-3 w-max pb-2">
-                  {restaurants.map((restaurant) => (
-                    <Link
-                      key={restaurant.id}
-                      to={`/restaurant/${restaurant.id}`}
-                      className="flex-shrink-0 w-36"
-                    >
-                      <div className="aspect-square rounded-xl overflow-hidden relative">
-                        <img
-                          src={restaurant.photos[0]}
-                          alt={restaurant.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                          <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
-                          <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                            <span>{restaurant.rating}</span>
-                            <span>•</span>
-                            <span>{restaurant.priceRange}</span>
+              {/* Popular Experiences */}
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">Popular Experiences</h2>
+                  <Link to="/experiences" className="flex items-center text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                  <div className="flex gap-3 w-max pb-2">
+                    {popularExperiences.map((experience: any) => (
+                      <Link
+                        key={experience.id}
+                        to={`/experience/${experience.id}`}
+                        className="flex-shrink-0 w-36"
+                      >
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          <img
+                            src={getExperienceImage(experience)}
+                            alt={experience.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={(e) => toggleFavorite(experience.id, e)}
+                            className="absolute top-2 right-2 z-10"
+                          >
+                            <Heart
+                              className={`h-5 w-5 drop-shadow-md ${
+                                favorites.includes(experience.id)
+                                  ? "fill-red-500 text-red-500"
+                                  : "fill-black/40 text-white"
+                              }`}
+                            />
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                              <span>{experience.rating}</span>
+                              <span>•</span>
+                              <span>${experience.price}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            {/* Popular Experiences */}
-            <section className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">Popular Experiences</h2>
-                <Link to="/experiences" className="flex items-center text-muted-foreground">
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </div>
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                <div className="flex gap-3 w-max pb-2">
-                  {popularExperiences.map((experience: any) => (
-                    <Link
-                      key={experience.id}
-                      to={`/experience/${experience.id}`}
-                      className="flex-shrink-0 w-36"
-                    >
+              {/* All Experiences Grid - 2 columns */}
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold">All Experiences</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredExperiences.slice(0, 8).map((experience) => (
+                    <Link key={experience.id} to={`/experience/${experience.id}`} className="block">
                       <div className="aspect-square rounded-xl overflow-hidden relative">
                         <img
                           src={getExperienceImage(experience)}
@@ -319,85 +384,49 @@ const AppView2 = () => {
                           className="absolute top-2 right-2 z-10"
                         >
                           <Heart
-                            className={`h-5 w-5 drop-shadow-md ${
+                            className={`h-4 w-4 drop-shadow-md ${
                               favorites.includes(experience.id)
                                 ? "fill-red-500 text-red-500"
                                 : "fill-black/40 text-white"
                             }`}
                           />
                         </button>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                          <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
-                          <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                            <span>{experience.rating}</span>
-                            <span>•</span>
-                            <span>${experience.price}</span>
-                          </div>
+                      </div>
+                      <div className="mt-1.5">
+                        <p className="text-xs font-medium line-clamp-1">{experience.name}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-1">{experience.vendor}</p>
+                        <div className="flex items-center gap-1 text-[10px]">
+                          <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                          <span>{experience.rating}</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="font-medium">${experience.price}</span>
                         </div>
                       </div>
                     </Link>
                   ))}
                 </div>
-              </div>
-            </section>
-
-            {/* All Experiences Grid - 2 columns */}
-            <section className="space-y-2">
-              <h2 className="text-sm font-semibold">All Experiences</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {filteredExperiences.slice(0, 8).map((experience) => (
-                  <Link key={experience.id} to={`/experience/${experience.id}`} className="block">
-                    <div className="aspect-square rounded-xl overflow-hidden relative">
-                      <img
-                        src={getExperienceImage(experience)}
-                        alt={experience.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={(e) => toggleFavorite(experience.id, e)}
-                        className="absolute top-2 right-2 z-10"
-                      >
-                        <Heart
-                          className={`h-4 w-4 drop-shadow-md ${
-                            favorites.includes(experience.id)
-                              ? "fill-red-500 text-red-500"
-                              : "fill-black/40 text-white"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    <div className="mt-1.5">
-                      <p className="text-xs font-medium line-clamp-1">{experience.name}</p>
-                      <p className="text-[10px] text-muted-foreground line-clamp-1">{experience.vendor}</p>
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                        <span>{experience.rating}</span>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="font-medium">${experience.price}</span>
-                      </div>
-                    </div>
+                {filteredExperiences.length > 8 && (
+                  <Link 
+                    to="/experiences" 
+                    className="block w-full py-2 text-center text-xs text-primary font-medium"
+                  >
+                    View all {filteredExperiences.length} experiences
                   </Link>
-                ))}
-              </div>
-              {filteredExperiences.length > 8 && (
-                <Link 
-                  to="/experiences" 
-                  className="block w-full py-2 text-center text-xs text-primary font-medium"
-                >
-                  View all {filteredExperiences.length} experiences
-                </Link>
-              )}
-            </section>
+                )}
+              </section>
 
-            {/* Services Section */}
-            <section className="space-y-3 pt-2 border-t border-border">
+              {/* Footer spacer for bottom nav */}
+              <div className="h-4" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="services" className="flex-1 overflow-y-auto pb-20 mt-0">
+            <div className="px-4 py-6 space-y-5">
               <div className="text-center">
-                <img src={stackdLogo} alt="stackd" className="h-16 w-16 mx-auto" />
-                <h2 className="text-sm font-semibold mt-2">Our Services</h2>
+                <img src={stackdLogo} alt="stackd" className="h-32 w-32 mx-auto" />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
                     <User className="h-4 w-4 text-white" />
@@ -405,7 +434,7 @@ const AppView2 = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Customers</h3>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Discover and book amazing local experiences
+                      Discover and book amazing local experiences with ease. From dining to adventures, find everything you need in one place.
                     </p>
                   </div>
                 </div>
@@ -417,7 +446,7 @@ const AppView2 = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Airbnb Hosts</h3>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Organize affiliate relationships effortlessly
+                      Organize and maintain your affiliate relationships effortlessly. Track commissions and manage partnerships all in one organized dashboard.
                     </p>
                   </div>
                 </div>
@@ -429,17 +458,71 @@ const AppView2 = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Vendors</h3>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Promote your affiliate programs
+                      Get additional advertising and promote your affiliate programs to reach more customers through local Airbnb hosts.
                     </p>
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
+          </TabsContent>
 
-            {/* Footer spacer for bottom nav */}
-            <div className="h-4" />
-          </div>
-        </div>
+          <TabsContent value="about" className="flex-1 overflow-y-auto pb-20 mt-0">
+            <div className="px-4 py-6 space-y-6">
+              {/* Logo and Tagline */}
+              <div className="text-center space-y-2">
+                <img src={stackdLogo} alt="stackd" className="h-32 w-32 mx-auto" />
+                <p className="text-muted-foreground text-xs max-w-xs mx-auto">
+                  Your one-stop platform for discovering local experiences, dining, and adventures.
+                </p>
+              </div>
+
+              {/* Mission */}
+              <div className="space-y-1.5">
+                <h3 className="font-semibold text-sm">Our Mission</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  We connect travelers with unforgettable local experiences while empowering hosts and vendors to grow their businesses through meaningful partnerships.
+                </p>
+              </div>
+
+              {/* What We Offer */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">What We Offer</h3>
+                <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Curated local restaurants and dining experiences</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Adventure activities and tours from trusted vendors</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>AI-powered trip planning assistance</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Seamless booking and reservation management</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Contact */}
+              <div className="space-y-1.5 pt-3 border-t border-border">
+                <h3 className="font-semibold text-sm">Get in Touch</h3>
+                <p className="text-xs text-muted-foreground">
+                  Have questions or feedback? We'd love to hear from you.
+                </p>
+                <p className="text-xs text-primary">support@stackd.com</p>
+              </div>
+
+              {/* Version */}
+              <div className="text-center pt-3">
+                <p className="text-[10px] text-muted-foreground">Version 1.0.0</p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Bottom Navigation - Fixed within container */}
         <nav className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
