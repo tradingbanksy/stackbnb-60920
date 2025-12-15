@@ -168,7 +168,7 @@ const AppView2 = () => {
 
           {/* Hero Content */}
           <div className="relative z-10 px-4 pb-4 pt-4 text-center">
-            <img src={stackdLogo} alt="stackd" className="h-16 w-16 mx-auto mb-3" />
+            <img src={stackdLogo} alt="stackd" className="h-80 w-80 mx-auto mb-3" />
             <h1 className="text-xl font-bold text-foreground mb-1">
               Discover Experiences
             </h1>
