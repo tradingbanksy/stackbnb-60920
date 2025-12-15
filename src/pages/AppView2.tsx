@@ -225,30 +225,6 @@ const AppView2 = () => {
 
           <TabsContent value="explore" className="flex-1 overflow-y-auto overflow-x-hidden pb-20 mt-0">
             <div className="px-3 py-3 space-y-5">
-              
-              {/* Category Filters - Horizontal Scroll */}
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                <div className="flex gap-2 w-max">
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`
-                        flex items-center gap-1 px-3 py-1.5 rounded-full text-xs whitespace-nowrap
-                        transition-all duration-200 active:scale-95
-                        ${
-                          selectedCategory === category.id
-                            ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-md"
-                            : "bg-card border border-border/50"
-                        }
-                      `}
-                    >
-                      <span>{category.icon}</span>
-                      <span className="font-medium">{category.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* My Businesses */}
               {myBusinesses.length > 0 && (
