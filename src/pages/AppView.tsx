@@ -163,7 +163,7 @@ const AppView = () => {
             <div className="w-8" /> {/* Spacer */}
             <Link
               to="/trip-planner"
-              className="p-2 rounded-full bg-gradient-to-r from-dusty-grape to-lilac-ash text-parchment"
+              className="p-2 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white"
             >
               <Sparkles className="h-4 w-4" />
             </Link>
@@ -181,7 +181,7 @@ const AppView = () => {
 
             {/* Search Section */}
             <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-dusty-grape/20 to-lilac-ash/20 rounded-2xl blur-sm"></div>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-2xl blur-sm"></div>
               <div className="relative bg-card/90 rounded-2xl border border-border/50 backdrop-blur-sm overflow-hidden">
                 {/* Location Input */}
                 <div className="flex items-center px-3 py-2.5 gap-2 border-b border-border/30">
@@ -203,7 +203,7 @@ const AppView = () => {
                     onChange={(e) => setSelectedDate(e.target.value)}
                     className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground [&::-webkit-calendar-picker-indicator]:opacity-50"
                   />
-                  <button className="bg-gradient-to-r from-dusty-grape to-lilac-ash text-parchment rounded-full p-1.5 flex-shrink-0">
+                  <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
                     <Search className="h-3 w-3" />
                   </button>
                 </div>
@@ -257,7 +257,7 @@ const AppView = () => {
                           to="/host/vendors"
                           className="flex-shrink-0 w-28"
                         >
-                          <div className="aspect-square bg-gradient-to-br from-dusty-grape/20 to-lilac-ash/20 rounded-xl flex items-center justify-center border border-border">
+                          <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border">
                             <Store className="h-8 w-8 text-muted-foreground" />
                           </div>
                           <p className="text-xs font-medium mt-1 line-clamp-1">{business.name}</p>
@@ -417,8 +417,8 @@ const AppView = () => {
 
               <div className="space-y-4">
                 <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-dusty-grape to-lilac-ash flex items-center justify-center flex-shrink-0">
-                    <User className="h-4 w-4 text-parchment" />
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Customers</h3>
@@ -429,8 +429,8 @@ const AppView = () => {
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-dusty-grape to-lilac-ash flex items-center justify-center flex-shrink-0">
-                    <Store className="h-4 w-4 text-parchment" />
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <Store className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Airbnb Hosts</h3>
@@ -441,8 +441,8 @@ const AppView = () => {
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-dusty-grape to-lilac-ash flex items-center justify-center flex-shrink-0">
-                    <Megaphone className="h-4 w-4 text-parchment" />
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <Megaphone className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Vendors</h3>

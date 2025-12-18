@@ -4,113 +4,100 @@
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
-Color Palette: Space Indigo, Dusty Grape, Lilac Ash, Almond Silk, Parchment
 */
 
 @layer base {
   :root {
-    /* Parchment background with Space Indigo text */
-    --background: 21 35% 92%;
-    --foreground: 240 27% 18%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 5%;
 
-    --card: 21 35% 96%;
-    --card-foreground: 240 27% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 5%;
 
-    --popover: 21 35% 96%;
-    --popover-foreground: 240 27% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 5%;
 
-    /* Dusty Grape as primary */
-    --primary: 232 17% 35%;
-    --primary-foreground: 21 35% 92%;
+    --primary: 20 100% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Lilac Ash as secondary */
-    --secondary: 309 6% 58%;
-    --secondary-foreground: 240 27% 18%;
+    --secondary: 30 100% 50%;
+    --secondary-foreground: 0 0% 5%;
 
-    /* Almond Silk for muted */
-    --muted: 11 24% 72%;
-    --muted-foreground: 232 17% 35%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
 
-    /* Lilac Ash accent */
-    --accent: 309 6% 58%;
-    --accent-foreground: 240 27% 18%;
+    --accent: 15 100% 60%;
+    --accent-foreground: 0 0% 5%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 21 35% 92%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 11 24% 82%;
-    --input: 11 24% 82%;
-    --ring: 232 17% 35%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 20 100% 55%;
 
     --radius: 0.75rem;
     
-    /* Gradients using the palette */
-    --gradient-primary: linear-gradient(135deg, hsl(232 17% 35%), hsl(309 6% 58%));
-    --gradient-dark: linear-gradient(135deg, hsl(240 27% 18%), hsl(232 17% 35%));
-    --gradient-accent: linear-gradient(135deg, hsl(309 6% 58%), hsl(11 24% 72%));
-    --gradient-hero: linear-gradient(135deg, hsl(232 17% 35%), hsl(309 6% 58%), hsl(11 24% 72%));
+    --gradient-primary: linear-gradient(135deg, hsl(25 100% 55%), hsl(280 80% 55%));
+    --gradient-dark: linear-gradient(135deg, hsl(30 100% 65%), hsl(280 70% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 100% 55%), hsl(280 80% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(30 100% 60%), hsl(320 80% 55%), hsl(280 75% 50%));
     
-    --shadow-elegant: 0 10px 30px -10px hsl(240 27% 18% / 0.2);
-    --shadow-card: 0 2px 12px -2px hsl(232 17% 35% / 0.1);
-    --shadow-glow: 0 0 40px hsl(309 6% 58% / 0.3);
-    --shadow-button: 0 4px 20px -4px hsl(232 17% 35% / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsl(280 80% 50% / 0.3);
+    --shadow-card: 0 2px 12px -2px hsl(25 100% 50% / 0.15);
+    --shadow-glow: 0 0 40px hsl(280 80% 55% / 0.4);
+    --shadow-button: 0 4px 20px -4px hsl(280 80% 50% / 0.4);
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 21 35% 94%;
-    --sidebar-foreground: 240 27% 18%;
-    --sidebar-primary: 232 17% 35%;
-    --sidebar-primary-foreground: 21 35% 92%;
-    --sidebar-accent: 11 24% 85%;
-    --sidebar-accent-foreground: 232 17% 35%;
-    --sidebar-border: 11 24% 82%;
-    --sidebar-ring: 232 17% 35%;
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 20 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 100% 97%;
+    --sidebar-accent-foreground: 20 100% 40%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 20 100% 55%;
   }
 
   .dark {
-    /* Space Indigo background with Parchment text */
-    --background: 240 27% 18%;
-    --foreground: 21 35% 92%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
 
-    --card: 232 17% 25%;
-    --card-foreground: 21 35% 92%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 232 17% 25%;
-    --popover-foreground: 21 35% 92%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Lilac Ash as primary in dark mode */
-    --primary: 309 6% 58%;
-    --primary-foreground: 240 27% 18%;
+    --primary: 20 100% 60%;
+    --primary-foreground: 0 0% 5%;
 
-    /* Almond Silk as secondary */
-    --secondary: 11 24% 72%;
-    --secondary-foreground: 240 27% 18%;
+    --secondary: 30 100% 55%;
+    --secondary-foreground: 0 0% 5%;
 
-    /* Dusty Grape for muted */
-    --muted: 232 17% 28%;
-    --muted-foreground: 309 6% 68%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
 
-    /* Almond Silk accent */
-    --accent: 11 24% 72%;
-    --accent-foreground: 240 27% 18%;
+    --accent: 15 100% 65%;
+    --accent-foreground: 0 0% 5%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 21 35% 92%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 232 17% 30%;
-    --input: 232 17% 30%;
-    --ring: 309 6% 58%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 20 100% 60%;
     
-    /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(309 6% 58%), hsl(11 24% 72%));
-    --gradient-dark: linear-gradient(135deg, hsl(240 27% 18%), hsl(232 17% 25%));
-    --gradient-accent: linear-gradient(135deg, hsl(11 24% 72%), hsl(309 6% 58%));
-    --gradient-hero: linear-gradient(135deg, hsl(309 6% 58%), hsl(11 24% 72%), hsl(21 35% 92%));
+    --gradient-primary: linear-gradient(135deg, hsl(25 100% 55%), hsl(280 80% 55%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 10%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 100% 55%), hsl(280 80% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(30 100% 60%), hsl(320 80% 55%), hsl(280 75% 50%));
     
-    --shadow-elegant: 0 10px 40px -10px hsl(240 27% 10% / 0.5);
-    --shadow-card: 0 2px 12px -2px hsl(240 27% 10% / 0.4);
-    --shadow-glow: 0 0 40px hsl(309 6% 58% / 0.3);
-    --shadow-button: 0 4px 20px -4px hsl(309 6% 58% / 0.4);
+    --shadow-elegant: 0 10px 40px -10px hsl(280 80% 50% / 0.4);
+    --shadow-card: 0 2px 12px -2px hsl(25 100% 50% / 0.3);
+    --shadow-glow: 0 0 40px hsl(280 80% 55% / 0.5);
+    --shadow-button: 0 4px 20px -4px hsl(280 80% 50% / 0.5);
   }
 }
 

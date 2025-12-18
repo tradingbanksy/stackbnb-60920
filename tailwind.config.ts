@@ -62,12 +62,6 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Custom palette colors
-        "space-indigo": "#22223b",
-        "dusty-grape": "#4a4e69",
-        "lilac-ash": "#9a8c98",
-        "almond-silk": "#c9ada7",
-        "parchment": "#f2e9e4",
       },
       borderRadius: {
         lg: "var(--radius)",

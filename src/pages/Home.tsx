@@ -152,7 +152,7 @@ const Home = () => {
         <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
           <Link
             to="/trip-planner"
-            className="p-2.5 rounded-full bg-gradient-to-r from-dusty-grape to-lilac-ash text-parchment shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            className="p-2.5 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
             title="AI Trip Planner"
           >
             <Sparkles className="h-5 w-5" />
@@ -182,11 +182,11 @@ const Home = () => {
               {/* Primary Button - Get Started as Host */}
               <Link 
                 to="/signup/host"
-                className="relative group flex items-center justify-center bg-gradient-to-r from-dusty-grape to-lilac-ash text-parchment rounded-full px-8 py-4 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                style={{ boxShadow: '0 8px 32px -8px rgba(74, 78, 105, 0.5)' }}
+                className="relative group flex items-center justify-center bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full px-8 py-4 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                style={{ boxShadow: '0 8px 32px -8px rgba(168, 85, 247, 0.5)' }}
               >
                 <span className="relative z-10">Get Started as Host</span>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-space-indigo to-dusty-grape opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Link>
 
               {/* Secondary Button - I'm a Vendor */}
@@ -225,10 +225,10 @@ const Home = () => {
             <div className="max-w-2xl mx-auto">
               <div className="relative group">
                 {/* Soft glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-dusty-grape/30 to-lilac-ash/30 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition duration-300"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/30 to-purple-600/30 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition duration-300"></div>
 
                 {/* Main search container */}
-                <div className="relative bg-card rounded-full shadow-xl border border-border/30 backdrop-blur-md overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:border-lilac-ash/20">
+                <div className="relative bg-card rounded-full shadow-xl border border-border/30 backdrop-blur-md overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:border-purple-500/20">
                   <div className="flex items-center px-6 py-4 gap-3">
                     <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <Input
@@ -237,7 +237,7 @@ const Home = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
                     />
-                    <button className="bg-gradient-to-r from-dusty-grape to-lilac-ash hover:from-space-indigo hover:to-dusty-grape text-parchment rounded-full p-3 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg">
+                    <button className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white rounded-full p-3 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg">
                       <Search className="h-4 w-4" />
                     </button>
                   </div>
@@ -257,8 +257,8 @@ const Home = () => {
                   transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
                   ${
                     selectedCategory === category.id
-                      ? "bg-gradient-to-r from-dusty-grape to-lilac-ash text-parchment border-transparent shadow-lg"
-                      : "bg-card border-border/50 hover:border-lilac-ash/30 hover:shadow-md"
+                      ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white border-transparent shadow-lg"
+                      : "bg-card border-border/50 hover:border-purple-500/30 hover:shadow-md"
                   }
                 `}
               >
