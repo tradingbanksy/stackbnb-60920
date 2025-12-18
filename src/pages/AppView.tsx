@@ -144,77 +144,9 @@ const AppView = () => {
       {/* Phone Container - Centered & Constrained */}
       <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative">
         
-        {/* Hero Section - Compact Mobile */}
-        <div className="relative flex-shrink-0">
-          {/* Background image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${heroImage})`,
-              filter: 'blur(1px)',
-            }}
-          />
-          <div className="absolute inset-0 bg-background/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
-
-          {/* Header */}
-          <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
-            <ThemeToggle />
-            <div className="w-8" /> {/* Spacer */}
-            <Link
-              to="/trip-planner"
-              className="p-2 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Link>
-          </div>
-
-          {/* Hero Content */}
-          <div className="relative z-10 px-4 pb-4 pt-4 text-center">
-            <img src={stackdLogo} alt="stackd" className="h-40 w-40 mx-auto mb-3" />
-            <h1 className="text-xl font-bold text-foreground mb-1">
-              Discover Experiences
-            </h1>
-            <p className="text-xs text-muted-foreground mb-3">
-              Find amazing restaurants & adventures nearby
-            </p>
-
-            {/* Search Section */}
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-2xl blur-sm"></div>
-              <div className="relative bg-card/90 rounded-2xl border border-border/50 backdrop-blur-sm overflow-hidden">
-                {/* Location Input */}
-                <div className="flex items-center px-3 py-2.5 gap-2 border-b border-border/30">
-                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                  <Input
-                    placeholder="Where are you?"
-                    value={locationQuery}
-                    onChange={(e) => setLocationQuery(e.target.value)}
-                    className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
-                  />
-                </div>
-                {/* Date Input */}
-                <div className="flex items-center px-3 py-2.5 gap-2">
-                  <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
-                  <Input
-                    type="date"
-                    placeholder="When?"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground [&::-webkit-calendar-picker-indicator]:opacity-50"
-                  />
-                  <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
-                    <Search className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
         <Tabs defaultValue="explore" className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border">
+          {/* Sticky Tabs Header */}
+          <div className="flex-shrink-0 sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
             <TabsList className="w-full justify-start rounded-none bg-transparent h-10 p-0">
               <TabsTrigger 
                 value="explore" 
@@ -238,6 +170,74 @@ const AppView = () => {
           </div>
 
           <TabsContent value="explore" className="flex-1 overflow-y-auto overflow-x-hidden pb-20 mt-0">
+            {/* Hero Section - Now scrollable */}
+            <div className="relative">
+              {/* Background image */}
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ 
+                  backgroundImage: `url(${heroImage})`,
+                  filter: 'blur(1px)',
+                }}
+              />
+              <div className="absolute inset-0 bg-background/70" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
+
+              {/* Header */}
+              <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
+                <ThemeToggle />
+                <div className="w-8" /> {/* Spacer */}
+                <Link
+                  to="/trip-planner"
+                  className="p-2 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Link>
+              </div>
+
+              {/* Hero Content */}
+              <div className="relative z-10 px-4 pb-4 pt-4 text-center">
+                <img src={stackdLogo} alt="stackd" className="h-40 w-40 mx-auto mb-3" />
+                <h1 className="text-xl font-bold text-foreground mb-1">
+                  Discover Experiences
+                </h1>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Find amazing restaurants & adventures nearby
+                </p>
+
+                {/* Search Section */}
+                <div className="relative">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-2xl blur-sm"></div>
+                  <div className="relative bg-card/90 rounded-2xl border border-border/50 backdrop-blur-sm overflow-hidden">
+                    {/* Location Input */}
+                    <div className="flex items-center px-3 py-2.5 gap-2 border-b border-border/30">
+                      <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                      <Input
+                        placeholder="Where are you?"
+                        value={locationQuery}
+                        onChange={(e) => setLocationQuery(e.target.value)}
+                        className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    {/* Date Input */}
+                    <div className="flex items-center px-3 py-2.5 gap-2">
+                      <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
+                      <Input
+                        type="date"
+                        placeholder="When?"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground [&::-webkit-calendar-picker-indicator]:opacity-50"
+                      />
+                      <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
+                        <Search className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div className="px-3 py-3 space-y-5">
 
               {/* My Businesses */}
