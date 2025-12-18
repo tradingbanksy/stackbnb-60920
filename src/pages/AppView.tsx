@@ -1,9 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone, Monitor, MapPin, CalendarDays } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
@@ -77,7 +81,7 @@ const AppView = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   useEffect(() => {
     fetchMyBusinesses();
@@ -205,34 +209,40 @@ const AppView = () => {
                   Find amazing restaurants & adventures nearby
                 </p>
 
-                {/* Search Section */}
+                {/* Search Section - Single Bar */}
                 <div className="relative">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-2xl blur-sm"></div>
-                  <div className="relative bg-card/90 rounded-2xl border border-border/50 backdrop-blur-sm overflow-hidden">
-                    {/* Location Input */}
-                    <div className="flex items-center px-3 py-2.5 gap-2 border-b border-border/30">
-                      <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                      <Input
-                        placeholder="Where are you?"
-                        value={locationQuery}
-                        onChange={(e) => setLocationQuery(e.target.value)}
-                        className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
-                      />
-                    </div>
-                    {/* Date Input */}
-                    <div className="flex items-center px-3 py-2.5 gap-2">
-                      <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
-                      <Input
-                        type="date"
-                        placeholder="When?"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground [&::-webkit-calendar-picker-indicator]:opacity-50"
-                      />
-                      <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
-                        <Search className="h-3 w-3" />
-                      </button>
-                    </div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
+                  <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
+                    <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                    <Input
+                      placeholder="Where to?"
+                      value={locationQuery}
+                      onChange={(e) => setLocationQuery(e.target.value)}
+                      className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground flex-1 min-w-0"
+                    />
+                    <div className="h-4 w-px bg-border/50 flex-shrink-0" />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                          <CalendarDays className="h-4 w-4 text-primary" />
+                          <span className="text-xs">
+                            {selectedDate ? format(selectedDate, "MMM d") : "When?"}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
+                      <Search className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
               </div>
