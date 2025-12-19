@@ -103,7 +103,7 @@ const Home = () => {
   // Redirect mobile users to app view (unless they explicitly want browser view)
   useEffect(() => {
     if (isMobile && !forceBrowserView) {
-      navigate("/appview", { replace: true });
+      navigate("/appview");
     }
   }, [isMobile, navigate, forceBrowserView]);
 
