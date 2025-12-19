@@ -198,7 +198,7 @@ const AppView = () => {
                 <ThemeToggle />
                 <div className="flex items-center gap-2">
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="p-2 rounded-full bg-background/80 border border-border text-foreground hover:bg-accent transition-colors">
+                    <DropdownMenuTrigger className="p-2 rounded-full bg-background/80 border border-border text-foreground hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-500 focus:bg-purple-500/20 focus:border-purple-500/50 focus:text-purple-500 data-[state=open]:bg-purple-500/20 data-[state=open]:border-purple-500/50 data-[state=open]:text-purple-500 transition-colors">
                       <User className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
