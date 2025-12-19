@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone, Monitor, MapPin, CalendarDays } from "lucide-react";
+import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { experiences } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -191,18 +197,25 @@ const AppView = () => {
               <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
                 <ThemeToggle />
                 <div className="flex items-center gap-2">
-                  <Link
-                    to="/auth"
-                    className="px-3 py-1.5 text-xs font-medium rounded-full border border-border bg-background/80 text-foreground hover:bg-accent transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/auth?signup=true"
-                    className="px-3 py-1.5 text-xs font-medium rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    Sign Up
-                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="p-2 rounded-full bg-background/80 border border-border text-foreground hover:bg-accent transition-colors">
+                      <User className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem asChild>
+                        <Link to="/auth" className="flex items-center gap-2 cursor-pointer">
+                          <LogIn className="h-4 w-4" />
+                          Sign In
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/auth?signup=true" className="flex items-center gap-2 cursor-pointer">
+                          <UserPlus className="h-4 w-4" />
+                          Sign Up
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Link
                     to="/trip-planner"
                     className="p-2 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white"
