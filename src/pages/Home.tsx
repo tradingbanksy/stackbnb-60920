@@ -1,92 +1,72 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Sparkles, 
-  Search, 
-  Compass, 
-  DollarSign, 
-  ChevronRight,
-  Check,
-  ArrowRight,
-  MapPin
-} from "lucide-react";
+import { Briefcase, User, Search, Star, Heart, Sparkles } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
+import { experiences } from "@/data/mockData";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import MinimalDock from "@/components/ui/minimal-dock";
 import { Footerdemo } from "@/components/ui/footer-section";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import kayakingImg from "@/assets/experiences/kayaking.jpg";
+import bikesImg from "@/assets/experiences/bikes.jpg";
+import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
+import photographyImg from "@/assets/experiences/photography.jpg";
+import spaImg from "@/assets/experiences/spa.jpg";
+import diningImg from "@/assets/experiences/dining.jpg";
+import atvImg from "@/assets/experiences/atv.jpg";
+import boatImg from "@/assets/experiences/boat.jpg";
+import ziplineImg from "@/assets/experiences/zipline.jpg";
+import horsebackImg from "@/assets/experiences/horseback.jpg";
+import scubaImg from "@/assets/experiences/scuba.jpg";
+import hikingImg from "@/assets/experiences/hiking.jpg";
+import parasailingImg from "@/assets/experiences/parasailing.jpg";
+import yogaImg from "@/assets/experiences/yoga.jpg";
+import fishingImg from "@/assets/experiences/fishing.jpg";
+import cookingImg from "@/assets/experiences/cooking.jpg";
+import balloonImg from "@/assets/experiences/balloon.jpg";
+import wineImg from "@/assets/experiences/wine.jpg";
 
-const steps = [
-  {
-    icon: Sparkles,
-    title: "Quick Setup (2 Minutes)",
-    description: "Copy your current recommendations. Our AI extracts vendors automatically. No manual data entry.",
-    step: "Step 1: Paste Your Guidebook"
-  },
-  {
-    icon: Compass,
-    title: "Find Hidden Earnings",
-    description: "Browse 50+ local Tulum vendors with affiliate programs you didn't know existed. Tours, restaurants, transportation, and more.",
-    step: "Step 2: Discover Affiliate Programs"
-  },
-  {
-    icon: DollarSign,
-    title: "Automatic Commissions",
-    description: "Share one link with guests: stackd.com/your-name. You earn 7-12% on every booking. Guests pay the regular price—no markup.",
-    step: "Step 3: Earn on Every Booking"
-  },
+const categories = [
+  { id: "all", name: "All Experiences", icon: "✨" },
+  { id: "Water Sports", name: "Water Sports", icon: "🌊" },
+  { id: "Tours & Activities", name: "Tours & Activities", icon: "🗺️" },
+  { id: "Transportation", name: "Transportation", icon: "🚴" },
+  { id: "Food & Dining", name: "Food & Dining", icon: "🍷" },
+  { id: "Wellness", name: "Wellness", icon: "💆" },
+  { id: "Photography", name: "Photography", icon: "📸" },
 ];
 
-const stats = [
-  { value: "$850", label: "Average monthly earnings per host" },
-  { value: "23%", label: "Guest conversion rate" },
-  { value: "50+", label: "Local vendors in Tulum" },
-];
-
-const features = [
-  {
-    title: "Host-Curated Experiences",
-    description: "Your personal recommendations, not algorithmic suggestions",
-  },
-  {
-    title: "Automated Commission Tracking",
-    description: "See exactly what you've earned from each vendor, updated in real-time",
-  },
-  {
-    title: "2-Minute Setup",
-    description: "Paste your guidebook, we handle the rest. No technical skills required",
-  },
-];
-
-const faqs = [
-  {
-    question: "Do my guests pay more?",
-    answer: "No. Guests pay the vendor's regular price. Your commission comes from the vendor, not the guest."
-  },
-  {
-    question: "How do I get paid?",
-    answer: "Automatic payouts every week via Stripe. No chasing vendors for payment."
-  },
-  {
-    question: "What if I already recommend these places?",
-    answer: "Perfect! Now you'll get paid for recommendations you're already making for free."
-  },
-  {
-    question: "Is there a monthly fee?",
-    answer: "No. We only make money when you make money (3% of commission)."
-  },
-];
+// Image mapping based on experience category and name
+const getExperienceImage = (experience) => {
+  const imageMap = {
+    1: kayakingImg,
+    2: bikesImg,
+    3: snorkelingImg,
+    4: photographyImg,
+    5: spaImg,
+    6: diningImg,
+    7: atvImg,
+    8: boatImg,
+    9: ziplineImg,
+    10: horsebackImg,
+    11: scubaImg,
+    12: hikingImg,
+    13: parasailingImg,
+    14: yogaImg,
+    15: fishingImg,
+    16: cookingImg,
+    17: balloonImg,
+    18: wineImg,
+  };
+  return imageMap[experience.id] || kayakingImg;
+};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -94,7 +74,31 @@ const Home = () => {
   const { isAuthenticated, role } = useAuthContext();
   const isMobile = useIsMobile();
   const forceBrowserView = searchParams.get('view') === 'browser';
-  const [email, setEmail] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [favorites, setFavorites] = useState<number[]>(() => {
+    const saved = localStorage.getItem("favorites");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const toggleFavorite = (id: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFavorites((prev) => {
+      const newFavorites = prev.includes(id)
+        ? prev.filter((fav) => fav !== id)
+        : [...prev, id];
+      
+      localStorage.setItem("favorites", JSON.stringify(newFavorites));
+      
+      toast({
+        title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
+        duration: 2000,
+      });
+      
+      return newFavorites;
+    });
+  };
 
   // Redirect mobile users to app view (unless they explicitly want browser view)
   useEffect(() => {
@@ -114,10 +118,20 @@ const Home = () => {
     }
   }, [isAuthenticated, role, navigate]);
 
+  const filteredExperiences = experiences.filter((exp) => {
+    const matchesCategory = selectedCategory === "all" || exp.category === selectedCategory;
+    const matchesSearch = searchQuery === "" || 
+      exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-screen flex items-center">
+      <section className="relative overflow-hidden">
         {/* Background image with blur and overlay */}
         <div
           className="absolute inset-0 bg-cover bg-center scale-105"
@@ -126,7 +140,7 @@ const Home = () => {
             filter: 'blur(2px)',
           }}
         />
-        <div className="absolute inset-0 bg-background/70 dark:bg-background/80" />
+        <div className="absolute inset-0 bg-background/60 dark:bg-background/70" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
 
         {/* Theme Toggle - Top Left */}
@@ -138,7 +152,7 @@ const Home = () => {
         <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
           <Link
             to="/trip-planner"
-            className="p-2.5 rounded-full bg-teal-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            className="p-2.5 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
             title="AI Trip Planner"
           >
             <Sparkles className="h-5 w-5" />
@@ -146,260 +160,175 @@ const Home = () => {
           <MinimalDock />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
-          <div className="text-center space-y-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 sm:py-40">
+          <div className="text-center space-y-10">
             {/* Logo */}
-            <div className="mb-4 animate-fade-in">
-              <img src={stackdLogo} alt="stackd logo" className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 drop-shadow-2xl mx-auto" />
+            <div className="mb-4">
+              <img src={stackdLogo} alt="stackd logo" className="h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 drop-shadow-2xl mx-auto" />
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1] animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              Turn Your Airbnb Recommendations Into Income
-            </h1>
+            <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1]">
+              Grow your affiliate income.
+            </h2>
 
             {/* Subheadline */}
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Create affiliate partnerships with local Tulum vendors. Earn 7-12% commission on every booking your guests make.
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              A smarter way for hosts to partner locally, grow revenue, and streamline guest bookings.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              {/* Primary Button - I'm an Airbnb Host */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+              {/* Primary Button - Get Started as Host */}
               <Link 
                 to="/signup/host"
-                className="relative group flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white rounded-xl px-10 py-5 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                className="relative group flex items-center justify-center bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full px-8 py-4 font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                style={{ boxShadow: '0 8px 32px -8px rgba(168, 85, 247, 0.5)' }}
               >
-                <span>I'm an Airbnb Host</span>
-                <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10">Get Started as Host</span>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Link>
 
-              {/* Secondary Button - I'm a Guest */}
+              {/* Secondary Button - I'm a Vendor */}
+              <Link 
+                to="/signup/vendor"
+                className="flex items-center justify-center bg-card/80 backdrop-blur-md rounded-full px-8 py-4 border border-border hover:border-purple-500/50 shadow-md hover:shadow-lg transition-all duration-300 text-foreground font-semibold text-base hover:scale-[1.02] active:scale-[0.98]"
+              >
+                I'm a Vendor
+              </Link>
+              
+              {/* Tertiary Button - Preview App View */}
               <Link 
                 to="/appview"
-                className="flex items-center justify-center bg-transparent border-2 border-foreground/20 hover:border-teal-600 rounded-xl px-10 py-5 font-semibold text-lg transition-all duration-300 text-foreground hover:text-teal-600 hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center justify-center rounded-full px-8 py-4 text-muted-foreground hover:text-foreground font-medium text-base transition-all duration-300 hover:bg-card/50"
               >
-                I'm a Guest
+                Preview App View
               </Link>
             </div>
 
             {/* Sign In Link */}
-            <p className="text-sm text-muted-foreground pt-2 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <p className="text-sm text-muted-foreground pt-2">
               Already have an account?{" "}
-              <Link to="/signin" className="text-teal-600 hover:text-teal-500 hover:underline font-medium transition-colors">
+              <Link to="/signin" className="text-purple-500 hover:text-purple-400 hover:underline font-medium transition-colors">
                 Sign In
               </Link>
             </p>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex justify-center pt-2">
-            <div className="w-1 h-2 bg-muted-foreground/50 rounded-full"></div>
-          </div>
-        </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="relative bg-background py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-4">
-              How It Works
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Start earning from your recommendations in three simple steps
-            </p>
-          </div>
+      {/* Explore Experiences Section */}
+      <section className="relative bg-background py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          {/* Search Box */}
+          <div className="text-center space-y-4">
+            <div className="max-w-2xl mx-auto">
+              <div className="relative group">
+                {/* Soft glow effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/30 to-purple-600/30 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition duration-300"></div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            {steps.map((step, index) => (
-              <Card 
-                key={index} 
-                className="relative p-8 bg-card border border-border/50 hover:border-teal-600/30 hover:shadow-xl transition-all duration-300 group"
-              >
-                {/* Step number badge */}
-                <div className="absolute -top-4 left-8 bg-teal-600 text-white text-sm font-bold px-4 py-1 rounded-full">
-                  Step {index + 1}
-                </div>
-                
-                <div className="pt-4">
-                  <div className="w-14 h-14 bg-teal-600/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-600/20 transition-colors">
-                    <step.icon className="h-7 w-7 text-teal-600" />
+                {/* Main search container */}
+                <div className="relative bg-card rounded-full shadow-xl border border-border/30 backdrop-blur-md overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:border-purple-500/20">
+                  <div className="flex items-center px-6 py-4 gap-3">
+                    <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    <Input
+                      placeholder="Search experiences..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                    />
+                    <button className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white rounded-full p-3 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg">
+                      <Search className="h-4 w-4" />
+                    </button>
                   </div>
-                  
-                  <h3 className="text-xl font-bold text-foreground mb-3">
-                    {step.title}
-                  </h3>
-                  
-                  <p className="text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Transparent Pricing Section */}
-      <section className="relative py-20 sm:py-28 bg-gradient-to-br from-teal-50 to-blue-50 dark:from-teal-950/20 dark:to-blue-950/20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-4">
-              How Commissions Work
-            </h2>
-          </div>
-
-          <Card className="p-8 sm:p-12 bg-card/80 backdrop-blur-sm border border-border/50 shadow-xl">
-            <h3 className="text-xl font-bold text-foreground mb-6">For New Partnerships:</h3>
-            
-            <div className="space-y-4">
-              {[
-                "Vendor pays 10% commission total",
-                "You keep 7%, we keep 3%",
-                "Guest pays the listed price (no markup)",
-                "No hidden fees. No monthly costs."
-              ].map((item, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center mt-0.5">
-                    <Check className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-lg text-foreground">{item}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="relative bg-background py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            {stats.map((stat, index) => (
-              <Card 
-                key={index} 
-                className="p-8 text-center bg-card border border-border/50 hover:border-teal-600/30 hover:shadow-lg transition-all duration-300"
-              >
-                <div className="text-4xl sm:text-5xl font-black text-teal-600 mb-2">
-                  {stat.value}
-                </div>
-                <p className="text-muted-foreground text-lg">
-                  {stat.label}
-                </p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="relative bg-muted/30 py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-4">
-              Why Hosts Love Stackd
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="p-6 rounded-2xl bg-card border border-border/50 hover:shadow-lg transition-all duration-300"
-              >
-                <h3 className="text-xl font-bold text-foreground mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Tulum Section */}
-      <section className="relative bg-background py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-teal-600/10 text-teal-600 px-4 py-2 rounded-full mb-6">
-            <MapPin className="h-4 w-4" />
-            <span className="font-medium">Launch Location</span>
-          </div>
-          
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-6">
-            Starting in Tulum, Mexico
-          </h2>
-          
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            We're launching with Tulum's best local vendors—cenote tours, private chefs, transportation, water sports, and beach clubs. More cities coming soon.
-          </p>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="relative bg-muted/30 py-20 sm:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-4">
-              Common Questions
-            </h2>
-          </div>
-
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={index} 
-                value={`item-${index}`}
-                className="bg-card border border-border/50 rounded-xl px-6 data-[state=open]:shadow-lg transition-all"
-              >
-                <AccordionTrigger className="text-left text-lg font-semibold py-6 hover:no-underline">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-6 text-base">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </section>
-
-      {/* Footer CTA Section */}
-      <section className="relative bg-gradient-to-br from-teal-600 to-teal-700 py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
-            Ready to Monetize Your Recommendations?
-          </h2>
-          
-          <p className="text-lg text-teal-100 mb-8">
-            Join 200+ Tulum hosts on the waitlist
-          </p>
-
-          <div className="max-w-md mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 h-14 px-6 rounded-xl bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white"
-              />
-              <Button 
-                className="h-14 px-8 rounded-xl bg-white text-teal-700 hover:bg-teal-50 font-semibold text-lg shadow-lg"
-              >
-                Join Waitlist
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
             </div>
           </div>
 
-          <p className="text-sm text-teal-200 mt-6">
-            We'll notify you when we launch. No spam, ever.
-          </p>
+          {/* Category Filters */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center flex-wrap">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`
+                  flex items-center gap-1.5 px-4 py-2 rounded-full border whitespace-nowrap text-sm
+                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
+                  ${
+                    selectedCategory === category.id
+                      ? "bg-gradient-to-r from-orange-500 to-purple-600 text-white border-transparent shadow-lg"
+                      : "bg-card border-border/50 hover:border-purple-500/30 hover:shadow-md"
+                  }
+                `}
+              >
+                <span className="text-base">{category.icon}</span>
+                <span className="font-medium">{category.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Experiences Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-12">
+            {filteredExperiences.map((experience) => (
+              <Link key={experience.id} to={`/experience/${experience.id}`} className="block group">
+                <div className="space-y-2">
+                  {/* Image - Half size */}
+                  <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
+                    <div
+                      className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
+                      style={{
+                        backgroundImage: `url(${getExperienceImage(experience)})`,
+                      }}
+                    />
+
+                    {/* Heart/Favorite Button */}
+                    <button
+                      onClick={(e) => toggleFavorite(experience.id, e)}
+                      className="absolute top-2 right-2 z-20 p-1.5 rounded-full hover:scale-110 active:scale-95 transition-transform"
+                    >
+                      <Heart
+                        className={`h-5 w-5 transition-all drop-shadow-md ${
+                          favorites.includes(experience.id)
+                            ? "fill-red-500 text-red-500"
+                            : "fill-black/50 text-white stroke-white stroke-2"
+                        }`}
+                      />
+                    </button>
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-0.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <h3 className="font-semibold text-sm leading-tight line-clamp-2 flex-1">{experience.name}</h3>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">{experience.vendor}</p>
+
+                    {/* Stats */}
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <div className="flex items-center gap-0.5">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold">{experience.rating}</span>
+                      </div>
+                      <span className="text-muted-foreground">({experience.reviewCount})</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">{experience.duration}</span>
+                    </div>
+
+                    {/* Price */}
+                    <div className="pt-0.5">
+                      <span className="text-sm font-semibold">${experience.price}</span>
+                      <span className="text-muted-foreground text-xs"> per person</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
