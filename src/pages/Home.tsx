@@ -168,12 +168,6 @@ const Home = () => {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 sm:py-40">
           <div className="text-center space-y-10">
-            {/* Tulum Badge */}
-            <Badge className="bg-gradient-to-r from-orange-500/10 to-purple-600/10 text-foreground border border-orange-500/30 px-4 py-1.5 text-sm font-medium">
-              <MapPin className="h-3.5 w-3.5 mr-1.5 text-orange-500" />
-              Launching in Tulum, Mexico
-            </Badge>
-
             {/* Logo */}
             <div className="mb-4">
               <img src={stackdLogo} alt="stackd logo" className="h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 drop-shadow-2xl mx-auto" />
@@ -348,7 +342,7 @@ const Home = () => {
       <section className="py-16 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">How stackd Works</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4 tracking-wide">How stackd Works</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Turn your local knowledge into passive income
             </p>
@@ -369,7 +363,7 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Commission Tracking</h3>
               <p className="text-muted-foreground">
-                See exactly what you've earned from each vendor, updated in real-time.
+                See exactly what you've earned from each vendor and get metrics on which vendors are performing well for you, updated in real-time.
               </p>
             </Card>
             <Card className="p-6 bg-card border-border/50 hover:border-purple-500/30 hover:shadow-lg transition-all duration-300">
@@ -389,7 +383,7 @@ const Home = () => {
       <section className="py-16 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Transparent Pricing</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4 tracking-wide">Transparent Pricing</h2>
             <p className="text-muted-foreground">
               No hidden fees. No monthly costs. Simple.
             </p>
@@ -443,7 +437,7 @@ const Home = () => {
       <section className="py-16 bg-muted/30">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Common Questions</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4 tracking-wide">Common Questions</h2>
           </div>
           <Accordion type="single" collapsible className="space-y-4">
             <AccordionItem value="item-1" className="bg-card rounded-lg border border-border px-6">
