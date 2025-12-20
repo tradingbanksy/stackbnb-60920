@@ -640,7 +640,7 @@ const AppView = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Airbnb Hosts</h3>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Organize and maintain your affiliate relationships effortlessly. Track commissions and manage partnerships all in one organized dashboard.
+                      Create your profile, add vendors from our directory or your own list, and share with guests so they can book through the platform.
                     </p>
                   </div>
                 </div>

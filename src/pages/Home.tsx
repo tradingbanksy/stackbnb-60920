@@ -354,7 +354,7 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Curated Recommendations</h3>
               <p className="text-muted-foreground">
-                Your personal recommendations, not algorithmic suggestions. Guests trust you, not ads.
+                Create your host profile and add preferred vendors from our directory or your own list. Share your profile with guests so they can book through the platform.
               </p>
             </Card>
             <Card className="p-6 bg-card border-border/50 hover:border-purple-500/30 hover:shadow-lg transition-all duration-300">
