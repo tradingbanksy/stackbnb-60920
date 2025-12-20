@@ -8,8 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap } from "lucide-react";
+import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Accordion,
   AccordionContent,
@@ -548,65 +553,74 @@ const AppView = () => {
 
               {/* FAQ Section */}
               <section className="space-y-3 pt-2">
-                <h2 className="text-base font-display font-bold tracking-wide">Common Questions</h2>
-                <Accordion type="single" collapsible className="space-y-2">
-                  <AccordionItem value="item-1" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      Do my guests pay more?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      No. Guests pay the vendor's regular price. Your commission comes from the vendor, not the guest.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-2" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      How do I get paid?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      Automatic payouts every week via Stripe. No chasing vendors for payment.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-3" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      What if I already recommend these places?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      Perfect! Now you'll get paid for recommendations you're already making for free.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-4" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      Is there a monthly fee?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      No monthly fee for hosts. stackd earns a small platform fee from vendors.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-5" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      What do vendors get?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      Advertising and exposure through trusted host recommendations — the most valuable kind of marketing.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-6" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      What do guests get?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      Convenience of booking highly recommended businesses in one place, curated by their host.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-7" className="bg-card rounded-lg border border-border px-4">
-                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                      I already have affiliate partnerships — can I still use stackd?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-xs text-muted-foreground pb-3">
-                      Absolutely! Keep your existing relationships and discover new ones through our platform.
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border hover:border-purple-500/30 transition-all cursor-pointer group">
+                      <h2 className="text-sm font-display font-bold tracking-wide">Common Questions</h2>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform duration-200" />
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <Accordion type="single" collapsible className="space-y-2">
+                      <AccordionItem value="item-1" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          Do my guests pay more?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          No. Guests pay the vendor's regular price. Your commission comes from the vendor, not the guest.
+                        </AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="item-2" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          How do I get paid?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          Automatic payouts every week via Stripe. No chasing vendors for payment.
+                        </AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="item-3" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          What if I already recommend these places?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          Perfect! Now you'll get paid for recommendations you're already making for free.
+                        </AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="item-4" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          Is there a monthly fee?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          No monthly fee for hosts. stackd earns a small platform fee from vendors.
+                        </AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="item-5" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          What do vendors get?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          Advertising and exposure through trusted host recommendations — the most valuable kind of marketing.
+                        </AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="item-6" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          What do guests get?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          Convenience of booking highly recommended businesses in one place, curated by their host.
+                        </AccordionContent>
+                      </AccordionItem>
+                      <AccordionItem value="item-7" className="bg-card rounded-lg border border-border px-4">
+                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                          I already have affiliate partnerships — can I still use stackd?
+                        </AccordionTrigger>
+                        <AccordionContent className="text-xs text-muted-foreground pb-3">
+                          Absolutely! Keep your existing relationships and discover new ones through our platform.
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </CollapsibleContent>
+                </Collapsible>
               </section>
 
               {/* Footer spacer for bottom nav */}
