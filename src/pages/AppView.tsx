@@ -598,6 +598,14 @@ const AppView = () => {
                       Convenience of booking highly recommended businesses in one place, curated by their host.
                     </AccordionContent>
                   </AccordionItem>
+                  <AccordionItem value="item-7" className="bg-card rounded-lg border border-border px-4">
+                    <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
+                      I already have affiliate partnerships — can I still use stackd?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs text-muted-foreground pb-3">
+                      Absolutely! Keep your existing relationships and discover new ones through our platform.
+                    </AccordionContent>
+                  </AccordionItem>
                 </Accordion>
               </section>
 

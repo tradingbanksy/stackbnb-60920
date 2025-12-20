@@ -496,6 +496,14 @@ const Home = () => {
                 Guests get the convenience of booking highly recommended businesses in one place — curated by their host, not algorithms.
               </AccordionContent>
             </AccordionItem>
+            <AccordionItem value="item-8" className="bg-card rounded-lg border border-border px-6">
+              <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                I already have affiliate partnerships — can I still use stackd?
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">
+                Yes, absolutely! You can continue using your existing affiliate relationships and add new ones through our platform. stackd helps you discover even more local programs and manage everything in one place.
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </div>
       </section>
