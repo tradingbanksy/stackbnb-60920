@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -51,7 +51,6 @@ import fishingImg from "@/assets/experiences/fishing.jpg";
 import cookingImg from "@/assets/experiences/cooking.jpg";
 import balloonImg from "@/assets/experiences/balloon.jpg";
 import wineImg from "@/assets/experiences/wine.jpg";
-import AppSplash from "@/components/AppSplash";
 
 // Restaurant components
 import RestaurantCard from "@/components/RestaurantCard";
@@ -92,8 +91,6 @@ const getExperienceImage = (experience: any) => {
 };
 
 const AppView = () => {
-  const navigate = useNavigate();
-  const [showSplash, setShowSplash] = useState(true);
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
@@ -163,19 +160,6 @@ const AppView = () => {
     !exp.category.toLowerCase().includes('dining') && 
     !exp.category.toLowerCase().includes('food')
   ).slice(0, 10);
-
-  const handleSplashSelect = (choice: "signup" | "explore") => {
-    if (choice === "signup") {
-      navigate("/auth?signup=true");
-    } else {
-      setShowSplash(false);
-    }
-  };
-
-  // Show splash screen first
-  if (showSplash) {
-    return <AppSplash onSelect={handleSplashSelect} />;
-  }
 
   return (
     <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
