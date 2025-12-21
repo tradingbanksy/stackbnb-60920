@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 
 interface AppSplashProps {
@@ -6,6 +6,16 @@ interface AppSplashProps {
 }
 
 const AppSplash = ({ onSelect }: AppSplashProps) => {
+  const [shaking, setShaking] = useState<"signup" | "explore" | null>(null);
+
+  const handleClick = (choice: "signup" | "explore") => {
+    setShaking(choice);
+    setTimeout(() => {
+      setShaking(null);
+      onSelect(choice);
+    }, 400);
+  };
+
   return (
     <div className="min-h-screen h-screen w-screen flex justify-center overflow-hidden" style={{ backgroundColor: '#FAF9F6' }}>
       {/* Phone Container - Centered & Constrained */}
@@ -17,14 +27,16 @@ const AppSplash = ({ onSelect }: AppSplashProps) => {
           className="h-96 w-96 mb-12 drop-shadow-lg" 
         />
 
-        {/* Button Options - Styled like search bar */}
-        <div className="w-full max-w-[280px] space-y-3">
+        {/* Button Options - Side by side */}
+        <div className="flex gap-4">
           {/* Sign Up Button */}
           <div className="relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/40 to-purple-600/40 rounded-full blur-md"></div>
             <button
-              onClick={() => onSelect("signup")}
-              className="relative w-full bg-white/90 rounded-full border border-gray-200/50 backdrop-blur-sm px-5 py-4 text-sm font-medium text-gray-700 hover:bg-white transition-all duration-200"
+              onClick={() => handleClick("signup")}
+              className={`relative bg-white/90 rounded-full border border-gray-200/50 backdrop-blur-sm px-6 py-3 text-sm font-medium text-gray-700 hover:bg-white transition-all duration-200 ${
+                shaking === "signup" ? "animate-[shake_0.4s_ease-in-out]" : ""
+              }`}
             >
               Sign Up
             </button>
@@ -32,16 +44,28 @@ const AppSplash = ({ onSelect }: AppSplashProps) => {
 
           {/* Explore Button */}
           <div className="relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/40 to-purple-600/40 rounded-full blur-md"></div>
             <button
-              onClick={() => onSelect("explore")}
-              className="relative w-full bg-white/90 rounded-full border border-gray-200/50 backdrop-blur-sm px-5 py-4 text-sm font-medium text-gray-700 hover:bg-white transition-all duration-200"
+              onClick={() => handleClick("explore")}
+              className={`relative bg-white/90 rounded-full border border-gray-200/50 backdrop-blur-sm px-6 py-3 text-sm font-medium text-gray-700 hover:bg-white transition-all duration-200 ${
+                shaking === "explore" ? "animate-[shake_0.4s_ease-in-out]" : ""
+              }`}
             >
               Explore
             </button>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-4px); }
+          40% { transform: translateX(4px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+      `}</style>
     </div>
   );
 };
