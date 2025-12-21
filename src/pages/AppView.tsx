@@ -261,10 +261,10 @@ const AppView = () => {
                     <div className="h-4 w-px bg-border/50 flex-shrink-0" />
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 min-w-[100px]">
                           <CalendarDays className="h-4 w-4 text-primary" />
-                          <span className="text-xs">
-                            {selectedDate ? format(selectedDate, "MMM d") : "When?"}
+                          <span className="text-xs whitespace-nowrap">
+                            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "When?"}
                           </span>
                         </button>
                       </PopoverTrigger>
