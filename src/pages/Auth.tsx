@@ -79,11 +79,11 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-6">
         <Button
           variant="ghost"
-          onClick={() => navigate("/appview")}
+          onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/appview')}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
+          Back
         </Button>
 
         <Card className="p-6">

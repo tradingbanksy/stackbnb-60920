@@ -98,6 +98,7 @@ const AppView = () => {
   const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
@@ -259,7 +260,7 @@ const AppView = () => {
                       className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground flex-1 min-w-0"
                     />
                     <div className="h-4 w-px bg-border/50 flex-shrink-0" />
-                    <Popover>
+                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
                         <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 min-w-[100px]">
                           <CalendarDays className="h-4 w-4 text-primary" />
@@ -272,7 +273,10 @@ const AppView = () => {
                         <Calendar
                           mode="single"
                           selected={selectedDate}
-                          onSelect={setSelectedDate}
+                          onSelect={(date) => {
+                            setSelectedDate(date);
+                            setCalendarOpen(false);
+                          }}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
                         />
@@ -765,7 +769,7 @@ const AppView = () => {
             </Link>
 
             <Link 
-              to="/?view=browser"
+              to="/home"
               className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
             >
               <Monitor className="h-5 w-5" />
