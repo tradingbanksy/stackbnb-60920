@@ -14,43 +14,46 @@ const PaymentPage = () => {
   const { bookingData, updateGuestData } = useUser();
   const { toast } = useToast();
   
-  const [formData, setFormData] = useState({
+  // Non-sensitive guest contact info (can be stored in context)
+  const [guestInfo, setGuestInfo] = useState({
     fullName: '',
     email: '',
     phone: '',
-    cardNumber: '',
-    expiration: '',
-    cvv: '',
   });
+  
+  // SECURITY: Payment card data kept in local state only, never persisted
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiration, setExpiration] = useState('');
+  const [cvv, setCvv] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.fullName.trim()) {
+    if (!guestInfo.fullName.trim()) {
       newErrors.fullName = "Name is required";
     }
 
-    if (!formData.email.trim()) {
+    if (!guestInfo.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(guestInfo.email)) {
       newErrors.email = "Email is invalid";
     }
 
-    if (!formData.phone.trim()) {
+    if (!guestInfo.phone.trim()) {
       newErrors.phone = "Phone is required";
     }
 
-    if (!formData.cardNumber.trim()) {
+    if (!cardNumber.trim()) {
       newErrors.cardNumber = "Card number is required";
     }
 
-    if (!formData.expiration.trim()) {
+    if (!expiration.trim()) {
       newErrors.expiration = "Expiration is required";
     }
 
-    if (!formData.cvv.trim()) {
+    if (!cvv.trim()) {
       newErrors.cvv = "CVV is required";
     }
 
@@ -62,7 +65,8 @@ const PaymentPage = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      updateGuestData(formData);
+      // SECURITY: Only save non-sensitive guest contact info to context
+      updateGuestData(guestInfo);
       toast({
         title: "Processing payment...",
         description: "Please wait",
@@ -80,9 +84,9 @@ const PaymentPage = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGuestInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setGuestInfo(prev => ({
       ...prev,
       [name]: value
     }));
@@ -156,8 +160,8 @@ const PaymentPage = () => {
               <Input
                 id="fullName"
                 name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
+                value={guestInfo.fullName}
+                onChange={handleGuestInfoChange}
                 placeholder="John Doe"
                 className={errors.fullName ? "border-destructive" : ""}
               />
@@ -172,8 +176,8 @@ const PaymentPage = () => {
                 id="email"
                 name="email"
                 type="email"
-                value={formData.email}
-                onChange={handleChange}
+                value={guestInfo.email}
+                onChange={handleGuestInfoChange}
                 placeholder="john@example.com"
                 className={errors.email ? "border-destructive" : ""}
               />
@@ -188,8 +192,8 @@ const PaymentPage = () => {
                 id="phone"
                 name="phone"
                 type="tel"
-                value={formData.phone}
-                onChange={handleChange}
+                value={guestInfo.phone}
+                onChange={handleGuestInfoChange}
                 placeholder="(555) 123-4567"
                 className={errors.phone ? "border-destructive" : ""}
               />
@@ -204,11 +208,15 @@ const PaymentPage = () => {
                 <Input
                   id="cardNumber"
                   name="cardNumber"
-                  value={formData.cardNumber}
-                  onChange={handleChange}
+                  value={cardNumber}
+                  onChange={(e) => {
+                    setCardNumber(e.target.value);
+                    if (errors.cardNumber) setErrors(prev => ({ ...prev, cardNumber: '' }));
+                  }}
                   placeholder="1234 5678 9012 3456"
                   maxLength={19}
                   className={errors.cardNumber ? "border-destructive" : ""}
+                  autoComplete="off"
                 />
                 <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
@@ -223,11 +231,15 @@ const PaymentPage = () => {
                 <Input
                   id="expiration"
                   name="expiration"
-                  value={formData.expiration}
-                  onChange={handleChange}
+                  value={expiration}
+                  onChange={(e) => {
+                    setExpiration(e.target.value);
+                    if (errors.expiration) setErrors(prev => ({ ...prev, expiration: '' }));
+                  }}
                   placeholder="MM/YY"
                   maxLength={5}
                   className={errors.expiration ? "border-destructive" : ""}
+                  autoComplete="off"
                 />
                 {errors.expiration && (
                   <p className="text-xs text-destructive">{errors.expiration}</p>
@@ -239,11 +251,15 @@ const PaymentPage = () => {
                 <Input
                   id="cvv"
                   name="cvv"
-                  value={formData.cvv}
-                  onChange={handleChange}
+                  value={cvv}
+                  onChange={(e) => {
+                    setCvv(e.target.value);
+                    if (errors.cvv) setErrors(prev => ({ ...prev, cvv: '' }));
+                  }}
                   placeholder="123"
                   maxLength={3}
                   className={errors.cvv ? "border-destructive" : ""}
+                  autoComplete="off"
                 />
                 {errors.cvv && (
                   <p className="text-xs text-destructive">{errors.cvv}</p>

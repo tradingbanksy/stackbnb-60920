@@ -22,9 +22,11 @@ const VendorSignup = () => {
     contactName: vendorSignupData.contactName || '',
     email: vendorSignupData.email || '',
     phone: vendorSignupData.phone || '',
-    password: vendorSignupData.password || '',
-    confirmPassword: vendorSignupData.confirmPassword || '',
   });
+  
+  // SECURITY: Password fields kept in local state only, never persisted
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -53,13 +55,13 @@ const VendorSignup = () => {
       newErrors.phone = "Phone is required";
     }
 
-    if (!formData.password) {
+    if (!password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    } else if (password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
@@ -218,8 +220,11 @@ const VendorSignup = () => {
               id="password" 
               name="password"
               type="password" 
-              value={formData.password}
-              onChange={handleChange}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+              }}
               className={errors.password ? "border-destructive" : ""}
             />
             {errors.password && (
@@ -233,8 +238,11 @@ const VendorSignup = () => {
               id="confirmPassword" 
               name="confirmPassword"
               type="password" 
-              value={formData.confirmPassword}
-              onChange={handleChange}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
+              }}
               className={errors.confirmPassword ? "border-destructive" : ""}
             />
             {errors.confirmPassword && (

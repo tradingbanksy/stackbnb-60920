@@ -1,12 +1,11 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
+// SECURITY: Password fields removed from stored data - only used during form submission
 interface HostSignupData {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  password: string;
-  confirmPassword: string;
 }
 
 interface PropertyData {
@@ -18,23 +17,22 @@ interface PropertyData {
   zip: string;
 }
 
+// SECURITY: Password fields removed from stored data - only used during form submission
 interface VendorSignupData {
   businessName: string;
   businessType: string;
   contactName: string;
   email: string;
   phone: string;
-  password: string;
-  confirmPassword: string;
 }
 
+// SECURITY: taxId removed - should only be submitted directly to server
 interface BusinessData {
   address: string;
   city: string;
   state: string;
   zip: string;
   description: string;
-  taxId: string;
 }
 
 interface BookingData {
@@ -48,17 +46,16 @@ interface BookingData {
   totalPrice: number;
 }
 
+// SECURITY: Payment card data removed entirely - should use tokenized payment processor
 interface GuestData {
   fullName: string;
   email: string;
   phone: string;
-  cardNumber: string;
-  expiration: string;
-  cvv: string;
 }
 
 // Note: Authentication is handled by AuthContext using Supabase sessions
 // This context only manages signup flow data and booking data
+// SECURITY: Sensitive data (passwords, payment info, tax IDs) are NOT stored
 interface UserContextType {
   hostSignupData: HostSignupData;
   propertyData: PropertyData;
@@ -80,8 +77,6 @@ const initialHostSignupData: HostSignupData = {
   lastName: '',
   email: '',
   phone: '',
-  password: '',
-  confirmPassword: '',
 };
 
 const initialPropertyData: PropertyData = {
@@ -99,8 +94,6 @@ const initialVendorSignupData: VendorSignupData = {
   contactName: '',
   email: '',
   phone: '',
-  password: '',
-  confirmPassword: '',
 };
 
 const initialBusinessData: BusinessData = {
@@ -109,7 +102,6 @@ const initialBusinessData: BusinessData = {
   state: '',
   zip: '',
   description: '',
-  taxId: '',
 };
 
 const initialBookingData: BookingData = {
@@ -127,75 +119,81 @@ const initialGuestData: GuestData = {
   fullName: '',
   email: '',
   phone: '',
-  cardNumber: '',
-  expiration: '',
-  cvv: '',
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  // Signup flow data - stored in localStorage for multi-step form persistence
+  // Signup flow data - stored in sessionStorage for multi-step form persistence
+  // SECURITY: Using sessionStorage instead of localStorage (clears on browser close)
   const [hostSignupData, setHostSignupData] = useState<HostSignupData>(() => {
-    const stored = localStorage.getItem('hostSignupData');
+    const stored = sessionStorage.getItem('hostSignupData');
     return stored ? JSON.parse(stored) : initialHostSignupData;
   });
 
   const [propertyData, setPropertyData] = useState<PropertyData>(() => {
-    const stored = localStorage.getItem('propertyData');
+    const stored = sessionStorage.getItem('propertyData');
     return stored ? JSON.parse(stored) : initialPropertyData;
   });
 
   const [vendorSignupData, setVendorSignupData] = useState<VendorSignupData>(() => {
-    const stored = localStorage.getItem('vendorSignupData');
+    const stored = sessionStorage.getItem('vendorSignupData');
     return stored ? JSON.parse(stored) : initialVendorSignupData;
   });
 
   const [businessData, setBusinessData] = useState<BusinessData>(() => {
-    const stored = localStorage.getItem('businessData');
+    const stored = sessionStorage.getItem('businessData');
     return stored ? JSON.parse(stored) : initialBusinessData;
   });
 
   const [bookingData, setBookingData] = useState<BookingData>(() => {
-    const stored = localStorage.getItem('bookingData');
+    const stored = sessionStorage.getItem('bookingData');
     return stored ? JSON.parse(stored) : initialBookingData;
   });
 
+  // SECURITY: Guest data (name, email, phone only) stored in sessionStorage
   const [guestData, setGuestData] = useState<GuestData>(() => {
-    const stored = localStorage.getItem('guestData');
+    const stored = sessionStorage.getItem('guestData');
     return stored ? JSON.parse(stored) : initialGuestData;
   });
 
   // Clean up old vulnerable localStorage keys on mount
   useEffect(() => {
+    // Remove old localStorage data (migrating to sessionStorage)
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userRole');
     localStorage.removeItem('hasCompletedSignup');
+    localStorage.removeItem('hostSignupData');
+    localStorage.removeItem('propertyData');
+    localStorage.removeItem('vendorSignupData');
+    localStorage.removeItem('businessData');
+    localStorage.removeItem('bookingData');
+    localStorage.removeItem('guestData');
   }, []);
 
-  // Persist signup flow data to localStorage
+  // Persist signup flow data to sessionStorage (non-sensitive data only)
   useEffect(() => {
-    localStorage.setItem('hostSignupData', JSON.stringify(hostSignupData));
+    sessionStorage.setItem('hostSignupData', JSON.stringify(hostSignupData));
   }, [hostSignupData]);
 
   useEffect(() => {
-    localStorage.setItem('propertyData', JSON.stringify(propertyData));
+    sessionStorage.setItem('propertyData', JSON.stringify(propertyData));
   }, [propertyData]);
 
   useEffect(() => {
-    localStorage.setItem('vendorSignupData', JSON.stringify(vendorSignupData));
+    sessionStorage.setItem('vendorSignupData', JSON.stringify(vendorSignupData));
   }, [vendorSignupData]);
 
   useEffect(() => {
-    localStorage.setItem('businessData', JSON.stringify(businessData));
+    sessionStorage.setItem('businessData', JSON.stringify(businessData));
   }, [businessData]);
 
   useEffect(() => {
-    localStorage.setItem('bookingData', JSON.stringify(bookingData));
+    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
   }, [bookingData]);
 
   useEffect(() => {
-    localStorage.setItem('guestData', JSON.stringify(guestData));
+    sessionStorage.setItem('guestData', JSON.stringify(guestData));
   }, [guestData]);
 
   const updateHostSignupData = (data: Partial<HostSignupData>) => {
@@ -227,10 +225,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setPropertyData(initialPropertyData);
     setVendorSignupData(initialVendorSignupData);
     setBusinessData(initialBusinessData);
-    localStorage.removeItem('hostSignupData');
-    localStorage.removeItem('propertyData');
-    localStorage.removeItem('vendorSignupData');
-    localStorage.removeItem('businessData');
+    sessionStorage.removeItem('hostSignupData');
+    sessionStorage.removeItem('propertyData');
+    sessionStorage.removeItem('vendorSignupData');
+    sessionStorage.removeItem('businessData');
   };
 
   return (

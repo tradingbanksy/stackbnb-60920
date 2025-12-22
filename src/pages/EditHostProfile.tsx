@@ -29,8 +29,6 @@ const EditHostProfile = () => {
       lastName: formData.lastName,
       email: formData.email,
       phone: formData.phone,
-      password: hostSignupData.password,
-      confirmPassword: hostSignupData.confirmPassword,
     });
     
     updatePropertyData({

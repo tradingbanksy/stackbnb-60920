@@ -23,8 +23,10 @@ const VendorBusinessDetails = () => {
     state: businessData.state || '',
     zip: businessData.zip || '',
     description: businessData.description || '',
-    taxId: businessData.taxId || '',
   });
+  
+  // SECURITY: Tax ID kept in local state only, submitted directly to server
+  const [taxId, setTaxId] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -51,7 +53,7 @@ const VendorBusinessDetails = () => {
       newErrors.description = "Business description is required";
     }
 
-    if (!formData.taxId.trim()) {
+    if (!taxId.trim()) {
       newErrors.taxId = "Tax ID/EIN is required";
     }
 
@@ -210,11 +212,12 @@ const VendorBusinessDetails = () => {
           <div className="space-y-2">
             <Label htmlFor="taxId">Tax ID / EIN *</Label>
             <Input 
-              id="taxId" 
-              name="taxId"
-              value={formData.taxId}
-              onChange={handleChange}
-              placeholder="12-3456789" 
+              value={taxId}
+              onChange={(e) => {
+                setTaxId(e.target.value);
+                if (errors.taxId) setErrors(prev => ({ ...prev, taxId: '' }));
+              }}
+              placeholder="12-3456789"
               className={errors.taxId ? "border-destructive" : ""}
             />
             {errors.taxId && (
