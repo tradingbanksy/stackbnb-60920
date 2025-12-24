@@ -21,21 +21,21 @@ const SplashPage = () => {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
       <Snowfall />
       {/* Logo with Reflection */}
-      <div className="mb-12 relative z-10 flex flex-col items-center">
+      <div className="mb-12 relative z-10">
         <img 
           src={stackdLogo} 
           alt="stackd logo" 
-          className="h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 drop-shadow-2xl" 
+          className="h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 drop-shadow-2xl relative z-10" 
         />
-        {/* Reflection */}
+        {/* Reflection to the right */}
         <img 
           src={stackdLogo} 
           alt="" 
           aria-hidden="true"
-          className="h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 -mt-8 transform scale-y-[-1] opacity-20 blur-[2px]"
+          className="absolute top-0 left-[85%] h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 transform scale-x-[-1] opacity-15 blur-[3px] z-0"
           style={{
-            maskImage: 'linear-gradient(to bottom, transparent 20%, black 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 20%, black 100%)',
+            maskImage: 'linear-gradient(to right, black 0%, transparent 80%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 0%, transparent 80%)',
           }}
         />
       </div>
