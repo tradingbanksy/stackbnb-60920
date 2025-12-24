@@ -21,11 +21,32 @@ const SplashPage = () => {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
       <Snowfall />
       
-      {/* Top right shadow effect */}
+      {/* Corner shadow effects */}
       <div 
         className="absolute top-0 right-0 w-96 h-96 pointer-events-none"
         style={{ 
           background: 'radial-gradient(circle at top right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
+          filter: 'blur(40px)'
+        }}
+      />
+      <div 
+        className="absolute top-0 left-0 w-96 h-96 pointer-events-none"
+        style={{ 
+          background: 'radial-gradient(circle at top left, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
+          filter: 'blur(40px)'
+        }}
+      />
+      <div 
+        className="absolute bottom-0 right-0 w-96 h-96 pointer-events-none"
+        style={{ 
+          background: 'radial-gradient(circle at bottom right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
+          filter: 'blur(40px)'
+        }}
+      />
+      <div 
+        className="absolute bottom-0 left-0 w-96 h-96 pointer-events-none"
+        style={{ 
+          background: 'radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
           filter: 'blur(40px)'
         }}
       />
