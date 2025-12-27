@@ -163,7 +163,7 @@ const Auth = () => {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-card px-2 text-muted-foreground">continue with</span>
+                <span className="bg-card px-2 text-muted-foreground">Continue with</span>
               </div>
             </div>
 
