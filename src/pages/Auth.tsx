@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Apple } from "lucide-react";
+import { FaGoogle, FaAirbnb } from "react-icons/fa";
 import { authSchema, type AuthFormData } from "@/lib/validations";
 import {
   Form,
@@ -70,6 +71,26 @@ const Auth = () => {
         variant: "destructive",
       });
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/appview`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
@@ -160,6 +181,56 @@ const Auth = () => {
                   ? "Already have an account? Sign in"
                   : "Don't have an account? Sign up"}
               </button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+              >
+                <FaGoogle className="h-4 w-4 mr-2" />
+                Continue with Google
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => toast({
+                  title: "Coming Soon",
+                  description: "Apple Sign-In will be available soon.",
+                })}
+              >
+                <Apple className="h-4 w-4 mr-2" />
+                Continue with Apple
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => toast({
+                  title: "Coming Soon",
+                  description: "Airbnb login will be available soon.",
+                })}
+              >
+                <FaAirbnb className="h-4 w-4 mr-2" />
+                Continue with Airbnb
+              </Button>
             </div>
           </div>
         </Card>
