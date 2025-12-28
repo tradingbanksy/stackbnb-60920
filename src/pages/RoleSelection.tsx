@@ -11,7 +11,6 @@ const RoleSelection = () => {
           src={stackdLogo}
           alt="stackd logo"
           className="h-32 w-32 sm:h-40 sm:w-40 mx-auto"
-          style={{ filter: "drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))" }}
         />
       </div>
 
