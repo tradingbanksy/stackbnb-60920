@@ -5,54 +5,53 @@ import { Building2, Store } from "lucide-react";
 const RoleSelection = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      
       {/* Corner shadow effects */}
-      <div 
+      <div
         className="absolute top-0 right-0 w-96 h-96 pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle at top right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
-          filter: 'blur(40px)'
+        style={{
+          background:
+            "radial-gradient(circle at top right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)",
+          filter: "blur(40px)",
         }}
       />
-      <div 
+      <div
         className="absolute top-0 left-0 w-96 h-96 pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle at top left, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
-          filter: 'blur(40px)'
+        style={{
+          background:
+            "radial-gradient(circle at top left, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)",
+          filter: "blur(40px)",
         }}
       />
-      <div 
+      <div
         className="absolute bottom-0 right-0 w-96 h-96 pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle at bottom right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
-          filter: 'blur(40px)'
+        style={{
+          background:
+            "radial-gradient(circle at bottom right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)",
+          filter: "blur(40px)",
         }}
       />
-      <div 
+      <div
         className="absolute bottom-0 left-0 w-96 h-96 pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)',
-          filter: 'blur(40px)'
+        style={{
+          background:
+            "radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 30%, transparent 70%)",
+          filter: "blur(40px)",
         }}
       />
-      
+
       {/* Logo */}
       <div className="mb-6">
-        <img 
-          src={stackdLogo} 
-          alt="stackd logo" 
+        <img
+          src={stackdLogo}
+          alt="stackd logo"
           className="h-32 w-32 sm:h-40 sm:w-40 mx-auto"
-          style={{ filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))' }}
+          style={{ filter: "drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))" }}
         />
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2 text-center">
-        How will you use stackd?
-      </h1>
-      <p className="text-muted-foreground text-sm mb-10 text-center max-w-sm">
-        Choose your role to get started
-      </p>
+      <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2 text-center">Choose your role.</h1>
+      <p className="text-muted-foreground text-sm mb-10 text-center max-w-sm">Choose your role to get started</p>
 
       {/* Role Cards */}
       <div className="flex flex-col sm:flex-row items-stretch gap-4 w-full max-w-2xl">
@@ -90,10 +89,7 @@ const RoleSelection = () => {
       </div>
 
       {/* Back link */}
-      <Link 
-        to="/"
-        className="mt-10 text-muted-foreground text-sm hover:text-foreground transition-colors"
-      >
+      <Link to="/" className="mt-10 text-muted-foreground text-sm hover:text-foreground transition-colors">
         ← Back to home
       </Link>
     </div>
