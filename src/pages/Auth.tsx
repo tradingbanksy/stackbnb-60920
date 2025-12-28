@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "@/components/ui/card";
@@ -14,9 +14,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get("role");
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  const getRedirectPath = () => {
+    if (role === "host") return "/host-property-info";
+    if (role === "vendor") return "/vendor-signup";
+    return "/appview";
+  };
 
   const form = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
@@ -31,21 +39,22 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        const redirectPath = getRedirectPath();
         const { error } = await supabase.auth.signUp({
           email: data.email.trim(),
           password: data.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/appview`,
+            emailRedirectTo: `${window.location.origin}${redirectPath}`,
           },
         });
         if (error) throw error;
         toast({
           title: "Success!",
-          description: "Account created successfully. You can now sign in.",
+          description: "Account created successfully.",
         });
-        setIsSignUp(false);
-        form.reset();
+        navigate(redirectPath);
       } else {
+        const redirectPath = getRedirectPath();
         const { error } = await supabase.auth.signInWithPassword({
           email: data.email.trim(),
           password: data.password,
@@ -55,7 +64,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
-        navigate("/appview");
+        navigate(redirectPath);
       }
     } catch (error: any) {
       toast({
@@ -70,11 +79,12 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
+    const redirectPath = getRedirectPath();
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/appview`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         },
       });
       if (error) throw error;
