@@ -1,19 +1,20 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import stackdLogo from "@/assets/stackd-logo-new.png";
+import { Building2, Store } from "lucide-react";
 
-const SplashPage = () => {
-  const [shakeExplore, setShakeExplore] = useState(false);
-  const [shakeSignup, setShakeSignup] = useState(false);
+const RoleSelection = () => {
+  const [shakeHost, setShakeHost] = useState(false);
+  const [shakeVendor, setShakeVendor] = useState(false);
 
-  const handleExploreClick = () => {
-    setShakeExplore(true);
-    setTimeout(() => setShakeExplore(false), 500);
+  const handleHostClick = () => {
+    setShakeHost(true);
+    setTimeout(() => setShakeHost(false), 500);
   };
 
-  const handleSignupClick = () => {
-    setShakeSignup(true);
-    setTimeout(() => setShakeSignup(false), 500);
+  const handleVendorClick = () => {
+    setShakeVendor(true);
+    setTimeout(() => setShakeVendor(false), 500);
   };
 
   return (
@@ -50,23 +51,31 @@ const SplashPage = () => {
       />
       
       {/* Logo */}
-      <div className="mb-12">
+      <div className="mb-8">
         <img 
           src={stackdLogo} 
           alt="stackd logo" 
-          className="h-64 w-64 sm:h-80 sm:w-80 lg:h-96 lg:w-96 mx-auto"
+          className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 mx-auto"
           style={{ filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))' }}
         />
       </div>
 
-      {/* Buttons Container */}
-      <div className="flex items-center gap-5">
-        {/* Sign Up Button */}
+      {/* Title */}
+      <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2 text-center">
+        Join as
+      </h1>
+      <p className="text-muted-foreground text-sm mb-10 text-center">
+        Select how you'd like to use stackd
+      </p>
+
+      {/* Role Buttons */}
+      <div className="flex flex-col sm:flex-row items-center gap-5 w-full max-w-md">
+        {/* Host Button */}
         <Link
-          to="/select-role"
-          onClick={handleSignupClick}
+          to="/auth?role=host"
+          onClick={handleHostClick}
           className={`
-            relative overflow-hidden px-10 py-3.5 rounded-full font-medium text-sm uppercase tracking-widest
+            relative overflow-hidden w-full sm:w-1/2 px-8 py-6 rounded-2xl font-medium text-center
             bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400
             text-white
             shadow-[0_4px_20px_rgba(168,85,247,0.4)]
@@ -74,34 +83,45 @@ const SplashPage = () => {
             hover:shadow-[0_6px_30px_rgba(168,85,247,0.6)]
             hover:scale-105
             active:scale-95
-            ${shakeSignup ? 'animate-shake' : ''}
+            ${shakeHost ? 'animate-shake' : ''}
           `}
         >
-          Sign Up
+          <Building2 className="w-8 h-8 mx-auto mb-3" />
+          <span className="text-lg font-semibold block">Host</span>
+          <span className="text-xs opacity-80 block mt-1">List your property</span>
         </Link>
 
-        {/* Explore Button */}
+        {/* Vendor Button */}
         <Link
-          to="/appview"
-          onClick={handleExploreClick}
+          to="/auth?role=vendor"
+          onClick={handleVendorClick}
           className={`
-            relative px-10 py-3.5 rounded-full font-medium text-sm uppercase tracking-widest
-            bg-transparent
-            text-foreground
-            border-2 border-foreground/30
+            relative overflow-hidden w-full sm:w-1/2 px-8 py-6 rounded-2xl font-medium text-center
+            bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400
+            text-white
+            shadow-[0_4px_20px_rgba(168,85,247,0.4)]
             transition-all duration-300
-            hover:border-foreground/60
-            hover:bg-foreground/5
+            hover:shadow-[0_6px_30px_rgba(168,85,247,0.6)]
             hover:scale-105
             active:scale-95
-            ${shakeExplore ? 'animate-shake' : ''}
+            ${shakeVendor ? 'animate-shake' : ''}
           `}
         >
-          Explore
+          <Store className="w-8 h-8 mx-auto mb-3" />
+          <span className="text-lg font-semibold block">Vendor</span>
+          <span className="text-xs opacity-80 block mt-1">Offer your services</span>
         </Link>
       </div>
+
+      {/* Back link */}
+      <Link 
+        to="/"
+        className="mt-10 text-muted-foreground text-sm hover:text-foreground transition-colors"
+      >
+        ← Back to home
+      </Link>
     </div>
   );
 };
 
-export default SplashPage;
+export default RoleSelection;
