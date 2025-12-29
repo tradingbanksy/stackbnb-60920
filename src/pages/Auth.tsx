@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,18 +11,33 @@ import { ArrowLeft, Apple } from "lucide-react";
 import { FaAirbnb } from "react-icons/fa";
 import { authSchema, type AuthFormData } from "@/lib/validations";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const role = searchParams.get("role");
+  const role = searchParams.get("role") as "host" | "vendor" | null;
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(true);
   const [loading, setLoading] = useState(false);
+  const { isAuthenticated, isLoading, role: userRole, setUserRole } = useAuthContext();
 
-  const getRedirectPath = () => {
-    if (role === "host") return "/host-dashboard";
-    if (role === "vendor") return "/vendor-dashboard";
+  // Redirect authenticated users based on their role
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && userRole) {
+      if (userRole === "host") {
+        navigate("/host/dashboard", { replace: true });
+      } else if (userRole === "vendor") {
+        navigate("/vendor/dashboard", { replace: true });
+      } else {
+        navigate("/appview", { replace: true });
+      }
+    }
+  }, [isAuthenticated, isLoading, userRole, navigate]);
+
+  const getRedirectPath = (userRole: string | null) => {
+    if (userRole === "host") return "/host/dashboard";
+    if (userRole === "vendor") return "/vendor/dashboard";
     return "/appview";
   };
 
@@ -39,8 +54,8 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const redirectPath = getRedirectPath();
-        const { error } = await supabase.auth.signUp({
+        const redirectPath = getRedirectPath(role);
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email: data.email.trim(),
           password: data.password,
           options: {
@@ -48,18 +63,39 @@ const Auth = () => {
           },
         });
         if (error) throw error;
+        
+        // Save user role if provided
+        if (signUpData.user && role) {
+          const { error: roleError } = await setUserRole(role);
+          if (roleError) {
+            console.error("Error setting user role:", roleError);
+          }
+        }
+        
         toast({
           title: "Success!",
           description: "Account created successfully.",
         });
         navigate(redirectPath);
       } else {
-        const redirectPath = getRedirectPath();
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email: data.email.trim(),
           password: data.password,
         });
         if (error) throw error;
+        
+        // Fetch user's role and redirect accordingly
+        let redirectPath = "/appview";
+        if (signInData.user) {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', signInData.user.id)
+            .maybeSingle();
+          
+          redirectPath = getRedirectPath(roleData?.role ?? null);
+        }
+        
         toast({
           title: "Welcome back!",
           description: "Successfully signed in.",
@@ -79,7 +115,7 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const redirectPath = getRedirectPath();
+    const redirectPath = getRedirectPath(role);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
