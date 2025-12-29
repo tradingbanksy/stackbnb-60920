@@ -21,8 +21,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   const getRedirectPath = () => {
-    if (role === "host") return "/host-property-info";
-    if (role === "vendor") return "/vendor-signup";
+    if (role === "host") return "/host-dashboard";
+    if (role === "vendor") return "/vendor-dashboard";
     return "/appview";
   };
 
