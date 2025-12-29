@@ -22,24 +22,17 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { isAuthenticated, isLoading, role: userRole, setUserRole } = useAuthContext();
 
-  // Redirect authenticated users based on their role
+  // Only redirect authenticated users who have an existing role in the database
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      // If user has a role, redirect to appropriate dashboard
+    if (!isLoading && isAuthenticated && userRole) {
       if (userRole === "host") {
         navigate("/host/dashboard", { replace: true });
       } else if (userRole === "vendor") {
         navigate("/vendor/dashboard", { replace: true });
-      } else if (role) {
-        // If URL has role param but userRole not set yet, use that
-        if (role === "host") {
-          navigate("/host/dashboard", { replace: true });
-        } else if (role === "vendor") {
-          navigate("/vendor/dashboard", { replace: true });
-        }
       }
+      // Don't redirect if no role - let them complete signup flow
     }
-  }, [isAuthenticated, isLoading, userRole, role, navigate]);
+  }, [isAuthenticated, isLoading, userRole, navigate]);
 
   const getRedirectPath = (selectedRole: string | null) => {
     if (selectedRole === "host") return "/host/dashboard";
