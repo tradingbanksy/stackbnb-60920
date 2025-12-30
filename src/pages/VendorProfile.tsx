@@ -3,11 +3,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronRight, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import VendorBottomNav from "@/components/VendorBottomNav";
-import { useUser } from "@/contexts/UserContext";
+import { useSignup } from "@/contexts/SignupContext";
 
 const VendorProfile = () => {
   const navigate = useNavigate();
-  const { vendorSignupData, businessData } = useUser();
+  const { vendorSignupData, businessData } = useSignup();
 
   const contactName = vendorSignupData.contactName || "John Smith";
   const businessName = vendorSignupData.businessName || "Ocean Adventures";

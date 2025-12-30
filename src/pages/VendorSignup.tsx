@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
+import { useSignup } from "@/contexts/SignupContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import stackdLogo from "@/assets/stackd-logo-new.png";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const VendorSignup = () => {
   const navigate = useNavigate();
-  const { vendorSignupData, updateVendorSignupData } = useUser();
+  const { vendorSignupData, updateVendorSignupData } = useSignup();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({

@@ -7,13 +7,13 @@ import { ArrowLeft, Minus, Plus, Calendar as CalendarIcon } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import { useState } from "react";
-import { useUser } from "@/contexts/UserContext";
+import { useBooking } from "@/contexts/BookingContext";
 import { useToast } from "@/hooks/use-toast";
 
 const BookingForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { updateBookingData } = useUser();
+  const { updateBookingData } = useBooking();
   const { toast } = useToast();
   
   const experience = experiences.find(exp => exp.id === Number(id));

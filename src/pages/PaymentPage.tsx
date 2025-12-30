@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { useUser } from "@/contexts/UserContext";
+import { useBooking } from "@/contexts/BookingContext";
 import { useToast } from "@/hooks/use-toast";
 
 const PaymentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { bookingData, updateGuestData } = useUser();
+  const { bookingData, updateGuestData } = useBooking();
   const { toast } = useToast();
   
   // Non-sensitive guest contact info (can be stored in context)

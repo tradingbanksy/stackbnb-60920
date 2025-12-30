@@ -2,12 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, Calendar, Clock, Users, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
+import { useBooking } from "@/contexts/BookingContext";
 import { useEffect } from "react";
 
 const BookingConfirmation = () => {
   const navigate = useNavigate();
-  const { bookingData, guestData } = useUser();
+  const { bookingData, guestData } = useBooking();
 
   useEffect(() => {
     // Confetti or success animation could be added here
