@@ -3,11 +3,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronRight, Store, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
-import { useUser } from "@/contexts/UserContext";
+import { useSignup } from "@/contexts/SignupContext";
 
 const HostProfile = () => {
   const navigate = useNavigate();
-  const { hostSignupData, propertyData } = useUser();
+  const { hostSignupData, propertyData } = useSignup();
 
   const firstName = hostSignupData.firstName || "John";
   const lastName = hostSignupData.lastName || "Doe";

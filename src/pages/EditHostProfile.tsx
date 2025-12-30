@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import HostBottomNav from "@/components/HostBottomNav";
-import { useUser } from "@/contexts/UserContext";
+import { useSignup } from "@/contexts/SignupContext";
 import { toast } from "sonner";
 import { useSmartBack } from "@/hooks/use-smart-back";
 
 const EditHostProfile = () => {
   const goBack = useSmartBack("/host/profile");
-  const { hostSignupData, propertyData, updateHostSignupData, updatePropertyData } = useUser();
+  const { hostSignupData, propertyData, updateHostSignupData, updatePropertyData } = useSignup();
   const [isEditing, setIsEditing] = useState(false);
   
   const [formData, setFormData] = useState({

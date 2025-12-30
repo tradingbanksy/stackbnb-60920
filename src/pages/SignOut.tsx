@@ -3,13 +3,13 @@ import { Card } from "@/components/ui/card";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useUser } from "@/contexts/UserContext";
+import { useSignup } from "@/contexts/SignupContext";
 import { useToast } from "@/hooks/use-toast";
 
 const SignOut = () => {
   const navigate = useNavigate();
   const { signOut } = useAuthContext();
-  const { clearSignupData } = useUser();
+  const { clearSignupData } = useSignup();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
