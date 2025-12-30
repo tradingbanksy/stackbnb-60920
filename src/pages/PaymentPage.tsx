@@ -73,7 +73,7 @@ const PaymentPage = () => {
       });
       
       setTimeout(() => {
-        navigate(`/booking/${id}/confirmed`);
+        navigate(`/booking/${id}/confirmed`, { replace: true });
       }, 1000);
     } else {
       toast({
