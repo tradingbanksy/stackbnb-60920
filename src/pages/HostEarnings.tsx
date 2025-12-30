@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, DollarSign, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const earningsData = [
   { id: 1, service: "Sunset Yoga Session", vendor: "Ocean Breeze Wellness", amount: 120, bookings: 3, date: "Dec 15, 2024" },
@@ -13,19 +13,20 @@ const earningsData = [
 ];
 
 const HostEarnings = () => {
+  const goBack = useSmartBack("/host/dashboard");
   const totalEarnings = earningsData.reduce((sum, item) => sum + item.amount, 0);
   const totalBookings = earningsData.reduce((sum, item) => sum + item.bookings, 0);
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
-        <Link 
-          to="/host/dashboard" 
+        <button 
+          onClick={goBack}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
-        </Link>
+        </button>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Total Earnings</h1>

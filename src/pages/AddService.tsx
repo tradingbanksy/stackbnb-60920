@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import VendorBottomNav from "@/components/VendorBottomNav";
 import { useToast } from "@/hooks/use-toast";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const AddService = () => {
   const navigate = useNavigate();
+  const goBack = useSmartBack("/vendor/services");
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -102,13 +104,13 @@ const AddService = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
-        <Link 
-          to="/vendor/services" 
+        <button 
+          onClick={goBack}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Services
-        </Link>
+        </button>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Add Service</h1>

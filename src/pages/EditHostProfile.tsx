@@ -3,13 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useState } from "react";
 import HostBottomNav from "@/components/HostBottomNav";
 import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const EditHostProfile = () => {
+  const goBack = useSmartBack("/host/profile");
   const { hostSignupData, propertyData, updateHostSignupData, updatePropertyData } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   
@@ -61,13 +62,13 @@ const EditHostProfile = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
-        <Link 
-          to="/host/profile" 
+        <button 
+          onClick={goBack}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Profile
-        </Link>
+        </button>
 
         <div className="flex items-center justify-between">
           <div className="space-y-1">

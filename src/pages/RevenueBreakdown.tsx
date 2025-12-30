@@ -1,22 +1,23 @@
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, DollarSign } from "lucide-react";
-import { Link } from "react-router-dom";
 import VendorBottomNav from "@/components/VendorBottomNav";
 import { revenueBreakdown } from "@/data/mockData";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const RevenueBreakdown = () => {
+  const goBack = useSmartBack("/vendor/dashboard");
   const totalRevenue = revenueBreakdown.reduce((sum, item) => sum + item.amount, 0);
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
-        <Link 
-          to="/vendor/dashboard" 
+        <button 
+          onClick={goBack}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
-        </Link>
+        </button>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Revenue Breakdown</h1>

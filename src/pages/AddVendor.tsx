@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,9 +21,11 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const AddVendor = () => {
   const navigate = useNavigate();
+  const goBack = useSmartBack("/host/vendors");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<VendorFormData>({
@@ -78,13 +80,13 @@ const AddVendor = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
-        <Link 
-          to="/host/vendors" 
+        <button 
+          onClick={goBack}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Vendors
-        </Link>
+        </button>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Add New Vendor</h1>

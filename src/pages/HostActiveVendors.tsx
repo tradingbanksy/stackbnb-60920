@@ -1,11 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
 import { vendors } from "@/data/mockData";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const HostActiveVendors = () => {
-  const navigate = useNavigate();
+  const goBack = useSmartBack("/host/dashboard");
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -13,7 +13,7 @@ const HostActiveVendors = () => {
         {/* Header */}
         <div className="space-y-4">
           <button
-            onClick={() => navigate('/host/dashboard')}
+            onClick={goBack}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />

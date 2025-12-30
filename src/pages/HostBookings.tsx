@@ -1,20 +1,22 @@
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Calendar, DollarSign } from "lucide-react";
-import { Link } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
 import { recentBookings } from "@/data/mockData";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 const HostBookings = () => {
+  const goBack = useSmartBack("/host/dashboard");
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
-        <Link 
-          to="/host/dashboard" 
+        <button 
+          onClick={goBack}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
-        </Link>
+        </button>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">All Bookings</h1>
