@@ -319,7 +319,7 @@ export const autocompleteSearch = async (
         const restaurantRes = await fetch(restaurantUrl);
         if (restaurantRes.ok) {
           const restaurantData = await restaurantRes.json();
-          const restaurantSuggestions: AutocompleteSuggestion[] = restaurantData.features?.map((feature: any) => {
+          const restaurantSuggestions: AutocompleteSuggestion[] = restaurantData.features?.map((feature: { properties: { datasource?: { raw?: { cuisine?: string } }; categories?: string[]; place_id?: string; name?: string; formatted?: string; city?: string; state?: string; lat?: number; lon?: number; postcode?: string } }) => {
             const props = feature.properties;
             const raw = props.datasource?.raw || {};
             const categories = props.categories || [];
@@ -353,7 +353,7 @@ export const autocompleteSearch = async (
       const locationRes = await fetch(locationUrl);
       if (locationRes.ok) {
         const locationData = await locationRes.json();
-        const locationSuggestions: AutocompleteSuggestion[] = locationData.features?.map((feature: any) => {
+        const locationSuggestions: AutocompleteSuggestion[] = locationData.features?.map((feature: { properties: { place_id?: string; city?: string; name?: string; formatted?: string; state?: string; country?: string; lat?: number; lon?: number; postcode?: string } }) => {
           const props = feature.properties;
           return {
             id: `loc_${props.place_id}`,

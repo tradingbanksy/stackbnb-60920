@@ -37,7 +37,7 @@ const categories = [
   { id: "Photography", name: "Photography", icon: "📸" },
 ];
 
-const getExperienceImage = (experience: any) => {
+const getExperienceImage = (experience: { id: number }) => {
   const imageMap: Record<number, string> = {
     1: kayakingImg,
     2: bikesImg,

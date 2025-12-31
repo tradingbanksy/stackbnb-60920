@@ -53,7 +53,7 @@ const AddVendor = () => {
         return;
       }
 
-      const { error } = await supabase.from('vendors' as any).insert({
+      const { error } = await supabase.from('vendors').insert({
         user_id: user.id,
         name: data.vendorName.trim(),
         email: data.vendorEmail.trim(),
@@ -68,9 +68,10 @@ const AddVendor = () => {
 
       toast.success("Vendor added successfully!");
       navigate('/host/vendors');
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Please try again";
       toast.error("Failed to add vendor", {
-        description: error.message || "Please try again"
+        description: message
       });
     } finally {
       setIsSubmitting(false);

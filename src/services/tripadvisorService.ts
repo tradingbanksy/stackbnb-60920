@@ -224,7 +224,7 @@ export const getRestaurantPhotos = async (locationId: string): Promise<string[]>
 
     // Extract photo URLs from TripAdvisor response
     const photos = data?.photos || [];
-    return photos.map((photo: any) => 
+    return photos.map((photo: { images?: { large?: { url: string }; medium?: { url: string }; original?: { url: string } } }) => 
       photo.images?.large?.url || 
       photo.images?.medium?.url || 
       photo.images?.original?.url
@@ -236,7 +236,7 @@ export const getRestaurantPhotos = async (locationId: string): Promise<string[]>
 };
 
 // Get restaurant reviews
-export const getRestaurantReviews = async (locationId: string): Promise<any[]> => {
+export const getRestaurantReviews = async (locationId: string): Promise<unknown[]> => {
   try {
     const { data, error } = await supabase.functions.invoke('tripadvisor-search', {
       body: {

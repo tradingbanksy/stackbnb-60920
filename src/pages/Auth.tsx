@@ -101,10 +101,10 @@ const Auth = () => {
         });
         navigate(redirectPath);
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {
@@ -123,10 +123,10 @@ const Auth = () => {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
       setLoading(false);

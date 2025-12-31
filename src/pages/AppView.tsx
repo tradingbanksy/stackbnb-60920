@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import type { Vendor } from "@/types";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -66,7 +67,7 @@ const categories = [
   { id: "Photography", name: "Photo", icon: "📸" },
 ];
 
-const getExperienceImage = (experience: any) => {
+const getExperienceImage = (experience: { id: number }) => {
   const imageMap: Record<number, string> = {
     1: kayakingImg,
     2: bikesImg,
@@ -95,7 +96,7 @@ const AppView = () => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
   });
-  const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
+  const [myBusinesses, setMyBusinesses] = useState<Vendor[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -112,12 +113,12 @@ const AppView = () => {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('vendors' as any)
+        .from('vendors')
         .select('*')
         .eq('user_id', user.id);
 
       if (error) throw error;
-      setMyBusinesses((data as any) || []);
+      setMyBusinesses((data as Vendor[]) || []);
     } catch (error) {
       console.error('Error fetching businesses:', error);
     }
