@@ -1,11 +1,34 @@
 import { Card } from "@/components/ui/card";
 import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import VendorBottomNav from "@/components/VendorBottomNav";
 import { vendorDashboardStats, upcomingBookings } from "@/data/mockData";
 
+const fetchVendorStats = async () => {
+  // Ready for real API integration
+  return vendorDashboardStats;
+};
+
+const fetchUpcomingBookings = async () => {
+  // Ready for real API integration
+  return upcomingBookings;
+};
+
 const VendorDashboard = () => {
   const navigate = useNavigate();
+  
+  const { data: stats = [] } = useQuery({
+    queryKey: ['vendorDashboardStats'],
+    queryFn: fetchVendorStats,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['vendorUpcomingBookings'],
+    queryFn: fetchUpcomingBookings,
+    staleTime: 2 * 60 * 1000,
+  });
   
   const iconMap = {
     DollarSign,
@@ -39,7 +62,7 @@ const VendorDashboard = () => {
 
         {/* Stats Cards - Overlapping Hero */}
         <div className="px-4 -mt-12 relative z-20 space-y-3">
-          {vendorDashboardStats.map((stat) => {
+          {stats.map((stat) => {
             const Icon = iconMap[stat.icon as keyof typeof iconMap];
             
             // Define navigation routes for each stat
@@ -109,7 +132,7 @@ const VendorDashboard = () => {
           </div>
           
           <div className="space-y-3">
-            {upcomingBookings.map((booking, index) => (
+            {bookings.map((booking, index) => (
               <Card
                 key={index}
                 className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 group border-l-4 border-l-transparent hover:border-l-orange-500"
