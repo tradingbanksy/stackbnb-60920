@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 
 // SECURITY: Password fields removed from stored data - only used during form submission
 export interface HostSignupData {
@@ -104,22 +104,27 @@ export const SignupProvider = ({ children }: { children: ReactNode }) => {
     return stored ? JSON.parse(stored) : initialBusinessData;
   });
 
-  // Persist signup flow data to sessionStorage (non-sensitive data only)
-  useEffect(() => {
-    sessionStorage.setItem('hostSignupData', JSON.stringify(hostSignupData));
-  }, [hostSignupData]);
+  // Debounced persistence to sessionStorage (500ms delay for mobile performance)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    sessionStorage.setItem('propertyData', JSON.stringify(propertyData));
-  }, [propertyData]);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
 
-  useEffect(() => {
-    sessionStorage.setItem('vendorSignupData', JSON.stringify(vendorSignupData));
-  }, [vendorSignupData]);
+    debounceRef.current = setTimeout(() => {
+      sessionStorage.setItem('hostSignupData', JSON.stringify(hostSignupData));
+      sessionStorage.setItem('propertyData', JSON.stringify(propertyData));
+      sessionStorage.setItem('vendorSignupData', JSON.stringify(vendorSignupData));
+      sessionStorage.setItem('businessData', JSON.stringify(businessData));
+    }, 500);
 
-  useEffect(() => {
-    sessionStorage.setItem('businessData', JSON.stringify(businessData));
-  }, [businessData]);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [hostSignupData, propertyData, vendorSignupData, businessData]);
 
   const updateHostSignupData = (data: Partial<HostSignupData>) => {
     setHostSignupData(prev => ({ ...prev, ...data }));
