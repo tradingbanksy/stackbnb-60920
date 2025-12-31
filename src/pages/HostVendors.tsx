@@ -47,7 +47,7 @@ const HostVendors = () => {
       }
 
       const { data, error } = await supabase
-        .from('vendors' as any)
+        .from('vendors')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -66,7 +66,7 @@ const HostVendors = () => {
   const handleDeleteVendor = async (vendorId: string) => {
     try {
       const { error } = await supabase
-        .from('vendors' as any)
+        .from('vendors')
         .delete()
         .eq('id', vendorId);
 

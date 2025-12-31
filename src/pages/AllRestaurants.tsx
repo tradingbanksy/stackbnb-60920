@@ -118,7 +118,7 @@ const AllRestaurants = () => {
       restaurants = restaurants.filter(r => r.rating >= 4.5);
     }
     if (filters.priceRange.length > 0) {
-      restaurants = restaurants.filter(r => filters.priceRange.includes(r.priceRange as any));
+      restaurants = restaurants.filter(r => r.priceRange && filters.priceRange.includes(r.priceRange));
     }
     if (filters.outdoorSeating) {
       restaurants = restaurants.filter(r => r.hasOutdoorSeating);
