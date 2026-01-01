@@ -308,7 +308,7 @@ export default function TripPlannerChatUI({
                   }`}
                 >
                   <Card
-                    className={`max-w-[85%] p-3 text-sm ${
+                    className={`max-w-[85%] p-4 text-sm ${
                       m.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
@@ -317,7 +317,7 @@ export default function TripPlannerChatUI({
                     <div
                       className={
                         m.role === "assistant"
-                          ? "prose prose-sm dark:prose-invert max-w-none prose-p:my-4 prose-ul:my-3 prose-li:my-1.5 prose-headings:mt-5 prose-headings:mb-3 prose-strong:text-foreground [&>*+*]:mt-4"
+                          ? "prose prose-sm dark:prose-invert max-w-none prose-p:my-3 prose-p:leading-relaxed prose-ul:my-4 prose-ul:space-y-2 prose-li:my-1 prose-headings:mt-6 prose-headings:mb-3 prose-h2:text-base prose-h2:font-bold prose-strong:text-foreground [&>*+*]:mt-4 [&_ul]:pl-1 [&_li]:pl-0 prose-li:marker:text-primary whitespace-pre-line"
                           : ""
                       }
                     >
