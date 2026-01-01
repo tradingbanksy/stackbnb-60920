@@ -136,7 +136,7 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
               className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
                 isSaved 
                   ? 'bg-green-500 text-white' 
-                  : 'bg-white/95 text-foreground hover:bg-primary hover:text-white'
+                  : 'bg-white/95 text-foreground dark:bg-primary dark:text-white hover:bg-primary hover:text-white'
               }`}
             >
               {isLoading ? (
