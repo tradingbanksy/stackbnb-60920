@@ -278,6 +278,17 @@ const GuestGuide = () => {
       <div className="max-w-[430px] mx-auto w-full border-t border-border bg-background/95 backdrop-blur-sm px-4 py-4">
         <Link
           to="/trip-planner"
+          state={{ 
+            hostVendors: recommendedExperiences.map(exp => ({
+              id: exp!.id,
+              name: exp!.name,
+              category: exp!.category,
+              vendor: exp!.vendor,
+              price: exp!.price,
+              rating: exp!.rating,
+              description: exp!.description,
+            }))
+          }}
           className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white font-medium shadow-lg hover:scale-[1.02] transition-transform"
         >
           <Sparkles className="h-5 w-5" />
