@@ -1,11 +1,10 @@
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, Star, ArrowLeft, Store } from "lucide-react";
+import { Star, ArrowLeft, Store } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import heroImage from "@/assets/hero-beach.jpg";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
 import HostBottomNav from "@/components/HostBottomNav";
 
@@ -28,16 +27,6 @@ import fishingImg from "@/assets/experiences/fishing.jpg";
 import cookingImg from "@/assets/experiences/cooking.jpg";
 import balloonImg from "@/assets/experiences/balloon.jpg";
 import diningImg from "@/assets/experiences/dining.jpg";
-
-const categories = [
-  { id: "all", name: "All Vendors", icon: "✨" },
-  { id: "Water Sports", name: "Water Sports", icon: "🌊" },
-  { id: "Transportation", name: "Transportation", icon: "🚴" },
-  { id: "Food & Dining", name: "Food & Dining", icon: "🍷" },
-  { id: "Wellness", name: "Wellness", icon: "💆" },
-  { id: "Photography", name: "Photography", icon: "📸" },
-  { id: "Tours & Activities", name: "Tours", icon: "🎯" },
-];
 
 // Image mapping for experiences
 const getExperienceImage = (experienceId: number): string => {
@@ -65,8 +54,6 @@ const getExperienceImage = (experienceId: number): string => {
 };
 
 const HostVendors = () => {
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { recommendations, isLoading } = useProfile();
 
@@ -83,25 +70,6 @@ const HostVendors = () => {
       savedVendorIds.includes(String(exp.id))
     );
   }, [savedVendorIds]);
-
-  // Apply category and search filters
-  const filteredExperiences = useMemo(() => {
-    let filtered = savedExperiences;
-    
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(exp => exp.category === selectedCategory);
-    }
-    
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(exp => 
-        exp.name.toLowerCase().includes(query) ||
-        exp.vendor.toLowerCase().includes(query)
-      );
-    }
-    
-    return filtered;
-  }, [savedExperiences, selectedCategory, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pb-24">
@@ -132,47 +100,6 @@ const HostVendors = () => {
           </p>
         </div>
 
-        {/* Search Box */}
-        <div className="max-w-2xl mx-auto">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full blur-sm opacity-20 group-hover:opacity-30 transition duration-300"></div>
-            
-            <div className="relative bg-card rounded-full shadow-2xl border border-border/50 backdrop-blur-sm overflow-hidden hover:shadow-3xl transition-all duration-300">
-              <div className="flex items-center px-6 py-4 gap-3">
-                <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                <Input 
-                  placeholder="Search your vendors..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Category Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center flex-wrap">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`
-                flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 whitespace-nowrap text-sm
-                transition-all duration-300 hover:scale-105 active:scale-95 shadow-md
-                ${selectedCategory === category.id 
-                  ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white border-transparent shadow-lg scale-105' 
-                  : 'bg-card hover:border-primary/50 hover:shadow-lg'
-                }
-              `}
-            >
-              <span className="text-base">{category.icon}</span>
-              <span className="font-medium">{category.name}</span>
-            </button>
-          ))}
-        </div>
-
         {/* Content */}
         {isLoading ? (
           <div className="text-center py-12">
@@ -192,16 +119,10 @@ const HostVendors = () => {
               Explore Vendors
             </Link>
           </Card>
-        ) : filteredExperiences.length === 0 ? (
-          <Card className="max-w-md mx-auto p-8 text-center bg-card/80 backdrop-blur-sm">
-            <p className="text-muted-foreground">
-              No vendors match your current filters.
-            </p>
-          </Card>
         ) : (
           /* Vendors Grid */
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-12">
-            {filteredExperiences.map((experience) => (
+            {savedExperiences.map((experience) => (
               <Link
                 key={experience.id}
                 to={`/experience/${experience.id}`}
