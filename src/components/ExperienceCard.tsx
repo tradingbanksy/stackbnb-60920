@@ -118,21 +118,12 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
           />
           
-          {/* Category Badge */}
-          {experience.categoryIcon && (
-            <div className="absolute top-2 left-2 z-20">
-              <Badge variant="secondary" className="bg-white/95 text-foreground backdrop-blur-sm shadow-md text-xs px-2 py-0.5">
-                <span>{experience.categoryIcon}</span>
-              </Badge>
-            </div>
-          )}
-
-          {/* Add Button for Hosts */}
-          {shouldShowButton && (
+          {/* Add Button for Hosts - Top Left (replaces emoji badge) */}
+          {shouldShowButton ? (
             <button
               onClick={handleAddClick}
               disabled={isLoading}
-              className={`absolute top-2 right-2 z-20 p-1.5 rounded-full shadow-lg transition-all duration-200 ${
+              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
                 isSaved 
                   ? 'bg-green-500 text-white' 
                   : 'bg-white/95 text-foreground hover:bg-primary hover:text-white'
@@ -146,6 +137,15 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
                 <Plus className="h-4 w-4" />
               )}
             </button>
+          ) : (
+            /* Category Badge - Only show when not in host mode */
+            experience.categoryIcon && (
+              <div className="absolute top-2 left-2 z-20">
+                <Badge variant="secondary" className="bg-white/95 text-foreground backdrop-blur-sm shadow-md text-xs px-2 py-0.5">
+                  <span>{experience.categoryIcon}</span>
+                </Badge>
+              </div>
+            )
           )}
 
           {/* Hover Overlay */}
