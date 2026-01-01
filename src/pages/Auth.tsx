@@ -143,6 +143,16 @@ const Auth = () => {
 
   const handleAuth = async (data: AuthFormData) => {
     setLoading(true);
+    
+    // Set a 10 second timeout
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      toast({
+        title: "Connection Error",
+        description: "Request timed out. Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }, 10000);
 
     try {
       if (isSignUp) {
@@ -154,6 +164,8 @@ const Auth = () => {
             emailRedirectTo: `${window.location.origin}${redirectPath}`,
           },
         });
+        
+        clearTimeout(timeoutId);
         
         if (error) {
           setLoading(false);
@@ -180,6 +192,8 @@ const Auth = () => {
           password: data.password,
         });
         
+        clearTimeout(timeoutId);
+        
         if (error) {
           setLoading(false);
           throw error;
@@ -205,6 +219,7 @@ const Auth = () => {
         navigate(redirectPath);
       }
     } catch (error: unknown) {
+      clearTimeout(timeoutId);
       setLoading(false);
       const errorMessage = error instanceof Error ? error.message : "An error occurred. Please check your connection and try again.";
       toast({
