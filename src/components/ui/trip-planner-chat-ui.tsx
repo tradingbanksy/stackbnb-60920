@@ -349,7 +349,7 @@ export default function TripPlannerChatUI({
                         components={{
                           a: ({ href, children }) => {
                             const text = String(children);
-                            const isBookingLink = href?.startsWith('/experience/') && (text.includes('Book') || text.includes('🎫'));
+                            const isBookingLink = href?.startsWith('/experience/') && text.includes('Book');
                             
                             if (isBookingLink) {
                               return (

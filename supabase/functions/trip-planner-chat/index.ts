@@ -132,12 +132,12 @@ ${vendorList}
 • [item 3]
 • [etc...]
 
-🎫 [Book VENDORNAME Now →](/experience/ID)
+[Book VENDORNAME Now →](/experience/ID)
 
 ---
 
-IMPORTANT: For the booking link, use this EXACT markdown format (no ** around it):
-🎫 [Book Snorkeling Adventure Now →](/experience/3)
+IMPORTANT: For the booking link, use this EXACT markdown format:
+[Book Snorkeling Adventure Now →](/experience/3)
 
 Replace VENDORNAME with the actual vendor name and ID with the numeric ID.
 
