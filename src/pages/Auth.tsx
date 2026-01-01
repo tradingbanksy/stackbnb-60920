@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Apple } from "lucide-react";
+import { ArrowLeft, Apple, Users, Home, Briefcase } from "lucide-react";
 import { FaAirbnb } from "react-icons/fa";
 import { authSchema, type AuthFormData } from "@/lib/validations";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuthContext } from "@/contexts/AuthContext";
+import heroImage from "@/assets/hero-beach.jpg";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -48,66 +49,91 @@ const Auth = () => {
   // Show role selection if no role is specified and user is signing up
   if (!role && isSignUp) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background/80 to-background" />
+        
+        <div className="relative flex items-center justify-center min-h-screen p-4">
+          <div className="w-full max-w-md space-y-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span>Back</span>
+            </button>
 
-          <Card className="p-6">
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold">Create Account</h1>
-                <p className="text-sm text-muted-foreground">
-                  How will you be using Stackd?
-                </p>
-              </div>
+            <Card className="p-8 backdrop-blur-sm bg-card/95 border-border/50 shadow-2xl">
+              <div className="space-y-8">
+                <div className="text-center space-y-2">
+                  <h1 className="text-3xl font-bold">Create Account</h1>
+                  <p className="text-muted-foreground">
+                    How will you be using Stackd?
+                  </p>
+                </div>
 
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full h-16 flex flex-col items-center justify-center"
-                  onClick={() => handleRoleSelect("user")}
-                >
-                  <span className="font-semibold">I'm a Guest</span>
-                  <span className="text-xs text-muted-foreground">Discover local experiences</span>
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  className="w-full h-16 flex flex-col items-center justify-center"
-                  onClick={() => handleRoleSelect("host")}
-                >
-                  <span className="font-semibold">I'm a Host</span>
-                  <span className="text-xs text-muted-foreground">Create guest guides for my property</span>
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  className="w-full h-16 flex flex-col items-center justify-center"
-                  onClick={() => handleRoleSelect("vendor")}
-                >
-                  <span className="font-semibold">I'm a Vendor</span>
-                  <span className="text-xs text-muted-foreground">List my business or services</span>
-                </Button>
-              </div>
+                <div className="space-y-4">
+                  <button
+                    onClick={() => handleRoleSelect("user")}
+                    className="w-full group relative overflow-hidden rounded-xl border-2 border-border bg-card p-5 text-left transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg">
+                        <Users className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <span className="block font-semibold text-lg">I'm a Guest</span>
+                        <span className="text-sm text-muted-foreground">Discover local experiences</span>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleRoleSelect("host")}
+                    className="w-full group relative overflow-hidden rounded-xl border-2 border-border bg-card p-5 text-left transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg">
+                        <Home className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <span className="block font-semibold text-lg">I'm a Host</span>
+                        <span className="text-sm text-muted-foreground">Create guest guides for my property</span>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleRoleSelect("vendor")}
+                    className="w-full group relative overflow-hidden rounded-xl border-2 border-border bg-card p-5 text-left transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg">
+                        <Briefcase className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <span className="block font-semibold text-lg">I'm a Vendor</span>
+                        <span className="text-sm text-muted-foreground">List my business or services</span>
+                      </div>
+                    </div>
+                  </button>
+                </div>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(false)}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Already have an account? Sign in
-                </button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(false)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Already have an account? Sign in
+                  </button>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
     );
