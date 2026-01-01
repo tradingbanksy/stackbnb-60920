@@ -18,6 +18,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Moon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,6 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTheme } from "next-themes";
 
 // Bionic reading: bold first part of each word
 function applyBionicReading(text: string): string {
@@ -93,6 +95,7 @@ export default function TripPlannerChatUI({
   onSendMessage,
 }: TripPlannerChatUIProps) {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [message, setMessage] = useState("");
   const [bionicEnabled, setBionicEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -153,26 +156,46 @@ export default function TripPlannerChatUI({
           <Sparkles className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Trip Planner</h1>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setBionicEnabled(!bionicEnabled)}
-                className={cn(
-                  "transition-colors",
-                  bionicEnabled && "text-primary"
-                )}
-              >
-                {bionicEnabled ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{bionicEnabled ? "Disable" : "Enable"} Bionic Reading</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setBionicEnabled(!bionicEnabled)}
+                  className={cn(
+                    "transition-colors",
+                    bionicEnabled && "text-primary"
+                  )}
+                >
+                  {bionicEnabled ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{bionicEnabled ? "Disable" : "Enable"} Bionic Reading</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="transition-colors"
+                >
+                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle {theme === "dark" ? "Light" : "Dark"} Mode</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {!hasMessages ? (
