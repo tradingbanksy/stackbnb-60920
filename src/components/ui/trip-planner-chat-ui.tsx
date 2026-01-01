@@ -345,7 +345,37 @@ export default function TripPlannerChatUI({
                           : ""
                       }
                     >
-                      <ReactMarkdown>
+                      <ReactMarkdown
+                        components={{
+                          a: ({ href, children }) => {
+                            const text = String(children);
+                            const isBookingLink = href?.startsWith('/experience/') && (text.includes('Book') || text.includes('🎫'));
+                            
+                            if (isBookingLink) {
+                              return (
+                                <Link
+                                  to={href || '#'}
+                                  className="inline-flex items-center gap-2 px-4 py-2 mt-2 mb-1 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors no-underline shadow-sm"
+                                >
+                                  {text}
+                                </Link>
+                              );
+                            }
+                            
+                            // Regular links (like Google Maps ratings)
+                            return (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                {children}
+                              </a>
+                            );
+                          },
+                        }}
+                      >
                         {m.role === "assistant" && bionicEnabled 
                           ? applyBionicReading(m.content) 
                           : m.content}
