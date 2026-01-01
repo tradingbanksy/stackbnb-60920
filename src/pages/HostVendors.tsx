@@ -1,12 +1,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Star, ArrowLeft, Store } from "lucide-react";
+import { Star, ArrowLeft, Store, Share2, Copy, Check, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import heroImage from "@/assets/hero-beach.jpg";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import HostBottomNav from "@/components/HostBottomNav";
+import { toast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FaWhatsapp } from "react-icons/fa";
 
 // Import experience images
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -56,6 +65,33 @@ const getExperienceImage = (experienceId: number): string => {
 const HostVendors = () => {
   const navigate = useNavigate();
   const { recommendations, isLoading } = useProfile();
+  const { user } = useAuthContext();
+  const [copied, setCopied] = useState(false);
+
+  const guideUrl = user ? `${window.location.origin}/guide/${user.id}` : "";
+  const shareMessage = `Check out my curated guest guide with local recommendations: ${guideUrl}`;
+
+  const handleCopyLink = async () => {
+    if (!guideUrl) return;
+    try {
+      await navigator.clipboard.writeText(guideUrl);
+      setCopied(true);
+      toast({ title: "Link copied!", description: "Share this link with your guests" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Failed to copy", variant: "destructive" });
+    }
+  };
+
+  const handleShareSMS = () => {
+    if (!guideUrl) return;
+    window.open(`sms:?body=${encodeURIComponent(shareMessage)}`, "_blank");
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!guideUrl) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, "_blank");
+  };
 
   // Get vendor IDs from recommendations
   const savedVendorIds = useMemo(() => {
@@ -98,6 +134,45 @@ const HostVendors = () => {
           <p className="text-muted-foreground">
             Browse vendors from Explore to add them to your list
           </p>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link 
+              to="/explore?mode=host"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-medium hover:scale-105 transition-all text-sm"
+            >
+              Explore Vendors
+            </Link>
+            
+            {savedVendorIds.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-primary text-primary font-medium hover:bg-primary/10 transition-all text-sm gap-2">
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48">
+                  <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
+                    {copied ? (
+                      <Check className="h-4 w-4 mr-2 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 mr-2" />
+                    )}
+                    Copy Link
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleShareSMS} className="cursor-pointer">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Share via Text
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleShareWhatsApp} className="cursor-pointer">
+                    <FaWhatsapp className="h-4 w-4 mr-2 text-green-500" />
+                    Share via WhatsApp
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -112,70 +187,50 @@ const HostVendors = () => {
             <p className="text-muted-foreground mb-4">
               Browse experiences and click "Add to Vendor List" to add vendors here.
             </p>
-            <Link 
-              to="/explore?mode=host"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-medium hover:scale-105 transition-all"
-            >
-              Explore Vendors
-            </Link>
           </Card>
         ) : (
-          /* Vendors Grid */
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-12">
+          /* Vendors Grid - Smaller cards like AppView */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-12">
             {savedExperiences.map((experience) => (
               <Link
                 key={experience.id}
                 to={`/experience/${experience.id}`}
                 className="block group"
               >
-                <div className="space-y-2">
-                  {/* Image */}
+                <div className="space-y-1.5">
+                  {/* Image - Smaller like AppView */}
                   <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-                      style={{ 
-                        backgroundImage: `url(${getExperienceImage(experience.id)})` 
-                      }}
+                    <img 
+                      src={getExperienceImage(experience.id)}
+                      alt={experience.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                     
                     {/* Category Badge */}
                     <div className="absolute top-2 right-2 z-20">
-                      <Badge variant="secondary" className="bg-white/95 text-foreground backdrop-blur-sm shadow-md text-xs px-2 py-0.5">
-                        <span className="mr-0.5">{experience.categoryIcon}</span>
+                      <Badge variant="secondary" className="bg-white/95 text-foreground backdrop-blur-sm shadow-md text-xs px-1.5 py-0.5">
+                        <span>{experience.categoryIcon}</span>
                       </Badge>
                     </div>
 
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    {/* Gradient overlay with name */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                      <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
+                    </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="space-y-0.5">
-                    <div className="flex items-start justify-between gap-1">
-                      <h3 className="font-semibold text-sm leading-tight line-clamp-2 flex-1">
-                        {experience.name}
-                      </h3>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
+                  {/* Content - Compact */}
+                  <div className="space-y-0.5 px-0.5">
+                    <p className="text-[10px] text-muted-foreground line-clamp-1">
                       {experience.vendor}
                     </p>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <div className="flex items-center gap-0.5">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{experience.rating}</span>
-                      </div>
-                      <span className="text-muted-foreground">({experience.reviewCount})</span>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold">{experience.rating}</span>
                       <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">{experience.duration}</span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="pt-0.5">
-                      <span className="text-sm font-semibold">${experience.price}</span>
-                      <span className="text-muted-foreground text-xs"> per person</span>
+                      <span className="text-muted-foreground">${experience.price}</span>
                     </div>
                   </div>
                 </div>
