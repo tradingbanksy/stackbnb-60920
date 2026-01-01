@@ -100,15 +100,12 @@ const GuestGuide = () => {
       }
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from("profiles")
-          .select("full_name, recommendations")
-          .eq("user_id", hostId)
-          .maybeSingle();
+        const { data, error: fnError } = await supabase.functions.invoke("host-guide", {
+          body: { hostId },
+        });
 
-        if (fetchError) {
-          console.error("Error fetching host profile:", fetchError);
-          setError("Unable to load recommendations");
+        if (fnError) {
+          setError(fnError.message || "Unable to load recommendations");
           return;
         }
 
@@ -117,12 +114,12 @@ const GuestGuide = () => {
           return;
         }
 
+        // data comes from backend function; keep it strict + safe
         setHostProfile({
-          full_name: data.full_name,
-          recommendations: parseRecommendations(data.recommendations),
+          full_name: typeof data.full_name === "string" ? data.full_name : null,
+          recommendations: parseRecommendations((data.recommendations ?? null) as Json | null),
         });
-      } catch (err) {
-        console.error("Error:", err);
+      } catch {
         setError("Something went wrong");
       } finally {
         setIsLoading(false);
