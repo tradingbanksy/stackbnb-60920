@@ -132,11 +132,14 @@ ${vendorList}
 • [item 3]
 • [etc...]
 
-🎫 **[Book [Vendor Name] Now →](/experience/ID)**
+🎫 [Book VENDORNAME Now →](/experience/ID)
 
 ---
 
-Replace the bracketed values with actual data from the vendor info above.
+IMPORTANT: For the booking link, use this EXACT markdown format (no ** around it):
+🎫 [Book Snorkeling Adventure Now →](/experience/3)
+
+Replace VENDORNAME with the actual vendor name and ID with the numeric ID.
 
 4. **If the guest selects a NON-host vendor (any other business):**
    Show a Google search link instead:
