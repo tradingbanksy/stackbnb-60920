@@ -76,20 +76,25 @@ export const useAuth = () => {
 
     // Set up auth state listener for subsequent changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         // Skip initial session event since we handle it in initializeAuth
         if (event === 'INITIAL_SESSION') return;
 
         if (session?.user) {
-          // For sign in/token refresh, fetch role before updating state
-          const role = await fetchUserRole(session.user.id);
-          setAuthState({
+          // Update state immediately with user info, then defer role fetch
+          setAuthState(prev => ({
+            ...prev,
             session,
             user: session.user,
-            role,
             isAuthenticated: true,
             isLoading: false,
-          });
+          }));
+          
+          // Defer role fetch to avoid deadlock
+          setTimeout(async () => {
+            const role = await fetchUserRole(session.user.id);
+            setAuthState(prev => ({ ...prev, role }));
+          }, 0);
         } else {
           setAuthState({
             session: null,
