@@ -154,7 +154,11 @@ const Auth = () => {
             emailRedirectTo: `${window.location.origin}${redirectPath}`,
           },
         });
-        if (error) throw error;
+        
+        if (error) {
+          setLoading(false);
+          throw error;
+        }
         
         // Save user role if provided
         if (signUpData.user && role) {
@@ -168,13 +172,18 @@ const Auth = () => {
           title: "Success!",
           description: "Account created successfully.",
         });
+        setLoading(false);
         navigate(redirectPath);
       } else {
         const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email: data.email.trim(),
           password: data.password,
         });
-        if (error) throw error;
+        
+        if (error) {
+          setLoading(false);
+          throw error;
+        }
         
         // Fetch user's role and redirect accordingly
         let redirectPath = "/appview";
@@ -192,16 +201,17 @@ const Auth = () => {
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
+        setLoading(false);
         navigate(redirectPath);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      setLoading(false);
+      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please check your connection and try again.";
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
