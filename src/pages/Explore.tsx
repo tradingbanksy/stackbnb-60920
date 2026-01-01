@@ -1,16 +1,11 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { Search, Star, MapPin, CalendarDays, ArrowLeft, User, Sparkles, LogIn, UserPlus } from "lucide-react";
+import { Search, MapPin, ArrowLeft, User, Sparkles, LogIn, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo-new.png";
-import { format } from "date-fns";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExperienceCard } from "@/components/ExperienceCard";
 import {
@@ -34,9 +29,6 @@ const categories = [
 const Explore = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState("");
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, role } = useAuthContext();
@@ -133,29 +125,6 @@ const Explore = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground flex-1 min-w-0"
                   />
-                  <div className="h-4 w-px bg-border/50 flex-shrink-0" />
-                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                    <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 min-w-[100px]">
-                        <CalendarDays className="h-4 w-4 text-primary" />
-                        <span className="text-xs whitespace-nowrap">
-                          {selectedDate ? format(selectedDate, "MMM d, yyyy") : "When?"}
-                        </span>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                          setSelectedDate(date);
-                          setCalendarOpen(false);
-                        }}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
                   <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
                     <Search className="h-3 w-3" />
                   </button>
