@@ -23,6 +23,15 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { isAuthenticated, isLoading, role: userRole, setUserRole } = useAuthContext();
 
+  // All hooks must be called before any conditional returns
+  const form = useForm<AuthFormData>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
   // Only redirect authenticated users who have an existing role in the database
   useEffect(() => {
     if (!isLoading && isAuthenticated && userRole) {
@@ -131,14 +140,6 @@ const Auth = () => {
       </div>
     );
   }
-
-  const form = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
 
   const handleAuth = async (data: AuthFormData) => {
     setLoading(true);
