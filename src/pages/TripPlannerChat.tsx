@@ -26,8 +26,8 @@ const TripPlannerChat = () => {
   const hostVendors = (location.state as { hostVendors?: HostVendor[] })?.hostVendors || [];
   
   const initialMessage = hostVendors.length > 0
-    ? `🌴 Hello! I'm JC, your AI travel assistant. Your host has curated ${hostVendors.length} amazing experiences for you! Ask me about activities, restaurants, or let me help you plan your perfect trip.`
-    : "🌴 Hello! I'm JC, your AI travel assistant. I can help you discover amazing restaurants and excursions for your trip. Where are you planning to visit?";
+    ? `🌴 Hola! I'm JC, your Tulum travel assistant. Your host has curated ${hostVendors.length} amazing local experiences for you! Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`
+    : "🌴 Hola! I'm JC, your Tulum travel assistant. I know all the best cenotes, beach clubs, tacos, and hidden gems in the area. What are you looking to experience during your stay?";
 
   const [messages, setMessages] = useState<Message[]>([
     {
