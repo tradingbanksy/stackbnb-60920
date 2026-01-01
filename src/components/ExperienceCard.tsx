@@ -71,12 +71,22 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
 
   const vendorId = String(experience.id);
   const isHost = isAuthenticated && role === 'host';
-  const isSaved = hasRecommendation(vendorId, 'vendor');
-  const shouldShowButton = showAddButton && isHost;
+  const isSaved = isHost ? hasRecommendation(vendorId, 'vendor') : false;
+  // Show button if parent says so (host mode from URL) - auth check happens on click
+  const shouldShowButton = showAddButton;
 
   const handleAddClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Redirect to auth if not authenticated as host
+    if (!isHost) {
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in as a host to add vendors to your list.',
+      });
+      return;
+    }
     
     setIsLoading(true);
     try {
