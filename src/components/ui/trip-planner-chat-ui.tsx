@@ -400,20 +400,15 @@ export default function TripPlannerChatUI({
                messages[messages.length - 1]?.content.includes("HOST'S PICK") &&
                !messages[messages.length - 1]?.content.includes("Great choice") &&
                hostVendors.length > 0 && (
-                <div className="flex justify-start mt-2">
-                  <button
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <Button
+                    variant="outline"
                     onClick={() => onSendMessage("I'll go with the host's recommendation")}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium
-                      bg-gradient-to-r from-purple-600/10 via-pink-500/10 to-orange-400/10
-                      border border-purple-500/30
-                      text-foreground
-                      hover:border-purple-500/60 hover:bg-purple-500/20
-                      transition-all duration-300
-                      hover:scale-105 active:scale-95"
+                    className="flex items-center gap-2 rounded-full border-border bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent"
                   >
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    Go with Host's recommendation
-                  </button>
+                    <span className="text-xs">Go with Host's recommendation</span>
+                  </Button>
                 </div>
               )}
               
