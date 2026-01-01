@@ -107,24 +107,38 @@ serve(async (req) => {
 The guest's host has these specific preferred vendors. You MUST check this list and include the relevant ones when they match what the guest is asking about:
 ${vendorList}
 
-**CRITICAL INSTRUCTION FOR HOST VENDORS:**
-- When a guest asks about an activity (e.g., "snorkeling"), check if any host vendor matches that category
-- If a match exists, include it prominently in your response with this EXACT format:
+**CRITICAL INSTRUCTIONS FOR BOOKING LINKS:**
 
----
-⭐ **HOST'S PICK: [Vendor Name]** by [Provider] [★rating](https://www.google.com/maps/search/Vendor+Name+Tulum+Mexico)
+1. **DO NOT show booking links in your initial recommendations.** Only present options and descriptions first.
 
-[Description of the experience]. *Your host specifically recommends this!*
+2. **Wait for the guest to make a selection.** When they say things like "I'll go with...", "Let's do...", "I want to book...", "I choose...", or clearly indicate a preference, THEN provide the booking link.
 
-🎫 **[Book [Vendor Name] Now →](/experience/ID)**
+3. **If the guest selects a HOST'S PICK vendor:**
+   Show the internal booking link with this format:
+   
+   ---
+   ✅ Great choice! Your host recommends this one.
+   
+   🎫 **[Book [Vendor Name] Now →](/experience/ID)**
+   
+   ---
+   
+   Replace "ID" with the actual numeric ID from the vendor info above.
 
----
+4. **If the guest selects a NON-host vendor (any other business):**
+   Show a Google search link instead:
+   
+   ---
+   Great choice! Here's where you can book:
+   
+   🔗 **[Book on their website →](https://www.google.com/search?q=Vendor+Name+Tulum+booking)**
+   
+   ---
 
-- Replace "ID" with the actual numeric ID from the vendor info above
-- Place the host's pick section prominently when relevant to what the guest asked
-- Only show host vendors that are RELEVANT to what the guest asked about - do NOT show all host vendors for every query
-- The booking link must use the exact format: **[Book [Name] Now →](/experience/ID)** with the arrow symbol
-- Always include the horizontal rules (---) around the host pick section to make it stand out`;
+5. **When listing options initially:**
+   - Include the host's pick with ⭐ HOST'S PICK label at the top of relevant categories
+   - Do NOT include any booking links yet - just descriptions and ratings
+   - End with "Which one sounds good to you?" or similar to prompt selection`;
     }
 
     // Validate messages
