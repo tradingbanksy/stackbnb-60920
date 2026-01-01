@@ -115,6 +115,7 @@ export default function TripPlannerChatUI({
   const [bionicEnabled, setBionicEnabled] = useState(false);
   const [showVendorLinks, setShowVendorLinks] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 48,
     maxHeight: 150,
@@ -149,11 +150,22 @@ export default function TripPlannerChatUI({
     }
   };
 
+  // Auto-scroll to bottom when messages change (including during streaming)
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Also scroll when the last message content changes (for streaming)
+  const lastMessage = messages[messages.length - 1];
+  useEffect(() => {
+    if (lastMessage?.role === "assistant") {
+      scrollToBottom();
     }
-  }, [messages]);
+  }, [lastMessage?.content, scrollToBottom]);
 
   const hasMessages = messages.length > 1;
 
@@ -353,6 +365,8 @@ export default function TripPlannerChatUI({
                   </Card>
                 </div>
               )}
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
