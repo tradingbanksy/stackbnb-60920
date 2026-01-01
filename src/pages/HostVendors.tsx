@@ -1,168 +1,268 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Search, Star, ArrowLeft, Store } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { experiences } from "@/data/mockData";
+import heroImage from "@/assets/hero-beach.jpg";
+import { useState, useMemo } from "react";
+import { useProfile } from "@/contexts/ProfileContext";
 import HostBottomNav from "@/components/HostBottomNav";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
-type Vendor = {
-  id: string;
-  name: string;
-  email: string;
-  category: string;
-  commission: number;
-  description: string | null;
+// Import experience images
+import kayakingImg from "@/assets/experiences/kayaking.jpg";
+import bikesImg from "@/assets/experiences/bikes.jpg";
+import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
+import photographyImg from "@/assets/experiences/photography.jpg";
+import spaImg from "@/assets/experiences/spa.jpg";
+import wineImg from "@/assets/experiences/wine.jpg";
+import atvImg from "@/assets/experiences/atv.jpg";
+import boatImg from "@/assets/experiences/boat.jpg";
+import ziplineImg from "@/assets/experiences/zipline.jpg";
+import horsebackImg from "@/assets/experiences/horseback.jpg";
+import scubaImg from "@/assets/experiences/scuba.jpg";
+import hikingImg from "@/assets/experiences/hiking.jpg";
+import parasailingImg from "@/assets/experiences/parasailing.jpg";
+import yogaImg from "@/assets/experiences/yoga.jpg";
+import fishingImg from "@/assets/experiences/fishing.jpg";
+import cookingImg from "@/assets/experiences/cooking.jpg";
+import balloonImg from "@/assets/experiences/balloon.jpg";
+import diningImg from "@/assets/experiences/dining.jpg";
+
+const categories = [
+  { id: "all", name: "All Vendors", icon: "✨" },
+  { id: "Water Sports", name: "Water Sports", icon: "🌊" },
+  { id: "Transportation", name: "Transportation", icon: "🚴" },
+  { id: "Food & Dining", name: "Food & Dining", icon: "🍷" },
+  { id: "Wellness", name: "Wellness", icon: "💆" },
+  { id: "Photography", name: "Photography", icon: "📸" },
+  { id: "Tours & Activities", name: "Tours", icon: "🎯" },
+];
+
+// Image mapping for experiences
+const getExperienceImage = (experienceId: number): string => {
+  const imageMap: Record<number, string> = {
+    1: kayakingImg,
+    2: bikesImg,
+    3: snorkelingImg,
+    4: photographyImg,
+    5: spaImg,
+    6: wineImg,
+    7: atvImg,
+    8: boatImg,
+    9: ziplineImg,
+    10: horsebackImg,
+    11: scubaImg,
+    12: hikingImg,
+    13: parasailingImg,
+    14: yogaImg,
+    15: fishingImg,
+    16: cookingImg,
+    17: balloonImg,
+    18: diningImg,
+  };
+  return imageMap[experienceId] || kayakingImg;
 };
 
 const HostVendors = () => {
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [vendorToDelete, setVendorToDelete] = useState<string | null>(null);
+  const { recommendations, isLoading } = useProfile();
 
-  useEffect(() => {
-    fetchVendors();
-  }, []);
+  // Get vendor IDs from recommendations
+  const savedVendorIds = useMemo(() => {
+    return recommendations
+      .filter(r => r.type === 'vendor')
+      .map(r => r.id);
+  }, [recommendations]);
 
-  const fetchVendors = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+  // Filter experiences by saved vendor IDs (using vendorId from experience)
+  const savedExperiences = useMemo(() => {
+    return experiences.filter(exp => 
+      savedVendorIds.includes(String(exp.vendorId))
+    );
+  }, [savedVendorIds]);
 
-      const { data, error } = await supabase
-        .from('vendors')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setVendors((data as any) || []);
-    } catch (error) {
-      console.error('Error fetching vendors:', error);
-      toast.error("Failed to load vendors");
-    } finally {
-      setLoading(false);
+  // Apply category and search filters
+  const filteredExperiences = useMemo(() => {
+    let filtered = savedExperiences;
+    
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(exp => exp.category === selectedCategory);
     }
-  };
-
-  const handleDeleteVendor = async (vendorId: string) => {
-    try {
-      const { error } = await supabase
-        .from('vendors')
-        .delete()
-        .eq('id', vendorId);
-
-      if (error) throw error;
-
-      toast.success("Vendor removed successfully");
-      setVendors(vendors.filter(v => v.id !== vendorId));
-    } catch (error) {
-      console.error('Error deleting vendor:', error);
-      toast.error("Failed to remove vendor");
-    } finally {
-      setVendorToDelete(null);
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(exp => 
+        exp.name.toLowerCase().includes(query) ||
+        exp.vendor.toLowerCase().includes(query)
+      );
     }
-  };
+    
+    return filtered;
+  }, [savedExperiences, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
+    <div className="min-h-screen bg-background relative overflow-hidden pb-24">
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-20"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background/80 to-background" />
+      
+      <div className="relative max-w-7xl mx-auto px-4 py-8 space-y-6">
+        {/* Back Button */}
+        <button
+          onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/host/dashboard')}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span>Back to Dashboard</span>
+        </button>
+
         {/* Header */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold">My Vendors</h1>
-              <p className="text-sm text-muted-foreground">Manage your service providers</p>
-            </div>
-            <button
-              onClick={() => navigate('/signout')}
-              className="p-2 rounded-lg hover:bg-muted transition-colors active:scale-95"
-              aria-label="Sign out"
-            >
-              <LogOut className="h-5 w-5 text-muted-foreground" />
-            </button>
+        <div className="text-center space-y-2 pt-4">
+          <div className="flex items-center justify-center gap-2">
+            <Store className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">My Vendors</h1>
           </div>
-          <Button asChild variant="gradient" className="w-full">
-            <Link to="/host/vendors/add">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Vendor
-            </Link>
-          </Button>
+          <p className="text-muted-foreground">
+            Browse vendors from Explore to add them to your list
+          </p>
         </div>
 
-        {/* Vendors List */}
-        <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto">
-          {loading ? (
-            <p className="text-center text-muted-foreground py-8">Loading vendors...</p>
-          ) : vendors.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No vendors yet. Add your first vendor to get started!</p>
-            </Card>
-          ) : (
-            vendors.map((vendor) => (
-              <Card key={vendor.id} className="p-4 hover:shadow-xl transition-all duration-200">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-base font-semibold leading-tight flex-1">{vendor.name}</h3>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs flex-shrink-0">
-                        {vendor.commission}%
+        {/* Search Box */}
+        <div className="max-w-2xl mx-auto">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full blur-sm opacity-20 group-hover:opacity-30 transition duration-300"></div>
+            
+            <div className="relative bg-card rounded-full shadow-2xl border border-border/50 backdrop-blur-sm overflow-hidden hover:shadow-3xl transition-all duration-300">
+              <div className="flex items-center px-6 py-4 gap-3">
+                <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <Input 
+                  placeholder="Search your vendors..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center flex-wrap">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`
+                flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 whitespace-nowrap text-sm
+                transition-all duration-300 hover:scale-105 active:scale-95 shadow-md
+                ${selectedCategory === category.id 
+                  ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white border-transparent shadow-lg scale-105' 
+                  : 'bg-card hover:border-primary/50 hover:shadow-lg'
+                }
+              `}
+            >
+              <span className="text-base">{category.icon}</span>
+              <span className="font-medium">{category.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading your vendors...</p>
+          </div>
+        ) : savedVendorIds.length === 0 ? (
+          <Card className="max-w-md mx-auto p-8 text-center bg-card/80 backdrop-blur-sm">
+            <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Vendors Yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Browse experiences and click "Add to Vendor List" to add vendors here.
+            </p>
+            <Link 
+              to="/explore"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-medium hover:scale-105 transition-all"
+            >
+              Explore Vendors
+            </Link>
+          </Card>
+        ) : filteredExperiences.length === 0 ? (
+          <Card className="max-w-md mx-auto p-8 text-center bg-card/80 backdrop-blur-sm">
+            <p className="text-muted-foreground">
+              No vendors match your current filters.
+            </p>
+          </Card>
+        ) : (
+          /* Vendors Grid */
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-12">
+            {filteredExperiences.map((experience) => (
+              <Link
+                key={experience.id}
+                to={`/experience/${experience.id}`}
+                className="block group"
+              >
+                <div className="space-y-2">
+                  {/* Image */}
+                  <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
+                      style={{ 
+                        backgroundImage: `url(${getExperienceImage(experience.id)})` 
+                      }}
+                    />
+                    
+                    {/* Category Badge */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <Badge variant="secondary" className="bg-white/95 text-foreground backdrop-blur-sm shadow-md text-xs px-2 py-0.5">
+                        <span className="mr-0.5">{experience.categoryIcon}</span>
                       </Badge>
-                      <button
-                        onClick={() => setVendorToDelete(vendor.id)}
-                        className="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors active:scale-95"
-                        aria-label="Delete vendor"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    </div>
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-0.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <h3 className="font-semibold text-sm leading-tight line-clamp-2 flex-1">
+                        {experience.name}
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {experience.vendor}
+                    </p>
+
+                    {/* Stats */}
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <div className="flex items-center gap-0.5">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold">{experience.rating}</span>
+                      </div>
+                      <span className="text-muted-foreground">({experience.reviewCount})</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">{experience.duration}</span>
+                    </div>
+
+                    {/* Price */}
+                    <div className="pt-0.5">
+                      <span className="text-sm font-semibold">${experience.price}</span>
+                      <span className="text-muted-foreground text-xs"> per person</span>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-snug">{vendor.description}</p>
-                  <Badge variant="outline" className="text-xs">{vendor.category}</Badge>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
-
-      <AlertDialog open={!!vendorToDelete} onOpenChange={() => setVendorToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Vendor?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove this vendor? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => vendorToDelete && handleDeleteVendor(vendorToDelete)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <HostBottomNav />
     </div>

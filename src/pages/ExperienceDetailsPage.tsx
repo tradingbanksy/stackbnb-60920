@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import InteractiveSelector from "@/components/ui/interactive-selector";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
+import { VendorListButton } from "@/components/VendorListButton";
 import { FaWater, FaBicycle, FaSwimmer, FaCamera, FaSpa, FaWineGlass, FaMotorcycle, FaShip, FaTree, FaHorse, FaMask, FaMountain, FaParachuteBox, FaPray, FaFish, FaUtensils, FaCloudSun, FaGlassCheers } from 'react-icons/fa';
 
 // Base images
@@ -271,6 +272,12 @@ const ExperienceDetails = () => {
             itemId={String(experience.id)}
             itemType="experience"
             itemName={experience.name}
+          />
+
+          {/* Host Vendor List Button */}
+          <VendorListButton
+            vendorId={String(experience.vendorId)}
+            vendorName={experience.vendor}
           />
         </div>
 
