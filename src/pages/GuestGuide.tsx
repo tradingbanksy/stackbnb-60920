@@ -169,8 +169,8 @@ const GuestGuide = () => {
   const hasRecommendations = recommendedExperiences.length > 0 || recommendedRestaurants.length > 0;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-[430px] mx-auto">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="max-w-[430px] mx-auto flex-1 w-full">
         {/* Header */}
         <div className="bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4 py-8 text-center border-b border-border">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
@@ -274,11 +274,11 @@ const GuestGuide = () => {
         )}
       </div>
 
-      {/* Fixed AI Trip Planner Button */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      {/* Footer AI Trip Planner Button */}
+      <div className="max-w-[430px] mx-auto w-full border-t border-border bg-background/95 backdrop-blur-sm px-4 py-4">
         <Link
           to="/trip-planner"
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white font-medium shadow-lg hover:scale-105 transition-transform"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white font-medium shadow-lg hover:scale-[1.02] transition-transform"
         >
           <Sparkles className="h-5 w-5" />
           Plan your trip using AI
