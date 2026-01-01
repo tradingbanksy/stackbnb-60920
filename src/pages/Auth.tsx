@@ -80,7 +80,29 @@ const Auth = () => {
     handleOAuthCallback();
   }, [isAuthenticated, userRole, setUserRole]);
 
-  const handleRoleSelect = (selectedRole: "host" | "vendor" | "user") => {
+  const handleRoleSelect = async (selectedRole: "host" | "vendor" | "user") => {
+    // If user is already authenticated but has no role, save the role directly
+    if (isAuthenticated && !userRole) {
+      setLoading(true);
+      const { error } = await setUserRole(selectedRole);
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save your role. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      toast({
+        title: "Role saved!",
+        description: "Redirecting to your dashboard...",
+      });
+      setLoading(false);
+      navigate(getRedirectPath(selectedRole));
+      return;
+    }
+    // Otherwise, proceed to sign up form with role
     setSearchParams({ role: selectedRole });
   };
 
@@ -262,7 +284,6 @@ const Auth = () => {
         }
         
         // Fetch user's role and redirect accordingly
-        let redirectPath = "/appview";
         if (signInData.user) {
           const { data: roleData } = await supabase
             .from('user_roles')
@@ -270,15 +291,26 @@ const Auth = () => {
             .eq('user_id', signInData.user.id)
             .maybeSingle();
           
-          redirectPath = getRedirectPath(roleData?.role ?? null);
+          if (roleData?.role) {
+            // User has a role, redirect to their dashboard
+            const redirectPath = getRedirectPath(roleData.role);
+            toast({
+              title: "Welcome back!",
+              description: "Successfully signed in.",
+            });
+            setLoading(false);
+            navigate(redirectPath);
+          } else {
+            // No role found - need to select one
+            toast({
+              title: "Welcome back!",
+              description: "Please select your role to continue.",
+            });
+            setLoading(false);
+            setIsSignUp(true); // Show role selection
+            setSearchParams({}); // Clear role param to show selection screen
+          }
         }
-        
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in.",
-        });
-        setLoading(false);
-        navigate(redirectPath);
       }
     } catch (error: unknown) {
       clearTimeout(timeoutId);
