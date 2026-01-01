@@ -22,6 +22,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          recommendations: Json | null
           updated_at: string
           user_id: string
           zip_code: string | null
@@ -33,6 +34,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          recommendations?: Json | null
           updated_at?: string
           user_id: string
           zip_code?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          recommendations?: Json | null
           updated_at?: string
           user_id?: string
           zip_code?: string | null

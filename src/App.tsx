@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "./contexts/UserContext";
 import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
+import { ProfileProvider } from "./contexts/ProfileContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -286,16 +287,18 @@ const App = () => {
         disableTransitionOnChange
       >
         <AuthProvider>
-          <UserProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                <AppRoutes />
-              </BrowserRouter>
-            </TooltipProvider>
-          </UserProvider>
+          <ProfileProvider>
+            <UserProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <AppRoutes />
+                </BrowserRouter>
+              </TooltipProvider>
+            </UserProvider>
+          </ProfileProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

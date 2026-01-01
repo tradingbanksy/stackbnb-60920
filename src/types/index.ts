@@ -22,6 +22,27 @@ export type PriceRange = '$' | '$$' | '$$$' | '$$$$';
 // User role type
 export type UserRole = 'host' | 'vendor' | 'user';
 
+// Recommendation item stored in profile
+export interface RecommendationItem {
+  id: string;
+  type: 'vendor' | 'restaurant' | 'experience';
+  addedAt: string;
+}
+
+// User profile from Supabase profiles table
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  zip_code: string | null;
+  recommendations: RecommendationItem[];
+  created_at: string;
+  updated_at: string;
+}
+
 // TripAdvisor API response types
 export interface TripAdvisorPhoto {
   images?: {
