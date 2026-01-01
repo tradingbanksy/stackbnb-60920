@@ -133,8 +133,9 @@ const GuestGuide = () => {
   }, [hostId]);
 
   // Filter experiences and restaurants based on recommendations
+  // Note: "vendor" type uses experience IDs, so treat them as experiences
   const recommendedExperiences = hostProfile?.recommendations
-    .filter((r) => r.type === "experience")
+    .filter((r) => r.type === "experience" || r.type === "vendor")
     .map((r) => experiences.find((e) => String(e.id) === r.id))
     .filter(Boolean) || [];
 
