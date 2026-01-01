@@ -97,17 +97,22 @@ serve(async (req) => {
       const vendorList = hostVendors
         .map((v: unknown) => {
           const vendor = v as Record<string, unknown>;
-          return `- **${vendor.name}** (${vendor.category}) by ${vendor.vendor}: ${vendor.description} - $${vendor.price}, Rating: ${vendor.rating}/5`;
+          return `- "${vendor.name}" (Category: ${vendor.category}) by ${vendor.vendor}: ${vendor.description} - $${vendor.price}, Rating: ${vendor.rating}/5`;
         })
         .join("\n");
       
       vendorContext = `
 
-**HOST'S CURATED RECOMMENDATIONS:**
-The guest's host has specifically recommended these experiences. PRIORITIZE these when relevant to the guest's request:
+**HOST'S PREFERRED VENDORS (IMPORTANT!):**
+The guest's host has these specific preferred vendors. You MUST check this list and include the relevant ones when they match what the guest is asking about:
 ${vendorList}
 
-When the guest asks about activities, experiences, or things to do, suggest from this list FIRST if it matches their interests. Mention that "your host recommends" these options.`;
+**CRITICAL INSTRUCTION FOR HOST VENDORS:**
+- When a guest asks about an activity (e.g., "snorkeling"), check if any host vendor matches that category
+- If a match exists, include it prominently in your response with this EXACT format:
+  ⭐ **HOST'S PICK: [Vendor Name]** by [Provider] (★rating) – [Description]. *Your host specifically recommends this option!*
+- Place the host's pick at the TOP of the relevant category section
+- Only show host vendors that are RELEVANT to what the guest asked about - do NOT show all host vendors for every query`;
     }
 
     // Validate messages
@@ -214,7 +219,10 @@ End with: "Want me to help you plan a specific day or book any of these? Just le
 - Include practical details: prices, hours, reservations needed, how to get there
 - Organize into clear categories with headers (##)
 - Use bullet points (•) for lists
-- If host recommendations exist, mark them with "🏠 Your host recommends:" prefix
+- ONLY include host vendor recommendations that are DIRECTLY relevant to what the guest asked
+- For host picks, ALWAYS use this format at the TOP of the relevant section:
+  ⭐ **HOST'S PICK: [Name]** by [Provider] (★rating) – Description. *Your host recommends this!*
+- Do NOT show all host vendors - only the ones matching the guest's query category
 - Be enthusiastic and warm, like a friend who lives in Tulum
 - End responses with an offer to help further`
           },
