@@ -59,6 +59,7 @@ import HostRatings from "./pages/HostRatings";
 import VendorRatings from "./pages/VendorRatings";
 import AppView from "./pages/AppView";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import TripPlannerChat from "./pages/TripPlannerChat";
 import RestaurantDetail from "./pages/RestaurantDetail";
@@ -141,6 +142,7 @@ const AppRoutes = () => (
     <Route path="/booking/:id/confirmed" element={<BookingConfirmation />} />
     <Route path="/storefront/:hostId" element={<HostStorefront />} />
     <Route path="/auth" element={<Auth />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/profile" element={<Profile />} />
     <Route path="/for-hosts" element={<ForHosts />} />
     <Route path="/for-vendors" element={<ForVendors />} />

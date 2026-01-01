@@ -15,6 +15,7 @@ const SignIn = () => {
   const { isAuthenticated, role, isLoading } = useAuthContext();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -52,9 +53,13 @@ const SignIn = () => {
       });
 
       if (error) {
+        const msg = error.message.includes("Invalid login credentials")
+          ? "Invalid email or password. If you recently enabled leaked-password protection, you may need to reset your password."
+          : error.message;
+
         toast({
           title: "Sign in failed",
-          description: error.message,
+          description: msg,
           variant: "destructive",
         });
         return;
@@ -75,6 +80,40 @@ const SignIn = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = formData.email.trim();
+    if (!email) {
+      toast({
+        title: "Enter your email",
+        description: "Type your email above, then click Forgot Password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+
+      toast({
+        title: "Reset email sent",
+        description: "Check your inbox for a password reset link.",
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to send reset email";
+      toast({
+        title: "Couldn't send reset email",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -157,9 +196,14 @@ const SignIn = () => {
           </Button>
 
           <div className="text-center">
-            <Link to="#" className="text-sm text-primary hover:underline">
-              Forgot Password?
-            </Link>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={isSubmitting || isResettingPassword}
+              className="text-sm text-primary hover:underline disabled:opacity-60"
+            >
+              {isResettingPassword ? "Sending reset email..." : "Forgot Password?"}
+            </button>
           </div>
         </form>
 

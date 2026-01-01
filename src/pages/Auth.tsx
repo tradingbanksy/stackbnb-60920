@@ -22,6 +22,7 @@ const Auth = () => {
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { isAuthenticated, isLoading, role: userRole, setUserRole } = useAuthContext();
 
   // All hooks must be called before any conditional returns
@@ -293,7 +294,11 @@ const Auth = () => {
         return;
       }
       
-      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again.";
+      const rawMessage = error instanceof Error ? error.message : "An error occurred. Please try again.";
+      const errorMessage = rawMessage.includes("Invalid login credentials")
+        ? "Invalid email or password. If you recently enabled leaked-password protection, you may need to reset your password."
+        : rawMessage;
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -324,6 +329,40 @@ const Auth = () => {
         variant: "destructive",
       });
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = form.getValues("email").trim();
+    if (!email) {
+      toast({
+        title: "Enter your email",
+        description: "Type your email above, then click Forgot password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+
+      toast({
+        title: "Reset email sent",
+        description: "Check your inbox for a password reset link.",
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to send reset email";
+      toast({
+        title: "Couldn't send reset email",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -381,6 +420,19 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
                 </Button>
+
+                {!isSignUp && (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={loading || isResettingPassword}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
+                    </button>
+                  </div>
+                )}
               </form>
             </Form>
 

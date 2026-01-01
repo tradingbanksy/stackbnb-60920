@@ -13,6 +13,7 @@ const HostAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +58,36 @@ const HostAuth = () => {
         navigate("/host/vendors");
       }
     } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      const rawMessage = error?.message || "An error occurred";
+      const message = rawMessage.includes("Invalid login credentials")
+        ? "Invalid email or password. If you recently enabled leaked-password protection, you may need to reset your password."
+        : rawMessage;
+      toast.error(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      toast.error("Enter your email above to reset your password");
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+
+      toast.success("Reset email sent. Check your inbox.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to send reset email");
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -102,6 +130,19 @@ const HostAuth = () => {
           <Button type="submit" variant="gradient" className="w-full" disabled={loading}>
             {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
           </Button>
+
+          {!isSignUp && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading || isResettingPassword}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
+              </button>
+            </div>
+          )}
         </form>
 
         <div className="text-center">
