@@ -89,6 +89,27 @@ serve(async (req) => {
       );
     }
 
+    // Extract host vendors if provided
+    const hostVendors = (body as { hostVendors?: unknown[] }).hostVendors;
+    let vendorContext = "";
+    
+    if (hostVendors && Array.isArray(hostVendors) && hostVendors.length > 0) {
+      const vendorList = hostVendors
+        .map((v: unknown) => {
+          const vendor = v as Record<string, unknown>;
+          return `- **${vendor.name}** (${vendor.category}) by ${vendor.vendor}: ${vendor.description} - $${vendor.price}, Rating: ${vendor.rating}/5`;
+        })
+        .join("\n");
+      
+      vendorContext = `
+
+**HOST'S CURATED RECOMMENDATIONS:**
+The guest's host has specifically recommended these experiences. PRIORITIZE these when relevant to the guest's request:
+${vendorList}
+
+When the guest asks about activities, experiences, or things to do, suggest from this list FIRST if it matches their interests. Mention that "your host recommends" these options.`;
+    }
+
     // Validate messages
     const validation = validateMessages((body as { messages: unknown }).messages);
     if (!validation.valid) {
@@ -128,6 +149,7 @@ serve(async (req) => {
 **Your tone:** Clear, confident, helpful, and slightly opinionated. You never give generic answers.
 
 **Context:** You're part of Stackd, an app that connects travelers, Airbnb hosts, and local vendors so people can easily book experiences, dining, and services in a smooth, organized way.
+${vendorContext}
 
 **Always respond in this structure:**
 1. **Direct Answer** - Get to the point immediately
@@ -141,6 +163,7 @@ serve(async (req) => {
 - Give specific suggestions with real reasoning
 - Think like a founder + product designer + traveler
 - If you don't know something specific, say so and pivot to what you do know
+- If host recommendations are provided, PRIORITIZE them when they match the guest's request
 
 **Formatting:**
 - Use **bold** for venue names, key highlights, and important points

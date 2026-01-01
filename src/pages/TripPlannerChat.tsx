@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import TripPlannerChatUI from "@/components/ui/trip-planner-chat-ui";
 
@@ -7,15 +8,31 @@ interface Message {
   content: string;
 }
 
+interface HostVendor {
+  id: number;
+  name: string;
+  category: string;
+  vendor: string;
+  price: number;
+  rating: number;
+  description: string;
+}
+
 const MAX_MESSAGE_LENGTH = 2000;
 
 const TripPlannerChat = () => {
   const { toast } = useToast();
+  const location = useLocation();
+  const hostVendors = (location.state as { hostVendors?: HostVendor[] })?.hostVendors || [];
+  
+  const initialMessage = hostVendors.length > 0
+    ? `🌴 Hello! I'm JC, your AI travel assistant. Your host has curated ${hostVendors.length} amazing experiences for you! Ask me about activities, restaurants, or let me help you plan your perfect trip.`
+    : "🌴 Hello! I'm JC, your AI travel assistant. I can help you discover amazing restaurants and excursions for your trip. Where are you planning to visit?";
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "🌴 Hello! I'm JC, your AI travel assistant. I can help you discover amazing restaurants and excursions for your trip. Where are you planning to visit?",
+      content: initialMessage,
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +61,7 @@ const TripPlannerChat = () => {
         },
         body: JSON.stringify({
           messages: [...messages, { role: "user", content: trimmedInput }],
+          hostVendors: hostVendors.length > 0 ? hostVendors : undefined,
         }),
       });
 
