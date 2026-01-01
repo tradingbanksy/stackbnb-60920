@@ -97,7 +97,7 @@ serve(async (req) => {
       const vendorList = hostVendors
         .map((v: unknown) => {
           const vendor = v as Record<string, unknown>;
-          return `- "${vendor.name}" (Category: ${vendor.category}) by ${vendor.vendor}: ${vendor.description} - $${vendor.price}, Rating: ${vendor.rating}/5`;
+          return `- "${vendor.name}" (ID: ${vendor.id}, Category: ${vendor.category}) by ${vendor.vendor}: ${vendor.description} - $${vendor.price}, Rating: ${vendor.rating}/5, Booking Link: /experience/${vendor.id}`;
         })
         .join("\n");
       
@@ -110,9 +110,14 @@ ${vendorList}
 **CRITICAL INSTRUCTION FOR HOST VENDORS:**
 - When a guest asks about an activity (e.g., "snorkeling"), check if any host vendor matches that category
 - If a match exists, include it prominently in your response with this EXACT format:
-  ⭐ **HOST'S PICK: [Vendor Name]** by [Provider] (★rating) – [Description]. *Your host specifically recommends this option!*
+  ⭐ **HOST'S PICK: [Vendor Name]** by [Provider] [★rating](https://www.google.com/maps/search/Vendor+Name+Tulum+Mexico) – [Description]. *Your host specifically recommends this option!*
+  
+  👉 [Book this experience now!](/experience/ID)
+  
+- Replace "ID" with the actual numeric ID from the vendor info above
 - Place the host's pick at the TOP of the relevant category section
-- Only show host vendors that are RELEVANT to what the guest asked about - do NOT show all host vendors for every query`;
+- Only show host vendors that are RELEVANT to what the guest asked about - do NOT show all host vendors for every query
+- When offering to help book, include a direct booking link like: "Ready to book? [Book [Vendor Name] now!](/experience/ID)"`;
     }
 
     // Validate messages
