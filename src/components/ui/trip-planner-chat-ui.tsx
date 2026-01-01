@@ -403,7 +403,7 @@ export default function TripPlannerChatUI({
                 <div className="flex flex-wrap gap-2 mt-3">
                   <button
                     onClick={() => onSendMessage("I'll go with the host's recommendation")}
-                    className="px-3 py-1.5 text-sm text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground rounded-lg border border-border/50 transition-colors"
+                    className="px-3 py-1.5 text-xs text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground rounded-lg border border-border/50 transition-colors"
                   >
                     Go with Host's recommendation
                   </button>
