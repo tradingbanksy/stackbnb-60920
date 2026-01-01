@@ -124,11 +124,7 @@ ${vendorList}
 ---
 ✅ **Great choice! Your host recommends this one.**
 
-**📋 Experience Details:**
-
-| ⏱️ Duration | 👥 Max Group | 💰 Price |
-|:---:|:---:|:---:|
-| [duration] | [maxGuests] guests | $[price]/person |
+⏱️ **[duration]** · 👥 **Max [maxGuests]** · 💰 **$[price]/person**
 
 **✨ What's Included:**
 • [item 1]
