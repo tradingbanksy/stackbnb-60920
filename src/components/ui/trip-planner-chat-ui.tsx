@@ -401,14 +401,12 @@ export default function TripPlannerChatUI({
                !messages[messages.length - 1]?.content.includes("Great choice") &&
                hostVendors.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={() => onSendMessage("I'll go with the host's recommendation")}
-                    className="flex items-center gap-2 rounded-full border-border bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="px-3 py-1.5 text-sm text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground rounded-lg border border-border/50 transition-colors"
                   >
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs">Go with Host's recommendation</span>
-                  </Button>
+                    Go with Host's recommendation
+                  </button>
                 </div>
               )}
               
