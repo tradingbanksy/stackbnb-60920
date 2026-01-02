@@ -98,9 +98,11 @@ serve(async (req) => {
         .map((v: unknown) => {
           const vendor = v as Record<string, unknown>;
           const included = Array.isArray(vendor.included) ? (vendor.included as string[]).join(", ") : "";
+          const durationText = vendor.duration && vendor.duration !== "N/A" ? `Duration: ${vendor.duration}` : "Duration: Flexible (no time limit)";
+          const maxGuestsText = vendor.maxGuests ? `Max Guests: ${vendor.maxGuests}` : "";
           return `- "${vendor.name}" (ID: ${vendor.id}, Category: ${vendor.category}) by ${vendor.vendor}
   Description: ${vendor.description}
-  Price: $${vendor.price} per person | Duration: ${vendor.duration || "N/A"} | Max Guests: ${vendor.maxGuests || "N/A"}
+  Price: $${vendor.price} per person | ${durationText}${maxGuestsText ? ` | ${maxGuestsText}` : ""}
   Rating: ${vendor.rating}/5
   What's Included: ${included || "Contact for details"}
   Booking Link: /experience/${vendor.id}`;
@@ -124,7 +126,9 @@ ${vendorList}
 ---
 ✅ **Great choice! Your host recommends this one.**
 
-⏱️ **[duration]** · 👥 **Max [maxGuests]** · 💰 **$[price]/person**
+⏱️ **[duration or "Flexible"]** · 👥 **Max [maxGuests]** · 💰 **$[price]/person**
+
+Note: If duration is "Flexible (no time limit)", just show "⏱️ **Flexible**" - do NOT show "N/A hours" or similar.
 
 **✨ What's Included:**
 • [item 1]
