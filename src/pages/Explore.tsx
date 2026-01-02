@@ -197,15 +197,18 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Experiences Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {filteredExperiences.map((experience) => (
-                  <ExperienceCard 
-                    key={experience.id}
-                    experience={experience} 
-                    showAddButton={isHostMode}
-                  />
-                ))}
+              {/* Experiences - Horizontal Scroll */}
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                <div className="flex gap-3 w-max pb-2">
+                  {filteredExperiences.map((experience) => (
+                    <div key={experience.id} className="flex-shrink-0 w-40">
+                      <ExperienceCard 
+                        experience={experience} 
+                        showAddButton={isHostMode}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {filteredExperiences.length === 0 && (
@@ -238,17 +241,20 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Restaurants Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {filteredRestaurants.map((restaurant) => (
-                  <RestaurantCard
-                    key={restaurant.id}
-                    restaurant={restaurant}
-                    variant="grid"
-                    size="small"
-                    showAddButton={isHostMode}
-                  />
-                ))}
+              {/* Restaurants - Horizontal Scroll */}
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                <div className="flex gap-3 w-max pb-2">
+                  {filteredRestaurants.map((restaurant) => (
+                    <div key={restaurant.id} className="flex-shrink-0 w-40">
+                      <RestaurantCard
+                        restaurant={restaurant}
+                        variant="grid"
+                        size="small"
+                        showAddButton={isHostMode}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {filteredRestaurants.length === 0 && (
