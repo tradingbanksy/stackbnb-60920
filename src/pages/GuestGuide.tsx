@@ -10,6 +10,7 @@ import { mockRestaurants } from "@/data/mockRestaurants";
 import RestaurantCard from "@/components/RestaurantCard";
 import type { RecommendationItem } from "@/types";
 import type { Json } from "@/integrations/supabase/types";
+import stackdLogo from "@/assets/stackd-logo-new.png";
 
 // Experience images
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -172,8 +173,8 @@ const GuestGuide = () => {
       <div className="max-w-[430px] mx-auto flex-1 w-full">
         {/* Header */}
         <div className="bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4 py-8 text-center border-b border-border">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-            {firstName ? firstName.charAt(0).toUpperCase() : "H"}
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+            <img src={stackdLogo} alt="stackd" className="h-10 w-10 object-contain" />
           </div>
           <h1 className="text-2xl font-bold mb-2">
             {firstName ? `Welcome to ${firstName}'s Guide` : "Welcome to Your Host's Guide"}
