@@ -130,8 +130,9 @@ const TripPlannerChat = () => {
             const content = json.choices?.[0]?.delta?.content as string | undefined;
 
             if (content) {
-              // Strip inverted punctuation to keep output strictly English
+              // Strip inverted punctuation + leading exclamation at the start of a line/sentence
               assistantText += content.replace(/[¡¿]/g, "");
+              assistantText = assistantText.replace(/(^|\n)\s*[!]\s*(?=[A-Za-z])/g, "$1");
 
               setMessages((prev) => {
                 const updated = [...prev];
@@ -161,6 +162,8 @@ const TripPlannerChat = () => {
             const content = json.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantText += content.replace(/[¡¿]/g, "");
+              assistantText = assistantText.replace(/(^|\n)\s*[!]\s*(?=[A-Za-z])/g, "$1");
+
               setMessages((prev) => {
                 const updated = [...prev];
                 updated[updated.length - 1].content = assistantText;
