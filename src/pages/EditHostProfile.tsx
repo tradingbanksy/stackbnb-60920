@@ -2,43 +2,104 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import HostBottomNav from "@/components/HostBottomNav";
 import { useSignup } from "@/contexts/SignupContext";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSmartBack } from "@/hooks/use-smart-back";
 
 const EditHostProfile = () => {
   const goBack = useSmartBack("/host/profile");
   const { hostSignupData, propertyData, updateHostSignupData, updatePropertyData } = useSignup();
+  const { user } = useAuthContext();
+  const { profile, refreshProfile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
-    firstName: hostSignupData.firstName || '',
-    lastName: hostSignupData.lastName || '',
-    email: hostSignupData.email || '',
-    phone: hostSignupData.phone || '',
-    propertyName: propertyData.propertyName || '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    propertyName: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Initialize form data from profile or signup context
+  useEffect(() => {
+    if (profile?.full_name) {
+      const nameParts = profile.full_name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      setFormData({
+        firstName,
+        lastName,
+        email: profile.email || hostSignupData.email || '',
+        phone: profile.phone || hostSignupData.phone || '',
+        propertyName: propertyData.propertyName || '',
+      });
+    } else {
+      setFormData({
+        firstName: hostSignupData.firstName || '',
+        lastName: hostSignupData.lastName || '',
+        email: profile?.email || hostSignupData.email || '',
+        phone: profile?.phone || hostSignupData.phone || '',
+        propertyName: propertyData.propertyName || '',
+      });
+    }
+  }, [profile, hostSignupData, propertyData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    updateHostSignupData({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-    });
+    if (!user) {
+      toast.error("You must be logged in to update your profile");
+      return;
+    }
+
+    setIsSaving(true);
     
-    updatePropertyData({
-      ...propertyData,
-      propertyName: formData.propertyName,
-    });
-    
-    toast.success("Profile updated successfully!");
-    setIsEditing(false);
+    try {
+      // Update the database profile with full_name
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          full_name: fullName,
+          phone: formData.phone,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local contexts
+      updateHostSignupData({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+      });
+      
+      updatePropertyData({
+        ...propertyData,
+        propertyName: formData.propertyName,
+      });
+
+      // Refresh the profile context
+      await refreshProfile();
+      
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,13 +110,26 @@ const EditHostProfile = () => {
   };
 
   const handleCancel = () => {
-    setFormData({
-      firstName: hostSignupData.firstName || '',
-      lastName: hostSignupData.lastName || '',
-      email: hostSignupData.email || '',
-      phone: hostSignupData.phone || '',
-      propertyName: propertyData.propertyName || '',
-    });
+    if (profile?.full_name) {
+      const nameParts = profile.full_name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      setFormData({
+        firstName,
+        lastName,
+        email: profile.email || hostSignupData.email || '',
+        phone: profile.phone || hostSignupData.phone || '',
+        propertyName: propertyData.propertyName || '',
+      });
+    } else {
+      setFormData({
+        firstName: hostSignupData.firstName || '',
+        lastName: hostSignupData.lastName || '',
+        email: profile?.email || hostSignupData.email || '',
+        phone: profile?.phone || hostSignupData.phone || '',
+        propertyName: propertyData.propertyName || '',
+      });
+    }
     setIsEditing(false);
   };
 
@@ -159,8 +233,15 @@ const EditHostProfile = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" variant="gradient" className="flex-1" size="lg">
-                  Save Changes
+                <Button type="submit" variant="gradient" className="flex-1" size="lg" disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
               </div>
             )}
