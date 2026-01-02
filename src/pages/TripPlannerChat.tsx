@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import TripPlannerChatUI from "@/components/ui/trip-planner-chat-ui";
@@ -22,6 +22,7 @@ interface HostVendor {
 }
 
 const MAX_MESSAGE_LENGTH = 2000;
+const CHAT_HISTORY_KEY = "tripPlannerChatHistory";
 
 const TripPlannerChat = () => {
   const { toast } = useToast();
@@ -32,13 +33,27 @@ const TripPlannerChat = () => {
     ? `🌴 Hola! I'm JC, your Tulum travel assistant. Your host has curated ${hostVendors.length} amazing local experiences for you! Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`
     : "🌴 Hola! I'm JC, your Tulum travel assistant. I know all the best cenotes, beach clubs, tacos, and hidden gems in the area. What are you looking to experience during your stay?";
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: initialMessage,
-    },
-  ]);
+  // Load messages from sessionStorage or use initial message
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const stored = sessionStorage.getItem(CHAT_HISTORY_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch {
+        // Invalid JSON, use default
+      }
+    }
+    return [{ role: "assistant", content: initialMessage }];
+  });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Persist messages to sessionStorage whenever they change
+  useEffect(() => {
+    sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   const sendMessage = async (trimmedInput: string) => {
     if (!trimmedInput || isLoading) return;
