@@ -130,9 +130,11 @@ const TripPlannerChat = () => {
             const content = json.choices?.[0]?.delta?.content as string | undefined;
 
             if (content) {
-              // Strip inverted punctuation + leading exclamation at the start of a line/sentence
+              // Strip inverted punctuation + ensure response starts with capital letter (no leading symbols)
               assistantText += content.replace(/[¡¿]/g, "");
               assistantText = assistantText.replace(/(^|\n)\s*[!]\s*(?=[A-Za-z])/g, "$1");
+              // Ensure very first character is a capital letter (strip any leading non-letter symbols)
+              assistantText = assistantText.replace(/^[^A-Za-z]+/, "");
 
               setMessages((prev) => {
                 const updated = [...prev];
@@ -163,6 +165,7 @@ const TripPlannerChat = () => {
             if (content) {
               assistantText += content.replace(/[¡¿]/g, "");
               assistantText = assistantText.replace(/(^|\n)\s*[!]\s*(?=[A-Za-z])/g, "$1");
+              assistantText = assistantText.replace(/^[^A-Za-z]+/, "");
 
               setMessages((prev) => {
                 const updated = [...prev];
