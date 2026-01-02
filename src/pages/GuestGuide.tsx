@@ -141,9 +141,8 @@ const GuestGuide = () => {
     .map((r) => mockRestaurants.find((rest) => rest.id === r.id))
     .filter(Boolean) || [];
 
-  const hostName = hostProfile?.full_name;
-  const displayName = hostName || "Your Host";
-  const firstName = displayName.split(" ")[0];
+  const hostName = hostProfile?.full_name?.trim();
+  const firstName = hostName ? hostName.split(" ")[0] : null;
 
   if (isLoading) {
     return (
@@ -174,10 +173,10 @@ const GuestGuide = () => {
         {/* Header */}
         <div className="bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4 py-8 text-center border-b border-border">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-            {firstName.charAt(0).toUpperCase()}
+            {firstName ? firstName.charAt(0).toUpperCase() : "H"}
           </div>
           <h1 className="text-2xl font-bold mb-2">
-            Welcome to {firstName}'s Guide
+            {firstName ? `Welcome to ${firstName}'s Guide` : "Welcome to Your Host's Guide"}
           </h1>
           <p className="text-muted-foreground text-sm">
             Curated recommendations for your stay
