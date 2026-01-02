@@ -126,11 +126,15 @@ ${vendorList}
 ---
 ✅ **Great choice! Your host recommends this one.**
 
-⏱️ **[duration or "Flexible"]** · 👥 **Max [maxGuests]** · 💰 **$[price]/person**
+⏱️ **[duration]** · 👥 **Max [maxGuests]** · 💰 **$[price]/person**
 
-IMPORTANT: You MUST include the ⏱️ duration segment above (use "Flexible" if no time limit). Never omit duration.
+IMPORTANT: You MUST include the ⏱️ duration segment above. NEVER show "---" or "--" or omit duration.
 
-Note: If duration is "Flexible (no time limit)", just show "⏱️ **Flexible**" - do NOT show "N/A hours" or similar.
+**Duration Rules:**
+- If the experience has a specific time (e.g., "2 hours", "3 hours"), use that.
+- If it's a daily rental (bikes, kayaks, equipment) with no set time, show "24 hours" (full day rental).
+- If truly flexible with no time limit, show "Flexible".
+- NEVER use dashes or leave duration blank.
 
 **✨ What's Included:**
 • [item 1]
