@@ -267,12 +267,6 @@ const ExperienceDetails = () => {
             </Card>
           </div>
 
-          {/* Host Guest Guide Button */}
-          <GuestGuideButton
-            itemId={String(experience.id)}
-            itemType="experience"
-            itemName={experience.name}
-          />
 
           {/* Host Vendor List Button */}
           <VendorListButton
