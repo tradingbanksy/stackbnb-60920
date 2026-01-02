@@ -30,8 +30,8 @@ const TripPlannerChat = () => {
   const hostVendors = (location.state as { hostVendors?: HostVendor[] })?.hostVendors || [];
   
   const initialMessage = hostVendors.length > 0
-    ? `🌴 Hola! I'm JC, your Tulum travel assistant. Your host has curated ${hostVendors.length} amazing local experiences for you! Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`
-    : "🌴 Hola! I'm JC, your Tulum travel assistant. I know all the best cenotes, beach clubs, tacos, and hidden gems in the area. What are you looking to experience during your stay?";
+    ? `🌴 Hi! I'm JC, your Tulum travel assistant. Your host has curated ${hostVendors.length} amazing local experiences for you. Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`
+    : "🌴 Hi! I'm JC, your Tulum travel assistant. I know the best cenotes, beach clubs, tacos, and hidden gems in the area. What are you looking to experience during your stay?";
 
   // Load messages from sessionStorage or use initial message
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -92,38 +92,83 @@ const TripPlannerChat = () => {
       const decoder = new TextDecoder();
 
       // Add a "thinking" delay before showing response
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, 1200));
 
       let assistantText = "";
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      while (true) {
+      // Robust SSE parsing (handles partial lines/JSON across chunks)
+      let textBuffer = "";
+      let streamDone = false;
+
+      while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        textBuffer += decoder.decode(value, { stream: true });
 
-        for (const line of lines) {
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
           const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith("data:")) continue;
-          if (trimmed === "data: [DONE]") continue;
+
+          // Ignore keep-alives/comments/empty lines
+          if (!trimmed || trimmed.startsWith(":")) continue;
+          if (!trimmed.startsWith("data:")) continue;
+
+          const dataStr = trimmed.replace(/^data:\s*/, "").trim();
+          if (dataStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
 
           try {
-            const json = JSON.parse(trimmed.slice(5).trim());
-            const content = json.choices?.[0]?.delta?.content;
+            const json = JSON.parse(dataStr);
+            const content = json.choices?.[0]?.delta?.content as string | undefined;
+
             if (content) {
-              assistantText += content;
-              // Ensure double newlines for proper paragraph spacing
-              const formattedText = assistantText.replace(/\n\n/g, '\n\n');
+              // Strip inverted punctuation to keep output strictly English
+              assistantText += content.replace(/[¡¿]/g, "");
+
               setMessages((prev) => {
                 const updated = [...prev];
-                updated[updated.length - 1].content = formattedText;
+                updated[updated.length - 1].content = assistantText;
                 return updated;
               });
             }
           } catch {
-            // Skip malformed chunks silently
+            // Put the line back and wait for more data (partial JSON)
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush (in case the stream ended without a trailing newline)
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          raw = raw.trim();
+          if (!raw || raw.startsWith(":")) continue;
+          if (!raw.startsWith("data:")) continue;
+          const dataStr = raw.replace(/^data:\s*/, "").trim();
+          if (!dataStr || dataStr === "[DONE]") continue;
+
+          try {
+            const json = JSON.parse(dataStr);
+            const content = json.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantText += content.replace(/[¡¿]/g, "");
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1].content = assistantText;
+                return updated;
+              });
+            }
+          } catch {
+            // ignore leftovers
           }
         }
       }

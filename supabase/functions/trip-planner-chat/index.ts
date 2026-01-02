@@ -128,6 +128,8 @@ ${vendorList}
 
 ⏱️ **[duration or "Flexible"]** · 👥 **Max [maxGuests]** · 💰 **$[price]/person**
 
+IMPORTANT: You MUST include the ⏱️ duration segment above (use "Flexible" if no time limit). Never omit duration.
+
 Note: If duration is "Flexible (no time limit)", just show "⏱️ **Flexible**" - do NOT show "N/A hours" or similar.
 
 **✨ What's Included:**
