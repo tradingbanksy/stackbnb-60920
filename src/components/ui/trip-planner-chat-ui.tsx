@@ -92,6 +92,9 @@ interface HostVendor {
   price: number;
   rating: number;
   description: string;
+  duration?: string;
+  maxGuests?: number;
+  included?: string[];
 }
 
 interface TripPlannerChatUIProps {
