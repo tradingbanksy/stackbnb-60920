@@ -63,18 +63,33 @@ const EditHostProfile = () => {
     setIsSaving(true);
     
     try {
-      // Update the database profile with full_name
+      // Update (or create) the database profile with full_name
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-      
-      const { error } = await supabase
+
+      const { data: updatedRows, error: updateError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           full_name: fullName,
           phone: formData.phone,
         })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select('id');
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // If no profile row exists yet, create it
+      if (!updatedRows || updatedRows.length === 0) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            full_name: fullName || null,
+            email: formData.email || null,
+            phone: formData.phone || null,
+          });
+
+        if (insertError) throw insertError;
+      }
 
       // Update local contexts
       updateHostSignupData({

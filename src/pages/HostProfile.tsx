@@ -1,12 +1,28 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronRight, Store, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut, BookMarked, Copy, Check, Share2, MessageCircle } from "lucide-react";
+import {
+  ChevronRight,
+  Store,
+  CreditCard,
+  Receipt,
+  UserPen,
+  Lock,
+  HelpCircle,
+  LogOut,
+  BookMarked,
+  Copy,
+  Check,
+  Share2,
+  MessageCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
 import { useSignup } from "@/contexts/SignupContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +34,7 @@ import { FaWhatsapp } from "react-icons/fa";
 const HostProfile = () => {
   const navigate = useNavigate();
   const { hostSignupData, propertyData } = useSignup();
+  const { profile } = useProfile();
   const { user } = useAuthContext();
   const [copied, setCopied] = useState(false);
 
@@ -25,6 +42,18 @@ const HostProfile = () => {
   const lastName = hostSignupData.lastName || "Doe";
   const propertyName = propertyData.propertyName || "Beach House Paradise";
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
+  // Ensure the public guest guide can display a name (it reads from profiles.full_name)
+  useEffect(() => {
+    const fullName = `${firstName} ${lastName}`.trim();
+    if (!user || !fullName) return;
+    if (profile?.full_name && profile.full_name.trim()) return;
+
+    supabase
+      .from('profiles')
+      .update({ full_name: fullName })
+      .eq('user_id', user.id);
+  }, [user, firstName, lastName, profile?.full_name]);
 
   const guideUrl = user ? `${window.location.origin}/guide/${user.id}` : "";
 
