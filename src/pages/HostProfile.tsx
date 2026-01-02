@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import stackdLogo from "@/assets/stackd-logo-new.png";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ChevronRight,
@@ -178,11 +179,9 @@ const HostProfile = () => {
         {/* Profile Header Card */}
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <Avatar className="h-16 w-16 bg-gradient-to-r from-orange-500 to-pink-500 flex-shrink-0">
-              <AvatarFallback className="text-white text-xl font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-16 w-16 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <img src={stackdLogo} alt="stackd" className="h-10 w-10 object-contain" />
+            </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold truncate">
                 {displayFullName || "Your Name"}
