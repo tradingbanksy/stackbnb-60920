@@ -1,21 +1,31 @@
 import { Link } from "react-router-dom";
-import { Star, Heart, MapPin, Navigation } from "lucide-react";
+import { Star, Heart, MapPin, Navigation, Plus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { formatDistance } from "@/services/geoapifyService";
+import { useProfile } from "@/contexts/ProfileContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   variant?: 'horizontal' | 'vertical' | 'grid';
   size?: 'default' | 'small';
+  showAddButton?: boolean;
 }
 
-const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default' }: RestaurantCardProps) => {
+const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', showAddButton = false }: RestaurantCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const isOpen = isRestaurantOpen(restaurant);
   const isSmall = size === 'small';
+  
+  const { isAuthenticated, role } = useAuthContext();
+  const { hasRecommendation, addRecommendation, removeRecommendation } = useProfile();
+  
+  const isHost = isAuthenticated && role === 'host';
+  const isSaved = hasRecommendation(restaurant.id, 'restaurant');
 
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
@@ -39,6 +49,28 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default' }
     }
     localStorage.setItem("restaurantFavorites", JSON.stringify(newFavorites));
     setIsFavorite(!isFavorite);
+  };
+
+  const handleAddToGuide = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isHost) return;
+    
+    setIsAdding(true);
+    try {
+      if (isSaved) {
+        await removeRecommendation(restaurant.id, 'restaurant');
+        toast({ title: "Removed from guest guide", duration: 2000 });
+      } else {
+        await addRecommendation({ id: restaurant.id, type: 'restaurant' });
+        toast({ title: "Added to guest guide!", duration: 2000 });
+      }
+    } catch (error) {
+      toast({ title: "Failed to update", variant: "destructive", duration: 2000 });
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   // Cache API restaurant data before navigating
@@ -157,19 +189,38 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default' }
             }}
           />
           
-          {/* Favorite button */}
-          <button
-            onClick={toggleFavorite}
-            className={`absolute top-1 right-1 z-10 ${isSmall ? 'p-0.5' : 'p-1.5'} rounded-full hover:scale-110 active:scale-95 transition-transform`}
-          >
-            <Heart
-              className={`${isSmall ? 'h-3.5 w-3.5' : 'h-5 w-5'} drop-shadow-md ${
-                isFavorite
-                  ? "fill-red-500 text-red-500"
-                  : "fill-black/50 text-white stroke-white stroke-2"
+          {/* Add to guide button (for hosts) */}
+          {showAddButton && isHost ? (
+            <button
+              onClick={handleAddToGuide}
+              disabled={isAdding}
+              className={`absolute top-1 right-1 z-10 ${isSmall ? 'p-1' : 'p-1.5'} rounded-full transition-all ${
+                isSaved 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-white/90 text-foreground hover:bg-white'
               }`}
-            />
-          </button>
+            >
+              {isSaved ? (
+                <Check className={`${isSmall ? 'h-3 w-3' : 'h-4 w-4'}`} />
+              ) : (
+                <Plus className={`${isSmall ? 'h-3 w-3' : 'h-4 w-4'}`} />
+              )}
+            </button>
+          ) : (
+            /* Favorite button */
+            <button
+              onClick={toggleFavorite}
+              className={`absolute top-1 right-1 z-10 ${isSmall ? 'p-0.5' : 'p-1.5'} rounded-full hover:scale-110 active:scale-95 transition-transform`}
+            >
+              <Heart
+                className={`${isSmall ? 'h-3.5 w-3.5' : 'h-5 w-5'} drop-shadow-md ${
+                  isFavorite
+                    ? "fill-red-500 text-red-500"
+                    : "fill-black/50 text-white stroke-white stroke-2"
+                }`}
+              />
+            </button>
+          )}
 
           {/* Open/Closed badge - only show if we have hours data and not small */}
           {!isSmall && Object.keys(restaurant.hours || {}).length > 0 && (
