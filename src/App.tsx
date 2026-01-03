@@ -155,7 +155,7 @@ const AppRoutes = () => (
     <Route path="/wishlists" element={<Wishlists />} />
     <Route path="/guide/:hostId" element={<GuestGuide />} />
     <Route path="/test-instagram" element={<TestInstagramScrape />} />
-    <Route path="/vendor/create-profile" element={<CreateVendorProfile />} />
+    <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     
     {/* Legacy routes */}
     <Route path="/storefront/:id" element={<Storefront />} />
