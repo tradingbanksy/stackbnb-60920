@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronRight, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut } from "lucide-react";
+import { ChevronRight, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import VendorBottomNav from "@/components/VendorBottomNav";
 import { useSignup } from "@/contexts/SignupContext";
@@ -14,6 +14,12 @@ const VendorProfile = () => {
   const initials = contactName.split(' ').map(n => n[0]).join('').toUpperCase() || "JS";
 
   const menuItems = [
+    { 
+      label: "Preview Profile", 
+      icon: Eye, 
+      action: "/vendor/preview",
+      gradient: true
+    },
     { 
       label: "Payment Settings", 
       icon: CreditCard, 
@@ -48,7 +54,7 @@ const VendorProfile = () => {
       label: "Log Out", 
       icon: LogOut, 
       action: "/signout",
-      gradient: true
+      gradient: false
     },
   ];
 
