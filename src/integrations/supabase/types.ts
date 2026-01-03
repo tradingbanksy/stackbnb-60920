@@ -88,6 +88,7 @@ export type Database = {
           included_items: string[] | null
           instagram_url: string | null
           is_published: boolean | null
+          listing_type: string
           max_guests: number | null
           menu_url: string | null
           name: string
@@ -110,6 +111,7 @@ export type Database = {
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
+          listing_type?: string
           max_guests?: number | null
           menu_url?: string | null
           name: string
@@ -132,6 +134,7 @@ export type Database = {
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
+          listing_type?: string
           max_guests?: number | null
           menu_url?: string | null
           name?: string

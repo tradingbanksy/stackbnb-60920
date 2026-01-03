@@ -100,6 +100,7 @@ interface VendorProfile {
   price_per_person: number | null;
   google_rating: number | null;
   is_published: boolean | null;
+  listing_type: 'restaurant' | 'experience';
 }
 
 const AppView = () => {
@@ -108,7 +109,8 @@ const AppView = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [myBusinesses, setMyBusinesses] = useState<Vendor[]>([]);
-  const [publishedVendors, setPublishedVendors] = useState<VendorProfile[]>([]);
+  const [vendorRestaurants, setVendorRestaurants] = useState<VendorProfile[]>([]);
+  const [vendorExperiences, setVendorExperiences] = useState<VendorProfile[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -141,11 +143,14 @@ const AppView = () => {
     try {
       const { data, error } = await supabase
         .from('vendor_profiles')
-        .select('id, name, category, description, photos, price_per_person, google_rating, is_published')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
         .eq('is_published', true);
 
       if (error) throw error;
-      setPublishedVendors((data as VendorProfile[]) || []);
+      
+      const vendors = (data as VendorProfile[]) || [];
+      setVendorRestaurants(vendors.filter(v => v.listing_type === 'restaurant'));
+      setVendorExperiences(vendors.filter(v => v.listing_type === 'experience'));
     } catch (error) {
       console.error('Error fetching published vendors:', error);
     }
@@ -359,6 +364,42 @@ const AppView = () => {
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                   <div className="flex gap-3 w-max pb-2">
+                    {/* Vendor restaurants first */}
+                    {vendorRestaurants.map((vendor) => (
+                      <Link
+                        key={vendor.id}
+                        to={`/vendor/${vendor.id}`}
+                        className="flex-shrink-0 w-36"
+                      >
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          {vendor.photos && vendor.photos.length > 0 ? (
+                            <img
+                              src={vendor.photos[0]}
+                              alt={vendor.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-white/80" />
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              {vendor.google_rating && (
+                                <>
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{vendor.google_rating}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              <span>{vendor.category}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    {/* Mock restaurants */}
                     {restaurants.map((restaurant) => (
                       <Link
                         key={restaurant.id}
@@ -387,54 +428,6 @@ const AppView = () => {
                 </div>
               </section>
 
-              {/* Local Services (Published Vendors) */}
-              {publishedVendors.length > 0 && (
-                <section className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">Local Services</h2>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                    <div className="flex gap-3 w-max pb-2">
-                      {publishedVendors.map((vendor) => (
-                        <Link
-                          key={vendor.id}
-                          to={`/vendor/${vendor.id}`}
-                          className="flex-shrink-0 w-36"
-                        >
-                          <div className="aspect-square rounded-xl overflow-hidden relative">
-                            {vendor.photos && vendor.photos.length > 0 ? (
-                              <img
-                                src={vendor.photos[0]}
-                                alt={vendor.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-                                <Store className="h-8 w-8 text-white/80" />
-                              </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                              <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                              <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                                {vendor.google_rating && (
-                                  <>
-                                    <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                    <span>{vendor.google_rating}</span>
-                                    <span>•</span>
-                                  </>
-                                )}
-                                <span>{vendor.category}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              )}
-
               {/* Popular Experiences */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -445,6 +438,42 @@ const AppView = () => {
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                   <div className="flex gap-3 w-max pb-2">
+                    {/* Vendor experiences first */}
+                    {vendorExperiences.map((vendor) => (
+                      <Link
+                        key={vendor.id}
+                        to={`/vendor/${vendor.id}`}
+                        className="flex-shrink-0 w-36"
+                      >
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          {vendor.photos && vendor.photos.length > 0 ? (
+                            <img
+                              src={vendor.photos[0]}
+                              alt={vendor.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-white/80" />
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              {vendor.google_rating && (
+                                <>
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{vendor.google_rating}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              {vendor.price_per_person && <span>${vendor.price_per_person}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    {/* Mock experiences */}
                     {popularExperiences.map((experience: any) => (
                       <Link
                         key={experience.id}

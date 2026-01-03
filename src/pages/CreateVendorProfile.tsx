@@ -20,6 +20,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 
 const vendorProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  listingType: z.enum(['restaurant', 'experience'], { required_error: 'Please select a listing type' }),
   category: z.string().min(1, 'Please select a category'),
   instagramUrl: z.string().optional(),
   pricePerPerson: z.coerce.number().min(1, 'Price must be at least $1'),
@@ -249,6 +250,7 @@ const CreateVendorProfile = () => {
       const { error } = await supabase.from('vendor_profiles').insert({
         user_id: user.id,
         name: formData.name,
+        listing_type: formData.listingType,
         category: formData.category,
         description: formData.description,
         about_experience: formData.aboutExperience,
@@ -297,6 +299,40 @@ const CreateVendorProfile = () => {
             <CardDescription>Tell us about your service</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Listing Type Selection */}
+            <div className="space-y-2">
+              <Label>Where should this appear? *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setValue('listingType', 'restaurant')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    watchedValues.listingType === 'restaurant'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🍽️</div>
+                  <p className="font-medium">Restaurant</p>
+                  <p className="text-xs text-muted-foreground">Appears in "Restaurants Near You"</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue('listingType', 'experience')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    watchedValues.listingType === 'experience'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">✨</div>
+                  <p className="font-medium">Experience</p>
+                  <p className="text-xs text-muted-foreground">Appears in "Popular Experiences"</p>
+                </button>
+              </div>
+              {errors.listingType && <p className="text-sm text-destructive">{errors.listingType.message}</p>}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Business Name *</Label>
               <Input
