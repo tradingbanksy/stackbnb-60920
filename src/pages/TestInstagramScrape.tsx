@@ -74,9 +74,9 @@ const TestInstagramScrape = () => {
           continue;
         }
 
-        const fileName = `${user.id}/photos/${Date.now()}-${file.name}`;
+        const fileName = `${user.id}/${Date.now()}-${file.name}`;
         const { data, error } = await supabase.storage
-          .from('vendor-menus')
+          .from('vendor-photos')
           .upload(fileName, file);
 
         if (error) {
@@ -85,7 +85,7 @@ const TestInstagramScrape = () => {
         }
 
         const { data: urlData } = supabase.storage
-          .from('vendor-menus')
+          .from('vendor-photos')
           .getPublicUrl(data.path);
 
         newPhotos.push(urlData.publicUrl);
