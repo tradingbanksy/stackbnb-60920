@@ -74,6 +74,83 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_profiles: {
+        Row: {
+          about_experience: string | null
+          category: string
+          created_at: string
+          description: string | null
+          duration: string | null
+          google_place_id: string | null
+          google_rating: number | null
+          google_reviews_url: string | null
+          id: string
+          included_items: string[] | null
+          instagram_url: string | null
+          is_published: boolean | null
+          max_guests: number | null
+          menu_url: string | null
+          name: string
+          photos: string[] | null
+          price_per_person: number | null
+          updated_at: string
+          user_id: string
+          vendor_id: string | null
+        }
+        Insert: {
+          about_experience?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_reviews_url?: string | null
+          id?: string
+          included_items?: string[] | null
+          instagram_url?: string | null
+          is_published?: boolean | null
+          max_guests?: number | null
+          menu_url?: string | null
+          name: string
+          photos?: string[] | null
+          price_per_person?: number | null
+          updated_at?: string
+          user_id: string
+          vendor_id?: string | null
+        }
+        Update: {
+          about_experience?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_reviews_url?: string | null
+          id?: string
+          included_items?: string[] | null
+          instagram_url?: string | null
+          is_published?: boolean | null
+          max_guests?: number | null
+          menu_url?: string | null
+          name?: string
+          photos?: string[] | null
+          price_per_person?: number | null
+          updated_at?: string
+          user_id?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_profiles_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           category: string
