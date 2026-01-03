@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -88,6 +88,29 @@ const CreateVendorProfile = () => {
   });
 
   const watchedValues = watch();
+
+  // Load pre-selected photos from sessionStorage (from Instagram scrape page)
+  useEffect(() => {
+    const storedPhotos = sessionStorage.getItem('vendorScrapedPhotos');
+    const storedInstagramUrl = sessionStorage.getItem('vendorInstagramUrl');
+    
+    if (storedPhotos) {
+      try {
+        const photos = JSON.parse(storedPhotos);
+        setSelectedPhotos(photos);
+        setScrapedPhotos(photos); // Also set as scraped so they show in the grid
+        // Clear from storage after loading
+        sessionStorage.removeItem('vendorScrapedPhotos');
+      } catch (e) {
+        console.error('Error parsing stored photos:', e);
+      }
+    }
+    
+    if (storedInstagramUrl) {
+      setValue('instagramUrl', storedInstagramUrl);
+      sessionStorage.removeItem('vendorInstagramUrl');
+    }
+  }, [setValue]);
 
   // Scrape Instagram photos
   const handleScrapeInstagram = async () => {
