@@ -231,12 +231,12 @@ const VendorProfilePreview = () => {
       />
 
       {/* Hero Image Carousel */}
-      <div className="relative">
+      <div className="relative px-3 pt-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-10 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+          className="absolute top-6 left-6 z-10 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 rounded-full"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
@@ -247,7 +247,7 @@ const VendorProfilePreview = () => {
           size="icon"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="absolute top-4 right-4 z-10 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+          className="absolute top-6 right-6 z-10 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 rounded-full"
         >
           {isUploading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -257,18 +257,20 @@ const VendorProfilePreview = () => {
         </Button>
         
         {photos.length > 0 ? (
-          <div className="relative h-72 overflow-hidden group">
+          <div className="relative aspect-square rounded-xl overflow-hidden group">
             <img
               src={photos[currentImageIndex]}
               alt={profile.name}
               className="w-full h-full object-cover"
             />
+            {/* Gradient overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent h-24" />
             {/* Delete current photo button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleDeletePhoto(photos[currentImageIndex], currentImageIndex)}
-              className="absolute top-4 right-16 z-10 bg-red-500/80 backdrop-blur-sm text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-6 right-16 z-10 bg-red-500/80 backdrop-blur-sm text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -290,7 +292,7 @@ const VendorProfilePreview = () => {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="h-72 w-full bg-gradient-to-br from-orange-500 to-pink-500 flex flex-col items-center justify-center gap-3 hover:from-orange-600 hover:to-pink-600 transition-colors"
+            className="aspect-square w-full rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex flex-col items-center justify-center gap-3 hover:from-orange-600 hover:to-purple-700 transition-colors"
           >
             {isUploading ? (
               <Loader2 className="h-8 w-8 text-white animate-spin" />
@@ -422,17 +424,18 @@ const VendorProfilePreview = () => {
         {/* Photo Gallery */}
         {photos.length > 1 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Gallery</h2>
-            <div className="grid grid-cols-3 gap-2">
+            <h2 className="text-sm font-semibold">Gallery</h2>
+            <div className="grid grid-cols-3 gap-3">
               {photos.map((photo, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentImageIndex(idx)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    idx === currentImageIndex ? 'border-primary' : 'border-transparent'
+                  className={`aspect-square rounded-xl overflow-hidden relative transition-all ${
+                    idx === currentImageIndex ? 'ring-2 ring-primary ring-offset-2' : 'hover:opacity-90'
                   }`}
                 >
                   <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent h-8" />
                 </button>
               ))}
             </div>
