@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import VendorBottomNav from "@/components/VendorBottomNav";
@@ -57,6 +58,16 @@ const VendorDashboard = () => {
                 <LogOut className="h-5 w-5 text-white" />
               </button>
             </div>
+            
+            {/* Preview Profile Button */}
+            <Button
+              onClick={() => navigate('/vendor/preview')}
+              className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border-white/30 gap-2"
+              variant="outline"
+            >
+              <Eye className="h-4 w-4" />
+              Preview Your Profile
+            </Button>
           </div>
         </div>
 
