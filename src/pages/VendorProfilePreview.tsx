@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
-  ChevronLeft, Star, Clock, Users, DollarSign, MapPin, 
-  Instagram, ExternalLink, Check, Eye, Edit, Globe
+  ChevronLeft, Star, Clock, Users, DollarSign, 
+  Instagram, ExternalLink, Check, Eye, Edit, Globe, Plus, Trash2, Loader2, ImagePlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -39,6 +39,8 @@ const VendorProfilePreview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -92,6 +94,88 @@ const VendorProfilePreview = () => {
     }
   };
 
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !user || !profile) return;
+
+    setIsUploading(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('vendor-photos')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('vendor-photos')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      // Update the profile with new photos
+      const currentPhotos = profile.photos || [];
+      const newPhotos = [...currentPhotos, ...uploadedUrls];
+
+      const { error: updateError } = await supabase
+        .from('vendor_profiles')
+        .update({ photos: newPhotos })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => prev ? { ...prev, photos: newPhotos } : null);
+      toast.success(`${uploadedUrls.length} photo(s) uploaded successfully!`);
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast.error('Failed to upload photos');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeletePhoto = async (photoUrl: string, index: number) => {
+    if (!profile) return;
+
+    try {
+      // Extract the file path from the URL
+      const urlParts = photoUrl.split('/vendor-photos/');
+      if (urlParts.length > 1) {
+        const filePath = decodeURIComponent(urlParts[1]);
+        await supabase.storage.from('vendor-photos').remove([filePath]);
+      }
+
+      // Update the profile
+      const newPhotos = profile.photos?.filter((_, i) => i !== index) || [];
+      
+      const { error } = await supabase
+        .from('vendor_profiles')
+        .update({ photos: newPhotos })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      setProfile(prev => prev ? { ...prev, photos: newPhotos } : null);
+      if (currentImageIndex >= newPhotos.length && newPhotos.length > 0) {
+        setCurrentImageIndex(newPhotos.length - 1);
+      }
+      toast.success('Photo deleted');
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      toast.error('Failed to delete photo');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24">
@@ -136,6 +220,16 @@ const VendorProfilePreview = () => {
         </Badge>
       </div>
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handlePhotoUpload}
+        className="hidden"
+      />
+
       {/* Hero Image Carousel */}
       <div className="relative">
         <Button
@@ -146,14 +240,38 @@ const VendorProfilePreview = () => {
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
+
+        {/* Upload button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className="absolute top-4 right-4 z-10 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+        >
+          {isUploading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Plus className="h-5 w-5" />
+          )}
+        </Button>
         
         {photos.length > 0 ? (
-          <div className="relative h-72 overflow-hidden">
+          <div className="relative h-72 overflow-hidden group">
             <img
               src={photos[currentImageIndex]}
               alt={profile.name}
               className="w-full h-full object-cover"
             />
+            {/* Delete current photo button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleDeletePhoto(photos[currentImageIndex], currentImageIndex)}
+              className="absolute top-4 right-16 z-10 bg-red-500/80 backdrop-blur-sm text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
             {photos.length > 1 && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {photos.map((_, idx) => (
@@ -169,9 +287,20 @@ const VendorProfilePreview = () => {
             )}
           </div>
         ) : (
-          <div className="h-72 bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-            <span className="text-white/60 text-lg">No photos added</span>
-          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="h-72 w-full bg-gradient-to-br from-orange-500 to-pink-500 flex flex-col items-center justify-center gap-3 hover:from-orange-600 hover:to-pink-600 transition-colors"
+          >
+            {isUploading ? (
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            ) : (
+              <>
+                <ImagePlus className="h-12 w-12 text-white/80" />
+                <span className="text-white font-medium">Tap to add photos</span>
+              </>
+            )}
+          </button>
         )}
       </div>
 
