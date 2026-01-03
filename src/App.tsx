@@ -74,6 +74,7 @@ import GuestGuide from "./pages/GuestGuide";
 import TestInstagramScrape from "./pages/TestInstagramScrape";
 import CreateVendorProfile from "./pages/CreateVendorProfile";
 import VendorProfilePreview from "./pages/VendorProfilePreview";
+import VendorPublicProfile from "./pages/VendorPublicProfile";
 
 // Protected route component for hosts - uses Supabase session for authentication
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
@@ -155,6 +156,7 @@ const AppRoutes = () => (
     <Route path="/experiences" element={<AllExperiences />} />
     <Route path="/wishlists" element={<Wishlists />} />
     <Route path="/guide/:hostId" element={<GuestGuide />} />
+    <Route path="/vendor/:id" element={<VendorPublicProfile />} />
     <Route path="/test-instagram" element={<TestInstagramScrape />} />
     <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />

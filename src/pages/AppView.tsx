@@ -91,12 +91,24 @@ const getExperienceImage = (experience: { id: number }) => {
   return imageMap[experience.id] || kayakingImg;
 };
 
+interface VendorProfile {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  photos: string[] | null;
+  price_per_person: number | null;
+  google_rating: number | null;
+  is_published: boolean | null;
+}
+
 const AppView = () => {
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
   });
   const [myBusinesses, setMyBusinesses] = useState<Vendor[]>([]);
+  const [publishedVendors, setPublishedVendors] = useState<VendorProfile[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -105,6 +117,7 @@ const AppView = () => {
 
   useEffect(() => {
     fetchMyBusinesses();
+    fetchPublishedVendors();
   }, []);
 
   const fetchMyBusinesses = async () => {
@@ -121,6 +134,20 @@ const AppView = () => {
       setMyBusinesses((data as Vendor[]) || []);
     } catch (error) {
       console.error('Error fetching businesses:', error);
+    }
+  };
+
+  const fetchPublishedVendors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published')
+        .eq('is_published', true);
+
+      if (error) throw error;
+      setPublishedVendors((data as VendorProfile[]) || []);
+    } catch (error) {
+      console.error('Error fetching published vendors:', error);
     }
   };
 
@@ -359,6 +386,54 @@ const AppView = () => {
                   </div>
                 </div>
               </section>
+
+              {/* Local Services (Published Vendors) */}
+              {publishedVendors.length > 0 && (
+                <section className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">Local Services</h2>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                    <div className="flex gap-3 w-max pb-2">
+                      {publishedVendors.map((vendor) => (
+                        <Link
+                          key={vendor.id}
+                          to={`/vendor/${vendor.id}`}
+                          className="flex-shrink-0 w-36"
+                        >
+                          <div className="aspect-square rounded-xl overflow-hidden relative">
+                            {vendor.photos && vendor.photos.length > 0 ? (
+                              <img
+                                src={vendor.photos[0]}
+                                alt={vendor.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+                                <Store className="h-8 w-8 text-white/80" />
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                              <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                              <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                {vendor.google_rating && (
+                                  <>
+                                    <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                    <span>{vendor.google_rating}</span>
+                                    <span>•</span>
+                                  </>
+                                )}
+                                <span>{vendor.category}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               {/* Popular Experiences */}
               <section className="space-y-2">
