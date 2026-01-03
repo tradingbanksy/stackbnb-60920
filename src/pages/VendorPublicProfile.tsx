@@ -309,7 +309,7 @@ const VendorPublicProfile = () => {
               variant="default"
               size="lg"
               className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              onClick={() => toast.info('Booking coming soon!')}
+              onClick={() => navigate(`/vendor/${id}/book`)}
             >
               Book Now
             </Button>

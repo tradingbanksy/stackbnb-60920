@@ -108,6 +108,10 @@ const AppView = () => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
   });
+  const [vendorFavorites, setVendorFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem("vendorFavorites");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [myBusinesses, setMyBusinesses] = useState<Vendor[]>([]);
   const [vendorRestaurants, setVendorRestaurants] = useState<VendorProfile[]>([]);
   const [vendorExperiences, setVendorExperiences] = useState<VendorProfile[]>([]);
@@ -165,6 +169,25 @@ const AppView = () => {
         : [...prev, id];
       
       localStorage.setItem("favorites", JSON.stringify(newFavorites));
+      
+      toast({
+        title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
+        duration: 2000,
+      });
+      
+      return newFavorites;
+    });
+  };
+
+  const toggleVendorFavorite = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setVendorFavorites((prev) => {
+      const newFavorites = prev.includes(id)
+        ? prev.filter((fav) => fav !== id)
+        : [...prev, id];
+      
+      localStorage.setItem("vendorFavorites", JSON.stringify(newFavorites));
       
       toast({
         title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
@@ -383,6 +406,18 @@ const AppView = () => {
                               <Store className="h-8 w-8 text-white/80" />
                             </div>
                           )}
+                          <button
+                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                            className="absolute top-2 right-2 z-10"
+                          >
+                            <Heart
+                              className={`h-5 w-5 drop-shadow-md ${
+                                vendorFavorites.includes(vendor.id)
+                                  ? "fill-red-500 text-red-500"
+                                  : "fill-black/40 text-white"
+                              }`}
+                            />
+                          </button>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
                             <div className="flex items-center gap-1 text-white/80 text-[10px]">
@@ -457,6 +492,18 @@ const AppView = () => {
                               <Store className="h-8 w-8 text-white/80" />
                             </div>
                           )}
+                          <button
+                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                            className="absolute top-2 right-2 z-10"
+                          >
+                            <Heart
+                              className={`h-5 w-5 drop-shadow-md ${
+                                vendorFavorites.includes(vendor.id)
+                                  ? "fill-red-500 text-red-500"
+                                  : "fill-black/40 text-white"
+                              }`}
+                            />
+                          </button>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
                             <div className="flex items-center gap-1 text-white/80 text-[10px]">
