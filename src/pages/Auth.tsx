@@ -40,7 +40,7 @@ const Auth = () => {
       if (userRole === "host") {
         navigate("/host/dashboard", { replace: true });
       } else if (userRole === "vendor") {
-        navigate("/vendor/dashboard", { replace: true });
+        navigate("/test-instagram", { replace: true });
       } else if (userRole === "user") {
         navigate("/appview", { replace: true });
       }
@@ -108,7 +108,7 @@ const Auth = () => {
 
   const getRedirectPath = (selectedRole: string | null) => {
     if (selectedRole === "host") return "/host/dashboard";
-    if (selectedRole === "vendor") return "/vendor/dashboard";
+    if (selectedRole === "vendor") return "/test-instagram";
     return "/appview";
   };
 
