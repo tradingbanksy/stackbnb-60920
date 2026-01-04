@@ -22,7 +22,10 @@ export type Database = {
           currency: string
           experience_name: string
           guests: number
+          host_payout_amount: number | null
           id: string
+          payout_status: string | null
+          platform_fee_amount: number | null
           status: string
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -30,6 +33,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vendor_name: string | null
+          vendor_payout_amount: number | null
           vendor_profile_id: string | null
         }
         Insert: {
@@ -39,7 +43,10 @@ export type Database = {
           currency?: string
           experience_name: string
           guests?: number
+          host_payout_amount?: number | null
           id?: string
+          payout_status?: string | null
+          platform_fee_amount?: number | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -47,6 +54,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vendor_name?: string | null
+          vendor_payout_amount?: number | null
           vendor_profile_id?: string | null
         }
         Update: {
@@ -56,7 +64,10 @@ export type Database = {
           currency?: string
           experience_name?: string
           guests?: number
+          host_payout_amount?: number | null
           id?: string
+          payout_status?: string | null
+          platform_fee_amount?: number | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -64,6 +75,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vendor_name?: string | null
+          vendor_payout_amount?: number | null
           vendor_profile_id?: string | null
         }
         Relationships: [
@@ -76,6 +88,27 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          created_at: string
+          id: string
+          platform_fee_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          platform_fee_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform_fee_percentage?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           city: string | null
@@ -85,6 +118,8 @@ export type Database = {
           id: string
           phone: string | null
           recommendations: Json | null
+          stripe_account_id: string | null
+          stripe_onboarding_complete: boolean | null
           updated_at: string
           user_id: string
           zip_code: string | null
@@ -97,6 +132,8 @@ export type Database = {
           id?: string
           phone?: string | null
           recommendations?: Json | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id: string
           zip_code?: string | null
@@ -109,6 +146,8 @@ export type Database = {
           id?: string
           phone?: string | null
           recommendations?: Json | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id?: string
           zip_code?: string | null
@@ -147,6 +186,8 @@ export type Database = {
           google_place_id: string | null
           google_rating: number | null
           google_reviews_url: string | null
+          host_commission_percentage: number | null
+          host_user_id: string | null
           id: string
           included_items: string[] | null
           instagram_url: string | null
@@ -158,6 +199,8 @@ export type Database = {
           photos: string[] | null
           price_per_person: number | null
           price_tiers: Json | null
+          stripe_account_id: string | null
+          stripe_onboarding_complete: boolean | null
           updated_at: string
           user_id: string
           vendor_id: string | null
@@ -172,6 +215,8 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           google_reviews_url?: string | null
+          host_commission_percentage?: number | null
+          host_user_id?: string | null
           id?: string
           included_items?: string[] | null
           instagram_url?: string | null
@@ -183,6 +228,8 @@ export type Database = {
           photos?: string[] | null
           price_per_person?: number | null
           price_tiers?: Json | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id: string
           vendor_id?: string | null
@@ -197,6 +244,8 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           google_reviews_url?: string | null
+          host_commission_percentage?: number | null
+          host_user_id?: string | null
           id?: string
           included_items?: string[] | null
           instagram_url?: string | null
@@ -208,6 +257,8 @@ export type Database = {
           photos?: string[] | null
           price_per_person?: number | null
           price_tiers?: Json | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id?: string
           vendor_id?: string | null

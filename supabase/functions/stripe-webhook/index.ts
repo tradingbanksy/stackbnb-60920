@@ -74,12 +74,22 @@ serve(async (req) => {
       const metadata = session.metadata || {};
       const vendorId = metadata.vendor_id;
       const experienceName = metadata.experience_name || "Experience";
+      const vendorName = metadata.vendor_name || null;
       const bookingDate = metadata.date || "";
       const bookingTime = metadata.time || "";
       const guests = parseInt(metadata.guests || "1", 10);
       const userId = metadata.user_id;
+      const hostUserId = metadata.host_user_id;
+      
+      // Payment split amounts (stored in cents in metadata)
+      const platformFeeCents = parseInt(metadata.platform_fee_cents || "0", 10);
+      const vendorPayoutCents = parseInt(metadata.vendor_payout_cents || "0", 10);
+      const hostPayoutCents = parseInt(metadata.host_payout_cents || "0", 10);
 
-      logStep("Session metadata", { vendorId, experienceName, bookingDate, bookingTime, guests, userId });
+      logStep("Session metadata", { 
+        vendorId, experienceName, bookingDate, bookingTime, guests, userId,
+        platformFeeCents, vendorPayoutCents, hostPayoutCents, hostUserId
+      });
 
       if (!userId) {
         logStep("No user_id in metadata, skipping booking creation");
@@ -104,7 +114,7 @@ serve(async (req) => {
         });
       }
 
-      // Insert the booking
+      // Insert the booking with payout information
       const { data: booking, error: insertError } = await supabaseAdmin
         .from("bookings")
         .insert({
@@ -113,13 +123,17 @@ serve(async (req) => {
           stripe_session_id: session.id,
           stripe_payment_intent_id: session.payment_intent as string,
           experience_name: experienceName,
-          vendor_name: metadata.vendor_name || null,
+          vendor_name: vendorName,
           booking_date: bookingDate,
           booking_time: bookingTime,
           guests: guests,
           total_amount: (session.amount_total || 0) / 100, // Convert from cents
           currency: session.currency || "usd",
           status: "completed",
+          vendor_payout_amount: vendorPayoutCents / 100,
+          host_payout_amount: hostPayoutCents / 100,
+          platform_fee_amount: platformFeeCents / 100,
+          payout_status: "pending",
         })
         .select()
         .single();
@@ -130,6 +144,45 @@ serve(async (req) => {
       }
 
       logStep("Booking created successfully", { bookingId: booking.id });
+
+      // Transfer host's portion if applicable
+      if (hostUserId && hostPayoutCents > 0) {
+        // Get host's Stripe account
+        const { data: hostProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("stripe_account_id, stripe_onboarding_complete")
+          .eq("user_id", hostUserId)
+          .single();
+
+        if (hostProfile?.stripe_account_id && hostProfile?.stripe_onboarding_complete) {
+          try {
+            // Create a transfer to the host
+            const transfer = await stripe.transfers.create({
+              amount: hostPayoutCents,
+              currency: session.currency || "usd",
+              destination: hostProfile.stripe_account_id,
+              transfer_group: session.id,
+              metadata: {
+                booking_id: booking.id,
+                type: "host_commission",
+              },
+            });
+            logStep("Host transfer created", { transferId: transfer.id, amount: hostPayoutCents });
+
+            // Update booking payout status
+            await supabaseAdmin
+              .from("bookings")
+              .update({ payout_status: "processed" })
+              .eq("id", booking.id);
+          } catch (transferError) {
+            const errorMsg = transferError instanceof Error ? transferError.message : String(transferError);
+            logStep("Host transfer failed", { error: errorMsg });
+            // Don't fail the webhook, just log the error
+          }
+        } else {
+          logStep("Host not set up for Stripe Connect, skipping transfer", { hostUserId });
+        }
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {
