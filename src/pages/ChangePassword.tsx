@@ -8,6 +8,14 @@ import HostBottomNav from "@/components/HostBottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSmartBack } from "@/hooks/use-smart-back";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const ChangePassword = () => {
   const goBack = useSmartBack("/host/profile");
@@ -18,6 +26,39 @@ const ChangePassword = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [directPassword, setDirectPassword] = useState('');
+  const [directConfirm, setDirectConfirm] = useState('');
+  const [isDirectLoading, setIsDirectLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleDirectReset = async () => {
+    if (directPassword !== directConfirm) {
+      toast.error("Passwords don't match");
+      return;
+    }
+    if (directPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setIsDirectLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: directPassword
+      });
+
+      if (error) throw error;
+
+      toast.success("Password updated successfully!");
+      setDirectPassword('');
+      setDirectConfirm('');
+      setDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update password");
+    } finally {
+      setIsDirectLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +181,58 @@ const ChangePassword = () => {
             <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
               {isLoading ? "Verifying..." : "Update Password"}
             </Button>
+
+            <div className="text-center pt-2">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Forgot current password? Reset directly
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Reset Password Directly</DialogTitle>
+                    <DialogDescription>
+                      Since you're already logged in, you can set a new password without knowing your current one.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="directPassword">New Password</Label>
+                      <Input
+                        id="directPassword"
+                        type="password"
+                        value={directPassword}
+                        onChange={(e) => setDirectPassword(e.target.value)}
+                        placeholder="Enter new password"
+                        minLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="directConfirm">Confirm New Password</Label>
+                      <Input
+                        id="directConfirm"
+                        type="password"
+                        value={directConfirm}
+                        onChange={(e) => setDirectConfirm(e.target.value)}
+                        placeholder="Confirm new password"
+                        minLength={6}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleDirectReset} 
+                      className="w-full" 
+                      disabled={isDirectLoading}
+                    >
+                      {isDirectLoading ? "Updating..." : "Set New Password"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </form>
         </Card>
       </div>
