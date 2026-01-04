@@ -403,7 +403,13 @@ const VendorPublicProfile = () => {
               variant="default"
               size="lg"
               className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              onClick={() => navigate(`/vendor/${id}/book`)}
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (profile.price_tiers && profile.price_tiers.length > 0) {
+                  params.set('tier', selectedTierIndex.toString());
+                }
+                navigate(`/vendor/${id}/book${params.toString() ? `?${params.toString()}` : ''}`);
+              }}
             >
               Book Now
             </Button>

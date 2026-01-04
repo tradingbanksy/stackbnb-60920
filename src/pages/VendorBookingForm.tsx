@@ -5,17 +5,23 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Minus, Plus, Calendar as CalendarIcon, Store } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useBooking } from "@/contexts/BookingContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+interface PriceTier {
+  name: string;
+  price: number;
+}
 
 interface VendorProfile {
   id: string;
   name: string;
   category: string;
   price_per_person: number | null;
+  price_tiers: PriceTier[] | null;
   duration: string | null;
   max_guests: number | null;
 }
@@ -38,12 +44,14 @@ const categoryIcons: Record<string, string> = {
 
 const VendorBookingForm = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { updateBookingData } = useBooking();
   const { toast } = useToast();
   
   const [vendor, setVendor] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTierIndex, setSelectedTierIndex] = useState<number>(0);
   
   const [formData, setFormData] = useState({
     date: '',
@@ -61,13 +69,40 @@ const VendorBookingForm = () => {
     try {
       const { data, error } = await supabase
         .from('vendor_profiles')
-        .select('id, name, category, price_per_person, duration, max_guests')
+        .select('id, name, category, price_per_person, price_tiers, duration, max_guests')
         .eq('id', id)
         .eq('is_published', true)
         .maybeSingle();
 
       if (error) throw error;
-      setVendor(data);
+      
+      if (data) {
+        // Parse price_tiers from JSON safely
+        let priceTiers: PriceTier[] = [];
+        if (Array.isArray(data.price_tiers)) {
+          priceTiers = data.price_tiers.map((tier: unknown) => {
+            const t = tier as { name?: string; price?: number };
+            return {
+              name: t.name || '',
+              price: t.price || 0,
+            };
+          });
+        }
+        
+        setVendor({
+          ...data,
+          price_tiers: priceTiers,
+        } as VendorProfile);
+        
+        // Set selected tier from URL param
+        const tierParam = searchParams.get('tier');
+        if (tierParam !== null && priceTiers.length > 0) {
+          const tierIndex = parseInt(tierParam);
+          if (!isNaN(tierIndex) && tierIndex >= 0 && tierIndex < priceTiers.length) {
+            setSelectedTierIndex(tierIndex);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching vendor:', error);
       toast({
@@ -125,7 +160,9 @@ const VendorBookingForm = () => {
   }
 
   const maxGuests = vendor.max_guests || 10;
-  const pricePerPerson = vendor.price_per_person || 0;
+  const hasTiers = vendor.price_tiers && vendor.price_tiers.length > 0;
+  const selectedTier = hasTiers ? vendor.price_tiers![selectedTierIndex] : null;
+  const pricePerPerson = selectedTier ? selectedTier.price : (vendor.price_per_person || 0);
   const subtotal = pricePerPerson * formData.guests;
   const categoryIcon = categoryIcons[vendor.category] || categoryIcons['default'];
 
@@ -143,7 +180,7 @@ const VendorBookingForm = () => {
 
     updateBookingData({
       experienceId: vendor.id,
-      experienceName: vendor.name,
+      experienceName: selectedTier ? `${vendor.name} - ${selectedTier.name}` : vendor.name,
       vendorName: vendor.category,
       date: formData.date,
       time: formData.time,
@@ -213,6 +250,28 @@ const VendorBookingForm = () => {
               </div>
             </div>
           </Card>
+
+          {/* Service Type Selector (if has tiers) */}
+          {hasTiers && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Service Type *</Label>
+              <Select
+                value={selectedTierIndex.toString()}
+                onValueChange={(val) => setSelectedTierIndex(parseInt(val))}
+              >
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue placeholder="Choose service type" />
+                </SelectTrigger>
+                <SelectContent className="bg-card z-50">
+                  {vendor.price_tiers!.map((tier, idx) => (
+                    <SelectItem key={idx} value={idx.toString()}>
+                      {tier.name} - ${tier.price}/person
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Booking Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
