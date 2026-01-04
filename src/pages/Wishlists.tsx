@@ -89,6 +89,7 @@ const Wishlists = () => {
     }
   };
 
+  // Load favorites on every mount (not just when auth changes)
   useEffect(() => {
     // Always load restaurant favorites (stored in localStorage)
     loadFavoriteRestaurants();
@@ -100,6 +101,13 @@ const Wishlists = () => {
       fetchWishlists();
     } else {
       setLoading(false);
+    }
+  }, []); // Run on every mount
+  
+  // Reload vendors when isAuthenticated changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchWishlists();
     }
   }, [isAuthenticated]);
 
