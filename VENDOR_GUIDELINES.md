@@ -401,18 +401,84 @@ Uses framer-motion's `Reorder` component for drag-and-drop reordering.
    - `listing_type: 'restaurant'` → "Restaurants Near You" section
    - `listing_type: 'experience'` → "Popular Experiences" section
 
-2. **Host Dashboard** (`/host/dashboard`)
-   - "Partner Commissions" section (if `commission_percentage` is set)
+2. **AppView My Wishlists Section** (`/appview`)
+   - Shows favorited vendors alongside favorited experiences
+   - Combined count displays "X saved"
+   - Vendor favorites stored in `localStorage` key: `vendorFavorites`
+   - Links to `/vendor/:id` for full profile view
 
 3. **Wishlists Page** (`/wishlists`)
-   - Services tab shows all favorited vendors
+   - Services tab shows all favorited vendors (fetched from Supabase by IDs in localStorage)
+   - Grid layout with remove button on each card
 
-4. **Direct Link**
+4. **Host Dashboard** (`/host/dashboard`)
+   - "Partner Commissions" section (if `commission_percentage` is set)
+
+5. **Direct Link**
    - `/vendor/:id` → Full public profile
 
 ---
 
-## 11. Quick Checklist for New Vendors
+## 11. Vendor Favorites System
+
+### How Favorites Work
+1. User clicks heart icon on vendor card in AppView
+2. Vendor ID is added to `vendorFavorites` array in localStorage
+3. Toast notification confirms "Added to favorites"
+4. Vendor appears in:
+   - "My Wishlists" section on AppView (immediate)
+   - "Services" tab on Wishlists page (on navigation)
+
+### localStorage Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| `vendorFavorites` | `string[]` | Array of vendor profile UUIDs |
+| `restaurantFavorites` | `string[]` | Array of restaurant IDs |
+| `favorites` | `number[]` | Array of experience IDs (mock data) |
+
+### Favoriting Flow (AppView)
+```typescript
+const toggleVendorFavorite = (id: string, e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setVendorFavorites((prev) => {
+    const newFavorites = prev.includes(id)
+      ? prev.filter((fav) => fav !== id)
+      : [...prev, id];
+    
+    localStorage.setItem("vendorFavorites", JSON.stringify(newFavorites));
+    
+    toast({
+      title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
+      duration: 2000,
+    });
+    
+    return newFavorites;
+  });
+};
+```
+
+### Loading Favorites (Wishlists Page)
+```typescript
+const loadFavoriteVendors = async () => {
+  const favoriteIds = JSON.parse(localStorage.getItem("vendorFavorites") || "[]");
+  if (favoriteIds.length === 0) {
+    setFavoriteVendors([]);
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('vendor_profiles')
+    .select('id, name, category, description, photos, price_per_person, google_rating')
+    .in('id', favoriteIds);
+
+  if (!error) setFavoriteVendors(data || []);
+};
+```
+
+---
+
+## 12. Quick Checklist for New Vendors
 
 ### Profile Setup
 - [ ] Photos uploaded (at least 1, ideally 3)
@@ -434,6 +500,8 @@ Uses framer-motion's `Reorder` component for drag-and-drop reordering.
 
 ### Testing
 - [ ] Heart/favorite button works
+- [ ] Favorited vendor appears in "My Wishlists" section on AppView
+- [ ] Favorited vendor appears in Wishlists page Services tab
 - [ ] Book Now button navigates correctly
 - [ ] All links (Instagram, Menu, Google Reviews) open properly
 - [ ] Photo drag-and-drop reordering works
