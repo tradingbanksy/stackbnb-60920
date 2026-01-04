@@ -1,17 +1,54 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight, Handshake, Store } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
 import { dashboardStats, recentBookings } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
+
+interface VendorWithCommission {
+  id: string;
+  name: string;
+  category: string;
+  commission_percentage: number | null;
+  photos: string[] | null;
+  google_rating: number | null;
+}
 
 const HostDashboard = () => {
   const navigate = useNavigate();
+  const [vendors, setVendors] = useState<VendorWithCommission[]>([]);
+  const [isLoadingVendors, setIsLoadingVendors] = useState(true);
   
   const iconMap = {
     DollarSign,
     Calendar: CalendarCheck,
     Users,
     Star: StarIcon,
+  };
+
+  useEffect(() => {
+    fetchVendorsWithCommission();
+  }, []);
+
+  const fetchVendorsWithCommission = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id, name, category, commission_percentage, photos, google_rating')
+        .eq('is_published', true)
+        .not('commission_percentage', 'is', null)
+        .order('commission_percentage', { ascending: false });
+
+      if (error) throw error;
+      setVendors(data || []);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    } finally {
+      setIsLoadingVendors(false);
+    }
   };
 
   return (
@@ -131,6 +168,81 @@ const HostDashboard = () => {
               </Card>
             ))}
           </div>
+        </div>
+
+        {/* Vendor Commission Rates Section */}
+        <div className="px-4 mt-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Handshake className="h-5 w-5 text-amber-500" />
+              <h2 className="text-xl font-bold">Partner Commissions</h2>
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            Earn commissions when you refer guests to these vendors
+          </p>
+
+          {isLoadingVendors ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : vendors.length === 0 ? (
+            <Card className="p-6 text-center">
+              <Store className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">No vendors with affiliate programs yet</p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {vendors.map((vendor) => (
+                <Card
+                  key={vendor.id}
+                  className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 cursor-pointer group"
+                  onClick={() => navigate(`/vendor/${vendor.id}`)}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Vendor Photo */}
+                    <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-orange-500/20 to-pink-500/20">
+                      {vendor.photos && vendor.photos.length > 0 ? (
+                        <img
+                          src={vendor.photos[0]}
+                          alt={vendor.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Store className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Vendor Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate group-hover:text-orange-500 transition-colors">
+                        {vendor.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{vendor.category}</p>
+                      {vendor.google_rating && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <StarIcon className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          <span className="text-xs text-muted-foreground">{vendor.google_rating}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Commission Badge */}
+                    <div className="flex-shrink-0">
+                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-lg px-3 py-1 font-bold">
+                        {vendor.commission_percentage}%
+                      </Badge>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
