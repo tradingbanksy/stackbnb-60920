@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          booking_date: string
+          booking_time: string
+          created_at: string
+          currency: string
+          experience_name: string
+          guests: number
+          id: string
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+          vendor_name: string | null
+          vendor_profile_id: string | null
+        }
+        Insert: {
+          booking_date: string
+          booking_time: string
+          created_at?: string
+          currency?: string
+          experience_name: string
+          guests?: number
+          id?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          total_amount: number
+          updated_at?: string
+          user_id: string
+          vendor_name?: string | null
+          vendor_profile_id?: string | null
+        }
+        Update: {
+          booking_date?: string
+          booking_time?: string
+          created_at?: string
+          currency?: string
+          experience_name?: string
+          guests?: number
+          id?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+          vendor_name?: string | null
+          vendor_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_vendor_profile_id_fkey"
+            columns: ["vendor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           city: string | null
