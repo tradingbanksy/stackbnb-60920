@@ -76,6 +76,7 @@ import CreateVendorProfile from "./pages/CreateVendorProfile";
 import VendorProfilePreview from "./pages/VendorProfilePreview";
 import VendorPublicProfile from "./pages/VendorPublicProfile";
 import VendorBookingForm from "./pages/VendorBookingForm";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, role } = useAuthContext();
@@ -159,6 +160,7 @@ const AppRoutes = () => (
     <Route path="/vendor/:id" element={<VendorPublicProfile />} />
     <Route path="/vendor/:id/book" element={<VendorBookingForm />} />
     <Route path="/vendor/:id/payment" element={<PaymentPage />} />
+    <Route path="/booking/:id/success" element={<PaymentSuccess />} />
     <Route path="/vendor/:id/confirmed" element={<BookingConfirmation />} />
     <Route path="/test-instagram" element={<TestInstagramScrape />} />
     <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />

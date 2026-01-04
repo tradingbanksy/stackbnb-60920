@@ -1,99 +1,83 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, CreditCard } from "lucide-react";
+import { ArrowLeft, Loader2, Lock } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { useBooking } from "@/contexts/BookingContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const PaymentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { bookingData, updateGuestData } = useBooking();
+  const { bookingData } = useBooking();
   const { toast } = useToast();
-  
-  // Non-sensitive guest contact info (can be stored in context)
-  const [guestInfo, setGuestInfo] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-  });
-  
-  // SECURITY: Payment card data kept in local state only, never persisted
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiration, setExpiration] = useState('');
-  const [cvv, setCvv] = useState('');
+  const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!guestInfo.fullName.trim()) {
-      newErrors.fullName = "Name is required";
-    }
-
-    if (!guestInfo.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(guestInfo.email)) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!guestInfo.phone.trim()) {
-      newErrors.phone = "Phone is required";
-    }
-
-    if (!cardNumber.trim()) {
-      newErrors.cardNumber = "Card number is required";
-    }
-
-    if (!expiration.trim()) {
-      newErrors.expiration = "Expiration is required";
-    }
-
-    if (!cvv.trim()) {
-      newErrors.cvv = "CVV is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      // SECURITY: Only save non-sensitive guest contact info to context
-      updateGuestData(guestInfo);
+  const handleStripeCheckout = async () => {
+    if (!isAuthenticated) {
       toast({
-        title: "Processing payment...",
-        description: "Please wait",
-      });
-      
-      setTimeout(() => {
-        navigate(`/booking/${id}/confirmed`, { replace: true });
-      }, 1000);
-    } else {
-      toast({
-        title: "Validation error",
-        description: "Please fix the errors in the form",
+        title: "Login required",
+        description: "Please log in to complete your booking",
         variant: "destructive",
       });
+      navigate(`/auth?redirect=/vendor/${id}/payment`);
+      return;
+    }
+
+    if (!bookingData.experienceName || bookingData.totalPrice <= 0) {
+      toast({
+        title: "Booking error",
+        description: "Invalid booking details. Please start over.",
+        variant: "destructive",
+      });
+      navigate(`/vendor/${id}`);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-booking-checkout', {
+        body: {
+          experienceName: bookingData.experienceName,
+          vendorName: bookingData.vendorName,
+          date: bookingData.date,
+          time: bookingData.time,
+          guests: bookingData.guests,
+          totalPrice: bookingData.totalPrice,
+          vendorId: id,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Payment error",
+        description: error instanceof Error ? error.message : "Failed to start checkout. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
     }
   };
 
-  const handleGuestInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setGuestInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -111,7 +95,7 @@ const PaymentPage = () => {
         {/* Header */}
         <div className="px-4 py-4 border-b bg-card">
           <Link 
-            to={`/booking/${id}`}
+            to={`/vendor/${id}/book`}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -122,8 +106,8 @@ const PaymentPage = () => {
         <div className="px-4 py-6 space-y-6">
           {/* Header */}
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold">Payment Details</h1>
-            <p className="text-sm text-muted-foreground">Complete your booking securely</p>
+            <h1 className="text-2xl font-bold">Confirm & Pay</h1>
+            <p className="text-sm text-muted-foreground">Review your booking and complete payment</p>
           </div>
 
           {/* Booking Summary */}
@@ -132,7 +116,7 @@ const PaymentPage = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Experience</span>
-                <span className="font-medium">{bookingData.experienceName}</span>
+                <span className="font-medium text-right max-w-[180px]">{bookingData.experienceName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date</span>
@@ -153,128 +137,51 @@ const PaymentPage = () => {
             </div>
           </Card>
 
-          {/* Payment Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-sm font-medium">Full Name *</Label>
-              <Input
-                id="fullName"
-                name="fullName"
-                value={guestInfo.fullName}
-                onChange={handleGuestInfoChange}
-                placeholder="John Doe"
-                className={errors.fullName ? "border-destructive" : ""}
-              />
-              {errors.fullName && (
-                <p className="text-xs text-destructive">{errors.fullName}</p>
+          {/* User Info */}
+          {isAuthenticated && user && (
+            <Card className="p-4 bg-muted/30">
+              <h3 className="font-semibold mb-2">Booking as</h3>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </Card>
+          )}
+
+          {/* Stripe Checkout Button */}
+          <div className="space-y-4">
+            <Button 
+              variant="gradient" 
+              className="w-full" 
+              size="lg"
+              onClick={handleStripeCheckout}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Redirecting to checkout...
+                </>
+              ) : (
+                <>Proceed to Payment - ${bookingData.totalPrice}</>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email Address *</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={guestInfo.email}
-                onChange={handleGuestInfoChange}
-                placeholder="john@example.com"
-                className={errors.email ? "border-destructive" : ""}
-              />
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={guestInfo.phone}
-                onChange={handleGuestInfoChange}
-                placeholder="(555) 123-4567"
-                className={errors.phone ? "border-destructive" : ""}
-              />
-              {errors.phone && (
-                <p className="text-xs text-destructive">{errors.phone}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber" className="text-sm font-medium">Card Number *</Label>
-              <div className="relative">
-                <Input
-                  id="cardNumber"
-                  name="cardNumber"
-                  value={cardNumber}
-                  onChange={(e) => {
-                    setCardNumber(e.target.value);
-                    if (errors.cardNumber) setErrors(prev => ({ ...prev, cardNumber: '' }));
-                  }}
-                  placeholder="1234 5678 9012 3456"
-                  maxLength={19}
-                  className={errors.cardNumber ? "border-destructive" : ""}
-                  autoComplete="off"
-                />
-                <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-              {errors.cardNumber && (
-                <p className="text-xs text-destructive">{errors.cardNumber}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiration" className="text-sm font-medium">Expiration *</Label>
-                <Input
-                  id="expiration"
-                  name="expiration"
-                  value={expiration}
-                  onChange={(e) => {
-                    setExpiration(e.target.value);
-                    if (errors.expiration) setErrors(prev => ({ ...prev, expiration: '' }));
-                  }}
-                  placeholder="MM/YY"
-                  maxLength={5}
-                  className={errors.expiration ? "border-destructive" : ""}
-                  autoComplete="off"
-                />
-                {errors.expiration && (
-                  <p className="text-xs text-destructive">{errors.expiration}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cvv" className="text-sm font-medium">CVV *</Label>
-                <Input
-                  id="cvv"
-                  name="cvv"
-                  value={cvv}
-                  onChange={(e) => {
-                    setCvv(e.target.value);
-                    if (errors.cvv) setErrors(prev => ({ ...prev, cvv: '' }));
-                  }}
-                  placeholder="123"
-                  maxLength={3}
-                  className={errors.cvv ? "border-destructive" : ""}
-                  autoComplete="off"
-                />
-                {errors.cvv && (
-                  <p className="text-xs text-destructive">{errors.cvv}</p>
-                )}
-              </div>
-            </div>
-
-            <Button type="submit" variant="gradient" className="w-full" size="lg">
-              Confirm & Pay ${bookingData.totalPrice}
             </Button>
 
-            <p className="text-xs text-center text-muted-foreground">
-              This is a mock payment. No actual charges will be made.
-            </p>
-          </form>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              <span>Secure payment powered by Stripe</span>
+            </div>
+          </div>
+
+          {/* Not logged in prompt */}
+          {!isAuthenticated && (
+            <Card className="p-4 border-orange-500/30 bg-orange-500/5">
+              <p className="text-sm text-center">
+                Please{" "}
+                <Link to={`/auth?redirect=/vendor/${id}/payment`} className="text-primary underline font-medium">
+                  log in
+                </Link>{" "}
+                to complete your booking
+              </p>
+            </Card>
+          )}
         </div>
       </div>
     </div>
