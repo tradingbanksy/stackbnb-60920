@@ -95,6 +95,7 @@ export type Database = {
           name: string
           photos: string[] | null
           price_per_person: number | null
+          price_tiers: Json | null
           updated_at: string
           user_id: string
           vendor_id: string | null
@@ -119,6 +120,7 @@ export type Database = {
           name: string
           photos?: string[] | null
           price_per_person?: number | null
+          price_tiers?: Json | null
           updated_at?: string
           user_id: string
           vendor_id?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           name?: string
           photos?: string[] | null
           price_per_person?: number | null
+          price_tiers?: Json | null
           updated_at?: string
           user_id?: string
           vendor_id?: string | null

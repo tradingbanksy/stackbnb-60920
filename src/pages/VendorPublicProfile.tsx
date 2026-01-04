@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { 
   ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
@@ -13,6 +14,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import InteractiveSelector from '@/components/ui/interactive-selector';
 import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
+
+interface PriceTier {
+  name: string;
+  price: number;
+}
 
 interface VendorProfile {
   id: string;
@@ -24,6 +30,7 @@ interface VendorProfile {
   photos: string[] | null;
   menu_url: string | null;
   price_per_person: number | null;
+  price_tiers: PriceTier[] | null;
   duration: string | null;
   max_guests: number | null;
   included_items: string[] | null;
@@ -55,6 +62,7 @@ const VendorPublicProfile = () => {
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedTierIndex, setSelectedTierIndex] = useState<number>(0);
   
   // Show commission to hosts and vendors only, not guests
   const canSeeCommission = role === 'host' || role === 'vendor';
@@ -76,7 +84,25 @@ const VendorPublicProfile = () => {
         .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
+      
+      if (data) {
+        // Parse price_tiers from JSON safely
+        let priceTiers: PriceTier[] = [];
+        if (Array.isArray(data.price_tiers)) {
+          priceTiers = data.price_tiers.map((tier: unknown) => {
+            const t = tier as { name?: string; price?: number };
+            return {
+              name: t.name || '',
+              price: t.price || 0,
+            };
+          });
+        }
+        
+        setProfile({
+          ...data,
+          price_tiers: priceTiers,
+        } as VendorProfile);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
@@ -213,24 +239,57 @@ const VendorPublicProfile = () => {
             </div>
           </div>
 
+          {/* Price Tier Selector */}
+          {profile.price_tiers && profile.price_tiers.length > 0 ? (
+            <Card className="p-4">
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Select Service Type</label>
+                <Select
+                  value={selectedTierIndex.toString()}
+                  onValueChange={(val) => setSelectedTierIndex(parseInt(val))}
+                >
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue placeholder="Choose an option" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card z-50">
+                    {profile.price_tiers.map((tier, idx) => (
+                      <SelectItem key={idx} value={idx.toString()}>
+                        {tier.name} - ${tier.price}/person
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-sm text-muted-foreground">Your quote:</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                    ${profile.price_tiers[selectedTierIndex]?.price || 0}/person
+                  </span>
+                </div>
+              </div>
+            </Card>
+          ) : profile.price_per_person ? (
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Price per person:</span>
+                <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-lg px-3 py-1">
+                  ${profile.price_per_person}
+                </Badge>
+              </div>
+            </Card>
+          ) : null}
+
           {/* Quick Info */}
           <Card className="p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-2 gap-4 text-center">
               <div className="space-y-1">
                 <Clock className="h-5 w-5 mx-auto text-muted-foreground" />
                 <p className="text-xs font-medium">{profile.duration || 'Varies'}</p>
+                <p className="text-xs text-muted-foreground">duration</p>
               </div>
               <div className="space-y-1">
                 <Users className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">Max {profile.max_guests || 'N/A'}</p>
-              </div>
-              <div className="space-y-1">
-                {profile.price_per_person && (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
-                    ${profile.price_per_person}
-                  </Badge>
-                )}
-                <p className="text-xs text-muted-foreground">per person</p>
+                <p className="text-xs font-medium">Up to {profile.max_guests || 'N/A'}</p>
+                <p className="text-xs text-muted-foreground">guests</p>
               </div>
             </div>
           </Card>
@@ -326,11 +385,19 @@ const VendorPublicProfile = () => {
         </div>
 
         {/* Fixed Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 shadow-lg z-40">
           <div className="max-w-[375px] mx-auto flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">From</p>
-              <p className="text-2xl font-bold">${profile.price_per_person || 'TBD'}</p>
+              <p className="text-xs text-muted-foreground">
+                {profile.price_tiers && profile.price_tiers.length > 0 
+                  ? profile.price_tiers[selectedTierIndex]?.name 
+                  : 'Price'}
+              </p>
+              <p className="text-2xl font-bold">
+                ${profile.price_tiers && profile.price_tiers.length > 0 
+                  ? profile.price_tiers[selectedTierIndex]?.price 
+                  : profile.price_per_person || 'TBD'}
+              </p>
             </div>
             <Button 
               variant="default"

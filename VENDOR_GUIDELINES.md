@@ -106,7 +106,8 @@ The preview page shows vendors exactly how guests see their profile, plus manage
 | `description` | text | Brief tagline/summary |
 | `about_experience` | text | Detailed description (AI-generated option) |
 | `photos` | text[] | Array of image URLs (first 3 displayed) |
-| `price_per_person` | numeric | Price in dollars |
+| `price_per_person` | numeric | Starting price (auto-calculated from price_tiers if set) |
+| `price_tiers` | jsonb | Array of pricing options `[{ "name": "Breakfast", "price": 75 }]` |
 | `duration` | text | e.g., "3 hours" |
 | `max_guests` | integer | Maximum group size |
 | `included_items` | text[] | Array of included items |
@@ -115,6 +116,30 @@ The preview page shows vendors exactly how guests see their profile, plus manage
 | `menu_url` | text | Full menu/service list URL |
 | `google_reviews_url` | text | Google reviews link |
 | `commission_percentage` | numeric | Affiliate commission % (0-100) |
+
+---
+
+## 7. Pricing Tiers System
+
+### Setting Price Tiers (Vendor Side)
+- Vendors add multiple pricing options in the "Pricing & Details" section
+- Each tier has a **name** (e.g., "Breakfast", "Lunch", "Dinner") and **price**
+- `price_per_person` is auto-calculated as the minimum tier price
+- Tiers are editable inline after creation
+
+### Guest Experience
+- If vendor has price tiers, guests see a **dropdown selector** on the public profile
+- Selecting a tier shows the **live quote** below the dropdown
+- Bottom CTA bar updates to show selected tier name and price
+- "Book Now" button proceeds with the selected option
+
+### Display Rules
+| Location | What Shows |
+|----------|------------|
+| VendorPublicProfile | Dropdown selector with all tiers + quote preview |
+| VendorProfilePreview | List of all tiers with prices |
+| AppView cards | Starting price (lowest tier) |
+| Bottom CTA bar | Selected tier name + price |
 
 ---
 
