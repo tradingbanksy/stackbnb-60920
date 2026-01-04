@@ -139,14 +139,13 @@ const Auth = () => {
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="w-full max-w-md space-y-8">
             {/* Back Button */}
-            <Button
-              variant="ghost"
-              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
-              className="mb-0"
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-0"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4" />
               Back
-            </Button>
+            </button>
             {/* Logo */}
             <div className="flex justify-center">
               <img 
@@ -431,14 +430,13 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        <Button
-          variant="ghost"
-          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/appview"))}
-          className="mb-4"
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4" />
           Back
-        </Button>
+        </button>
 
         <Card className="p-6">
           <div className="space-y-6">
