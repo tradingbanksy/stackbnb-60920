@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Heart, Trash2, MoreHorizontal, Star, Utensils, Compass } from "lucide-react";
+import { ArrowLeft, Plus, Heart, Trash2, MoreHorizontal, Star, Utensils, Compass, Store } from "lucide-react";
 import { toast } from "sonner";
 import { experiences } from "@/data/mockData";
 import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
@@ -59,16 +59,27 @@ interface FavoriteRestaurant extends Restaurant {
   favoriteId: string;
 }
 
+interface FavoriteVendor {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  photos: string[] | null;
+  price_per_person: number | null;
+  google_rating: number | null;
+}
+
 const Wishlists = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthContext();
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [favoriteRestaurants, setFavoriteRestaurants] = useState<FavoriteRestaurant[]>([]);
+  const [favoriteVendors, setFavoriteVendors] = useState<FavoriteVendor[]>([]);
   const [selectedWishlist, setSelectedWishlist] = useState<Wishlist | null>(null);
   const [newWishlistName, setNewWishlistName] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("restaurants");
+  const [activeTab, setActiveTab] = useState("services");
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -81,6 +92,8 @@ const Wishlists = () => {
   useEffect(() => {
     // Always load restaurant favorites (stored in localStorage)
     loadFavoriteRestaurants();
+    // Load vendor favorites
+    loadFavoriteVendors();
     
     // Only fetch wishlists from Supabase if authenticated
     if (isAuthenticated) {
@@ -89,6 +102,35 @@ const Wishlists = () => {
       setLoading(false);
     }
   }, [isAuthenticated]);
+
+  const loadFavoriteVendors = async () => {
+    const favoriteIds = JSON.parse(localStorage.getItem("vendorFavorites") || "[]");
+    if (favoriteIds.length === 0) {
+      setFavoriteVendors([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id, name, category, description, photos, price_per_person, google_rating')
+        .in('id', favoriteIds);
+
+      if (error) throw error;
+      setFavoriteVendors((data as FavoriteVendor[]) || []);
+    } catch (error) {
+      console.error("Error loading favorite vendors:", error);
+      setFavoriteVendors([]);
+    }
+  };
+
+  const removeVendorFavorite = (vendorId: string) => {
+    const favoriteIds = JSON.parse(localStorage.getItem("vendorFavorites") || "[]");
+    const newFavorites = favoriteIds.filter((id: string) => id !== vendorId);
+    localStorage.setItem("vendorFavorites", JSON.stringify(newFavorites));
+    setFavoriteVendors(favoriteVendors.filter(v => v.id !== vendorId));
+    toast.success("Removed from favorites");
+  };
 
   const loadFavoriteRestaurants = () => {
     const favoriteIds = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
@@ -232,6 +274,7 @@ const Wishlists = () => {
   // Get total favorites count
   const totalExperienceFavorites = wishlists.reduce((sum, w) => sum + (w.items?.length || 0), 0);
   const totalRestaurantFavorites = favoriteRestaurants.length;
+  const totalVendorFavorites = favoriteVendors.length;
 
   if (loading) {
     return (
@@ -344,7 +387,16 @@ const Wishlists = () => {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="services" className="flex items-center gap-2">
+              <Store className="h-4 w-4" />
+              Services
+              {totalVendorFavorites > 0 && (
+                <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">
+                  {totalVendorFavorites}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="experiences" className="flex items-center gap-2">
               <Compass className="h-4 w-4" />
               Experiences
@@ -364,6 +416,65 @@ const Wishlists = () => {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="services">
+            {favoriteVendors.length === 0 ? (
+              <div className="text-center py-16">
+                <Store className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <h2 className="text-lg font-semibold mb-2">No favorite services yet</h2>
+                <p className="text-muted-foreground mb-6">
+                  Heart local services to save them here
+                </p>
+                <Button variant="outline" onClick={() => navigate("/appview")}>
+                  Explore Services
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {favoriteVendors.map((vendor) => (
+                  <Card 
+                    key={vendor.id} 
+                    className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => navigate(`/vendor/${vendor.id}`)}
+                  >
+                    <div className="relative aspect-[4/3]">
+                      <img
+                        src={vendor.photos?.[0] || '/placeholder.svg'}
+                        alt={vendor.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeVendorFavorite(vendor.id);
+                        }}
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white transition-colors"
+                      >
+                        <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+                      </button>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold line-clamp-1">{vendor.name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {vendor.category}
+                      </p>
+                      {vendor.google_rating !== null && (
+                        <div className="flex items-center gap-1 mt-2">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-medium">{vendor.google_rating.toFixed(1)}</span>
+                        </div>
+                      )}
+                      {vendor.price_per_person !== null && (
+                        <p className="mt-1 text-sm font-medium">
+                          ${vendor.price_per_person} <span className="font-normal text-muted-foreground">per person</span>
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="experiences">
             {wishlists.length === 0 ? (
