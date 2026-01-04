@@ -15,6 +15,7 @@ import {
   Check,
   Share2,
   MessageCircle,
+  Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import HostBottomNav from "@/components/HostBottomNav";
@@ -24,6 +25,8 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useEnsureProfileName } from "@/hooks/useEnsureProfileName";
 import { toast } from "@/hooks/use-toast";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +41,22 @@ const HostProfile = () => {
   const { profile } = useProfile();
   const { user } = useAuthContext();
   const [copied, setCopied] = useState(false);
+
+  // Check if user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ['isAdminHostProfile', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+      return !!data;
+    },
+    enabled: !!user,
+  });
 
   // Prefer backend profile name, fall back to signup/session data.
   const displayFullName = useMemo(() => {
@@ -150,6 +169,24 @@ const HostProfile = () => {
     },
   ];
 
+  // Add admin settings if user is admin
+  const allMenuItems = useMemo(() => {
+    if (isAdmin) {
+      return [
+        ...menuItems.slice(0, -1), // All items except Log Out
+        { 
+          label: "Platform Settings", 
+          icon: Settings, 
+          action: "/admin/settings",
+          gradient: false,
+          isAdmin: true
+        },
+        menuItems[menuItems.length - 1] // Log Out last
+      ];
+    }
+    return menuItems;
+  }, [isAdmin]);
+
   const handleMenuClick = (action: string) => {
     if (action === "share-guide") {
       // Handled by dropdown, do nothing here
@@ -195,7 +232,7 @@ const HostProfile = () => {
 
         {/* Menu Items */}
         <Card className="overflow-hidden">
-          {menuItems.map((item, index) => (
+          {allMenuItems.map((item, index) => (
             item.action === "share-guide" ? (
               <DropdownMenu key={item.label}>
                 <DropdownMenuTrigger asChild>
@@ -203,7 +240,7 @@ const HostProfile = () => {
                     className={`
                       w-full flex items-center justify-between p-4 
                       hover:bg-muted/30 active:bg-muted/50 transition-all
-                      ${index !== menuItems.length - 1 ? 'border-b' : ''}
+                      ${index !== allMenuItems.length - 1 ? 'border-b' : ''}
                       bg-gradient-to-r from-orange-500/5 to-pink-500/5
                     `}
                   >
@@ -247,11 +284,12 @@ const HostProfile = () => {
                 className={`
                   w-full flex items-center justify-between p-4 
                   hover:bg-muted/30 active:bg-muted/50 transition-all
-                  ${index !== menuItems.length - 1 ? 'border-b' : ''}
+                  ${index !== allMenuItems.length - 1 ? 'border-b' : ''}
+                  ${'isAdmin' in item && item.isAdmin ? 'bg-gradient-to-r from-violet-500/10 to-purple-500/10' : ''}
                 `}
               >
                 <div className="flex items-center gap-3">
-                  <item.icon className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <item.icon className={`h-5 w-5 flex-shrink-0 ${'isAdmin' in item && item.isAdmin ? 'text-violet-500' : 'text-muted-foreground'}`} />
                   <div className="text-left">
                     <span className="font-medium text-sm block">
                       {item.label}
