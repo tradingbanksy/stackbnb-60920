@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,15 +58,17 @@ const categoryIcons: Record<string, { icon: string; faIcon: React.ReactNode }> =
 const VendorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { role, isAuthenticated } = useAuthContext();
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedTierIndex, setSelectedTierIndex] = useState<number>(0);
   
-  // Only authenticated hosts/vendors can see commission.
-  // This guards against any stale role state while browsing as a guest.
-  const canSeeCommission = isAuthenticated && (role === 'host' || role === 'vendor');
+  // Commission is host-only AND only when explicitly in host context.
+  // This prevents it from appearing while casually exploring the public vendor page.
+  const isHostContext = searchParams.get('mode') === 'host';
+  const canSeeCommission = isAuthenticated && role === 'host' && isHostContext;
 
   useEffect(() => {
     if (id) {

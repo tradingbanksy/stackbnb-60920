@@ -200,7 +200,7 @@ const HostDashboard = () => {
                 <Card
                   key={vendor.id}
                   className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 cursor-pointer group"
-                  onClick={() => navigate(`/vendor/${vendor.id}`)}
+                  onClick={() => navigate(`/vendor/${vendor.id}?mode=host`)}
                 >
                   <div className="flex items-center gap-3">
                     {/* Vendor Photo */}

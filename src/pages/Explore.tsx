@@ -296,7 +296,11 @@ const Explore = () => {
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                   <div className="flex gap-3 w-max pb-2">
                     {filteredVendorExperiences.map((vendor) => (
-                      <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="flex-shrink-0 w-40 block">
+                      <Link
+                        key={vendor.id}
+                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
+                        className="flex-shrink-0 w-40 block"
+                      >
                         <div className="aspect-square rounded-xl overflow-hidden relative">
                           {vendor.photos && vendor.photos.length > 0 ? (
                             <img
