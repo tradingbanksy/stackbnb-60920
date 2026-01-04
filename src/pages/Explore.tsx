@@ -319,7 +319,7 @@ const Explore = () => {
                               className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
                                 hasRecommendation(vendor.id, 'vendor')
                                   ? 'bg-green-500 text-white' 
-                                  : 'bg-white/95 text-foreground hover:bg-primary hover:text-white'
+                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
                               }`}
                             >
                               {loadingVendors[vendor.id] ? (
