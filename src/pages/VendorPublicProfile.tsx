@@ -58,14 +58,15 @@ const categoryIcons: Record<string, { icon: string; faIcon: React.ReactNode }> =
 const VendorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { role } = useAuthContext();
+  const { role, isAuthenticated } = useAuthContext();
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedTierIndex, setSelectedTierIndex] = useState<number>(0);
   
-  // Show commission to hosts and vendors only, not guests
-  const canSeeCommission = role === 'host' || role === 'vendor';
+  // Only authenticated hosts/vendors can see commission.
+  // This guards against any stale role state while browsing as a guest.
+  const canSeeCommission = isAuthenticated && (role === 'host' || role === 'vendor');
 
   useEffect(() => {
     if (id) {
