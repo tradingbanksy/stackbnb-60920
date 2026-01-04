@@ -684,10 +684,10 @@ const CreateVendorProfile = () => {
             <div className="space-y-3">
               <Label className="flex items-center gap-1">
                 <DollarSign className="h-4 w-4" />
-                Pricing Options
+                Pricing Tiers
               </Label>
               <p className="text-xs text-muted-foreground">
-                Add different price tiers for your service (e.g., Breakfast, Lunch, Dinner for a chef)
+                Add pricing tiers for your service (e.g., Tier 1, Tier 2, Tier 3)
               </p>
               
               {/* Existing tiers */}
@@ -695,6 +695,7 @@ const CreateVendorProfile = () => {
                 <div className="space-y-2">
                   {priceTiers.map((tier, index) => (
                     <div key={index} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                      <span className="text-sm font-medium text-muted-foreground w-14">Tier {index + 1}</span>
                       <Input
                         value={tier.name}
                         onChange={(e) => updatePriceTier(index, 'name', e.target.value)}
@@ -727,6 +728,7 @@ const CreateVendorProfile = () => {
 
               {/* Add new tier */}
               <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground w-14">Tier {priceTiers.length + 1}</span>
                 <Input
                   value={newTierName}
                   onChange={(e) => setNewTierName(e.target.value)}
