@@ -70,10 +70,16 @@ const HostVendors = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, "_blank");
   };
 
-  // Get vendor IDs from recommendations
+  // UUID regex to validate IDs
+  const isValidUUID = (id: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  };
+
+  // Get vendor IDs from recommendations (only valid UUIDs)
   const savedVendorIds = useMemo(() => {
     return recommendations
-      .filter(r => r.type === 'vendor')
+      .filter(r => r.type === 'vendor' && isValidUUID(r.id))
       .map(r => r.id);
   }, [recommendations]);
 
