@@ -324,11 +324,12 @@ const VendorProfilePreview = () => {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center py-4">
+            <div className="relative flex flex-col items-center justify-center py-4 bg-background">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
                 className="w-full max-w-[450px] h-[280px] mx-auto rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex flex-col items-center justify-center gap-2 hover:from-orange-600 hover:to-purple-700 transition-colors cursor-pointer"
+                style={{ minWidth: '300px' }}
               >
                 {isUploading ? (
                   <Loader2 className="h-12 w-12 text-white animate-spin" />
