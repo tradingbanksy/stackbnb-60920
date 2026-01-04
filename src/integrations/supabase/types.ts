@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           about_experience: string | null
           category: string
+          commission_percentage: number | null
           created_at: string
           description: string | null
           duration: string | null
@@ -101,6 +102,7 @@ export type Database = {
         Insert: {
           about_experience?: string | null
           category: string
+          commission_percentage?: number | null
           created_at?: string
           description?: string | null
           duration?: string | null
@@ -124,6 +126,7 @@ export type Database = {
         Update: {
           about_experience?: string | null
           category?: string
+          commission_percentage?: number | null
           created_at?: string
           description?: string | null
           duration?: string | null

@@ -10,6 +10,7 @@ import {
   Instagram, ExternalLink, Store
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthContext } from '@/contexts/AuthContext';
 import InteractiveSelector from '@/components/ui/interactive-selector';
 import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
 
@@ -28,6 +29,7 @@ interface VendorProfile {
   included_items: string[] | null;
   google_rating: number | null;
   google_reviews_url: string | null;
+  commission_percentage: number | null;
 }
 
 // Category to icon mapping
@@ -49,9 +51,13 @@ const categoryIcons: Record<string, { icon: string; faIcon: React.ReactNode }> =
 const VendorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { role } = useAuthContext();
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  // Show commission to hosts and vendors only, not guests
+  const canSeeCommission = role === 'host' || role === 'vendor';
 
   useEffect(() => {
     if (id) {
@@ -228,6 +234,27 @@ const VendorPublicProfile = () => {
               </div>
             </div>
           </Card>
+
+          {/* Affiliate Commission - Hosts & Vendors Only */}
+          {canSeeCommission && profile.commission_percentage && (
+            <Card className="p-4 border-amber-500/50 bg-amber-500/5">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    💰 Affiliate Commission
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Partner with this vendor
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    {profile.commission_percentage}%
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Description */}
           {profile.about_experience && (

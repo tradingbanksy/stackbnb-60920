@@ -32,6 +32,7 @@ const vendorProfileSchema = z.object({
   googlePlaceId: z.string().optional(),
   googleRating: z.coerce.number().optional(),
   googleReviewsUrl: z.string().optional(),
+  commissionPercentage: z.coerce.number().min(0, 'Must be at least 0%').max(100, 'Cannot exceed 100%').optional(),
 });
 
 type VendorProfileFormData = z.infer<typeof vendorProfileSchema>;
@@ -74,6 +75,7 @@ interface ExistingProfile {
   google_place_id: string | null;
   google_rating: number | null;
   google_reviews_url: string | null;
+  commission_percentage: number | null;
 }
 
 const CreateVendorProfile = () => {
@@ -149,6 +151,7 @@ const CreateVendorProfile = () => {
             googlePlaceId: data.google_place_id || '',
             googleRating: data.google_rating || undefined,
             googleReviewsUrl: data.google_reviews_url || '',
+            commissionPercentage: data.commission_percentage || undefined,
           });
           setSelectedPhotos(data.photos || []);
           setScrapedPhotos(data.photos || []);
@@ -337,6 +340,7 @@ const CreateVendorProfile = () => {
         google_place_id: formData.googlePlaceId,
         google_rating: formData.googleRating || null,
         google_reviews_url: formData.googleReviewsUrl,
+        commission_percentage: formData.commissionPercentage || null,
       };
 
       if (existingProfile) {
@@ -711,6 +715,42 @@ const CreateVendorProfile = () => {
                 placeholder="https://g.page/..."
                 {...register('googleReviewsUrl')}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Affiliate Program */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              💰 Affiliate Program
+            </CardTitle>
+            <CardDescription>
+              Set the commission percentage you offer to hosts who refer guests to you. 
+              This is only visible to hosts and other vendors, not guests.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="commissionPercentage" className="flex items-center gap-1">
+                Commission Percentage
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="commissionPercentage"
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  placeholder="15"
+                  {...register('commissionPercentage')}
+                  className="w-24"
+                />
+                <span className="text-muted-foreground">%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Example: If you set 15%, hosts earn $15 for every $100 booking they refer.
+              </p>
             </div>
           </CardContent>
         </Card>

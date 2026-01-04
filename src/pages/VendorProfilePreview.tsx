@@ -32,6 +32,7 @@ interface VendorProfile {
   google_reviews_url: string | null;
   is_published: boolean | null;
   listing_type: string | null;
+  commission_percentage: number | null;
 }
 
 // Category to icon mapping
@@ -358,6 +359,25 @@ const VendorProfilePreview = () => {
                   </Badge>
                 )}
                 <p className="text-xs text-muted-foreground">per person</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Affiliate Commission - Vendor Only */}
+          <Card className="p-4 border-amber-500/50 bg-amber-500/5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  💰 Affiliate Commission
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Visible to hosts & vendors only
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                  {profile.commission_percentage ? `${profile.commission_percentage}%` : 'Not set'}
+                </p>
               </div>
             </div>
           </Card>
