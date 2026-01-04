@@ -308,11 +308,35 @@ Uses framer-motion's `Reorder` component for drag-and-drop reordering.
 ```
 
 ### Visibility Rules
-| Viewer Role | Can See Commission? |
-|-------------|---------------------|
-| Guest (user) | ❌ No |
-| Host | ✅ Yes |
-| Vendor | ✅ Yes |
+
+Commission information is shown **only** when **all** of the following are true:
+
+1. User is **authenticated**
+2. User role is `host`
+3. URL contains `?mode=host` query parameter
+
+| Context | `?mode=host` | Authenticated Host | Can See Commission? |
+|---------|--------------|-------------------|---------------------|
+| Explore page (host mode) | ✅ | ✅ | ✅ Yes |
+| Vendor profile from Host Dashboard | ✅ | ✅ | ✅ Yes |
+| Splash → Explore → Vendor profile | ❌ | ❌ | ❌ No |
+| Logged-in host browsing AppView | ❌ | ✅ | ❌ No |
+| Vendor viewing their own preview | N/A | ✅ Vendor | ✅ Yes (own preview page) |
+
+### Implementation (VendorPublicProfile.tsx)
+```typescript
+const [searchParams] = useSearchParams();
+const { role, isAuthenticated } = useAuthContext();
+
+// Commission is host-only AND only when explicitly in host context.
+const isHostContext = searchParams.get('mode') === 'host';
+const canSeeCommission = isAuthenticated && role === 'host' && isHostContext;
+```
+
+### Host-Context Links
+When navigating from host areas, append `?mode=host` to preserve context:
+- **Explore page** (`/explore?mode=host`): Vendor card links include `?mode=host`
+- **Host Dashboard**: Partner Commissions cards navigate to `/vendor/:id?mode=host`
 
 ---
 
