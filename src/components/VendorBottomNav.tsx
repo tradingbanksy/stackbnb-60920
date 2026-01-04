@@ -13,7 +13,7 @@ const VendorBottomNav = () => {
     },
     { 
       name: "Services", 
-      path: "/vendor/services", 
+      path: "/vendor/preview", 
       icon: Briefcase 
     },
     { 
