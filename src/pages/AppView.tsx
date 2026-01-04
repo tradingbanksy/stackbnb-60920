@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import type { Vendor } from "@/types";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap, Home } from "lucide-react";
+import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap, Home, Plus, Check, Percent, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   Collapsible,
@@ -101,9 +103,17 @@ interface VendorProfile {
   google_rating: number | null;
   is_published: boolean | null;
   listing_type: 'restaurant' | 'experience';
+  commission_percentage: number | null;
 }
 
 const AppView = () => {
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, role } = useAuthContext();
+  const { hasRecommendation, addRecommendation, removeRecommendation } = useProfile();
+  
+  // Check if we're in host mode
+  const isHostMode = searchParams.get('mode') === 'host' || (isAuthenticated && role === 'host');
+  
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
@@ -120,6 +130,7 @@ const AppView = () => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [loadingVendors, setLoadingVendors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchMyBusinesses();
@@ -147,7 +158,7 @@ const AppView = () => {
     try {
       const { data, error } = await supabase
         .from('vendor_profiles')
-        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type, commission_percentage')
         .eq('is_published', true);
 
       if (error) throw error;
@@ -157,6 +168,31 @@ const AppView = () => {
       setVendorExperiences(vendors.filter(v => v.listing_type === 'experience'));
     } catch (error) {
       console.error('Error fetching published vendors:', error);
+    }
+  };
+
+  const handleAddVendorToGuide = async (vendorId: string, vendorName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (hasRecommendation(vendorId, 'vendor')) {
+      setLoadingVendors(prev => ({ ...prev, [vendorId]: true }));
+      await removeRecommendation(vendorId, 'vendor');
+      setLoadingVendors(prev => ({ ...prev, [vendorId]: false }));
+      toast({
+        title: "Removed from guest guide",
+        description: `${vendorName} has been removed from your recommendations.`,
+        duration: 2000,
+      });
+    } else {
+      setLoadingVendors(prev => ({ ...prev, [vendorId]: true }));
+      await addRecommendation({ id: vendorId, type: 'vendor' });
+      setLoadingVendors(prev => ({ ...prev, [vendorId]: false }));
+      toast({
+        title: "Added to guest guide",
+        description: `${vendorName} has been added to your recommendations.`,
+        duration: 2000,
+      });
     }
   };
 
@@ -406,18 +442,46 @@ const AppView = () => {
                               <Store className="h-8 w-8 text-white/80" />
                             </div>
                           )}
-                          <button
-                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
-                            className="absolute top-2 right-2 z-10"
-                          >
-                            <Heart
-                              className={`h-5 w-5 drop-shadow-md ${
-                                vendorFavorites.includes(vendor.id)
-                                  ? "fill-red-500 text-red-500"
-                                  : "fill-black/40 text-white"
-                              }`}
-                            />
-                          </button>
+                          {/* Host mode: gradient add button on left, commission on right */}
+                          {isHostMode ? (
+                            <>
+                              <button
+                                onClick={(e) => handleAddVendorToGuide(vendor.id, vendor.name, e)}
+                                className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                                  hasRecommendation(vendor.id, 'vendor')
+                                    ? 'bg-green-500 text-white' 
+                                    : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
+                                }`}
+                              >
+                                {loadingVendors[vendor.id] ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : hasRecommendation(vendor.id, 'vendor') ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Plus className="h-4 w-4" />
+                                )}
+                              </button>
+                              {vendor.commission_percentage && (
+                                <div className="absolute top-2 right-2 z-20 bg-black/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                                  <Percent className="h-3 w-3 text-orange-400" />
+                                  <span className="text-xs font-semibold text-orange-400">{vendor.commission_percentage}%</span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <button
+                              onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                              className="absolute top-2 right-2 z-10"
+                            >
+                              <Heart
+                                className={`h-5 w-5 drop-shadow-md ${
+                                  vendorFavorites.includes(vendor.id)
+                                    ? "fill-red-500 text-red-500"
+                                    : "fill-black/40 text-white"
+                                }`}
+                              />
+                            </button>
+                          )}
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
                             <div className="flex items-center gap-1 text-white/80 text-[10px]">
@@ -492,18 +556,46 @@ const AppView = () => {
                               <Store className="h-8 w-8 text-white/80" />
                             </div>
                           )}
-                          <button
-                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
-                            className="absolute top-2 right-2 z-10"
-                          >
-                            <Heart
-                              className={`h-5 w-5 drop-shadow-md ${
-                                vendorFavorites.includes(vendor.id)
-                                  ? "fill-red-500 text-red-500"
-                                  : "fill-black/40 text-white"
-                              }`}
-                            />
-                          </button>
+                          {/* Host mode: gradient add button on left, commission on right */}
+                          {isHostMode ? (
+                            <>
+                              <button
+                                onClick={(e) => handleAddVendorToGuide(vendor.id, vendor.name, e)}
+                                className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                                  hasRecommendation(vendor.id, 'vendor')
+                                    ? 'bg-green-500 text-white' 
+                                    : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
+                                }`}
+                              >
+                                {loadingVendors[vendor.id] ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : hasRecommendation(vendor.id, 'vendor') ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Plus className="h-4 w-4" />
+                                )}
+                              </button>
+                              {vendor.commission_percentage && (
+                                <div className="absolute top-2 right-2 z-20 bg-black/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                                  <Percent className="h-3 w-3 text-orange-400" />
+                                  <span className="text-xs font-semibold text-orange-400">{vendor.commission_percentage}%</span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <button
+                              onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                              className="absolute top-2 right-2 z-10"
+                            >
+                              <Heart
+                                className={`h-5 w-5 drop-shadow-md ${
+                                  vendorFavorites.includes(vendor.id)
+                                    ? "fill-red-500 text-red-500"
+                                    : "fill-black/40 text-white"
+                                }`}
+                              />
+                            </button>
+                          )}
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
                             <div className="flex items-center gap-1 text-white/80 text-[10px]">
