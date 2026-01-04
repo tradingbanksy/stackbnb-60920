@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
   Loader2, Instagram, Upload, Sparkles, Check, X, Plus, 
@@ -56,9 +57,32 @@ const CATEGORIES = [
   'Other',
 ];
 
+interface ExistingProfile {
+  id: string;
+  name: string;
+  category: string;
+  listing_type: string;
+  description: string | null;
+  about_experience: string | null;
+  instagram_url: string | null;
+  photos: string[] | null;
+  menu_url: string | null;
+  price_per_person: number | null;
+  duration: string | null;
+  max_guests: number | null;
+  included_items: string[] | null;
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_reviews_url: string | null;
+}
+
 const CreateVendorProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuthContext();
+  
+  // Existing profile state
+  const [existingProfile, setExistingProfile] = useState<ExistingProfile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   // Instagram scraping state
   const [isScraping, setIsScraping] = useState(false);
@@ -80,7 +104,7 @@ const CreateVendorProfile = () => {
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<VendorProfileFormData>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<VendorProfileFormData>({
     resolver: zodResolver(vendorProfileSchema),
     defaultValues: {
       pricePerPerson: 0,
@@ -90,6 +114,57 @@ const CreateVendorProfile = () => {
 
   const watchedValues = watch();
 
+  // Check for existing profile
+  useEffect(() => {
+    const checkExistingProfile = async () => {
+      if (!user) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('vendor_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setExistingProfile(data);
+          // Pre-populate form with existing data
+          reset({
+            name: data.name,
+            listingType: data.listing_type as 'restaurant' | 'experience',
+            category: data.category,
+            description: data.description || '',
+            aboutExperience: data.about_experience || '',
+            instagramUrl: data.instagram_url || '',
+            pricePerPerson: data.price_per_person || 0,
+            duration: data.duration || '',
+            maxGuests: data.max_guests || 10,
+            googlePlaceId: data.google_place_id || '',
+            googleRating: data.google_rating || undefined,
+            googleReviewsUrl: data.google_reviews_url || '',
+          });
+          setSelectedPhotos(data.photos || []);
+          setScrapedPhotos(data.photos || []);
+          setIncludedItems(data.included_items || []);
+          setMenuUrl(data.menu_url || null);
+        }
+      } catch (error) {
+        console.error('Error checking existing profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    checkExistingProfile();
+  }, [user, reset]);
+
   // Load pre-selected photos from sessionStorage (from Instagram scrape page)
   useEffect(() => {
     const storedPhotos = sessionStorage.getItem('vendorScrapedPhotos');
@@ -98,9 +173,8 @@ const CreateVendorProfile = () => {
     if (storedPhotos) {
       try {
         const photos = JSON.parse(storedPhotos);
-        setSelectedPhotos(photos);
-        setScrapedPhotos(photos); // Also set as scraped so they show in the grid
-        // Clear from storage after loading
+        setSelectedPhotos(prev => [...new Set([...prev, ...photos])]);
+        setScrapedPhotos(prev => [...new Set([...prev, ...photos])]);
         sessionStorage.removeItem('vendorScrapedPhotos');
       } catch (e) {
         console.error('Error parsing stored photos:', e);
@@ -122,8 +196,6 @@ const CreateVendorProfile = () => {
     }
 
     setIsScraping(true);
-    setScrapedPhotos([]);
-    setSelectedPhotos([]);
 
     try {
       const { data, error } = await supabase.functions.invoke('scrape-instagram', {
@@ -133,8 +205,9 @@ const CreateVendorProfile = () => {
       if (error) throw new Error(error.message);
       if (!data.success) throw new Error(data.error || 'Failed to scrape Instagram');
 
-      setScrapedPhotos(data.data.photos || []);
-      toast.success(`Found ${data.data.photos?.length || 0} photos!`);
+      const newPhotos = data.data.photos || [];
+      setScrapedPhotos(prev => [...new Set([...prev, ...newPhotos])]);
+      toast.success(`Found ${newPhotos.length} photos!`);
     } catch (error) {
       console.error('Scrape error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to scrape Instagram');
@@ -247,7 +320,7 @@ const CreateVendorProfile = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('vendor_profiles').insert({
+      const profileData = {
         user_id: user.id,
         name: formData.name,
         listing_type: formData.listingType,
@@ -264,20 +337,58 @@ const CreateVendorProfile = () => {
         google_place_id: formData.googlePlaceId,
         google_rating: formData.googleRating || null,
         google_reviews_url: formData.googleReviewsUrl,
-        is_published: false,
-      });
+      };
 
-      if (error) throw error;
+      if (existingProfile) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('vendor_profiles')
+          .update(profileData)
+          .eq('id', existingProfile.id);
 
-      toast.success('Vendor profile created!');
-      navigate('/vendor/dashboard');
+        if (error) throw error;
+        toast.success('Vendor profile updated!');
+      } else {
+        // Create new profile
+        const { error } = await supabase
+          .from('vendor_profiles')
+          .insert({
+            ...profileData,
+            is_published: false,
+          });
+
+        if (error) throw error;
+        toast.success('Vendor profile created!');
+      }
+
+      navigate('/vendor/preview');
     } catch (error) {
       console.error('Submit error:', error);
-      toast.error('Failed to create profile');
+      toast.error('Failed to save profile');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const isUpdateMode = !!existingProfile;
+
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
+          <div className="flex items-center gap-4 p-4">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <Skeleton className="h-6 w-48" />
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto p-4 space-y-6">
+          <Skeleton className="h-48 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -287,7 +398,9 @@ const CreateVendorProfile = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Create Vendor Profile</h1>
+          <h1 className="text-xl font-semibold">
+            {isUpdateMode ? 'Update Vendor Profile' : 'Create Vendor Profile'}
+          </h1>
         </div>
       </div>
 
@@ -345,7 +458,10 @@ const CreateVendorProfile = () => {
 
             <div className="space-y-2">
               <Label htmlFor="category">Category *</Label>
-              <Select onValueChange={(value) => setValue('category', value)}>
+              <Select 
+                value={watchedValues.category} 
+                onValueChange={(value) => setValue('category', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
@@ -474,7 +590,7 @@ const CreateVendorProfile = () => {
               {menuUrl && (
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Menu uploaded: {menuFile?.name}</span>
+                  <span className="text-sm">{menuFile?.name || 'Menu uploaded'}</span>
                   <Button
                     type="button"
                     variant="ghost"
@@ -646,10 +762,10 @@ const CreateVendorProfile = () => {
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
+                {isUpdateMode ? 'Updating...' : 'Creating...'}
               </>
             ) : (
-              'Create Profile'
+              isUpdateMode ? 'Update Profile' : 'Create Profile'
             )}
           </Button>
         </div>

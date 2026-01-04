@@ -1,25 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { 
-  Star, Heart, Eye, Edit, Globe, Plus, Trash2, Loader2, ImagePlus,
-  User, Search, Sparkles, Store, ChevronRight, MapPin, CalendarDays
+  ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
+  Instagram, ExternalLink, Store, Eye, Edit, Globe, Plus, Trash2, Loader2, ImagePlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import VendorBottomNav from '@/components/VendorBottomNav';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import stackdLogo from '@/assets/stackd-logo-new.png';
-import heroImage from '@/assets/hero-beach.jpg';
+import InteractiveSelector from '@/components/ui/interactive-selector';
+import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
 
 interface VendorProfile {
   id: string;
@@ -40,6 +34,22 @@ interface VendorProfile {
   listing_type: string | null;
 }
 
+// Category to icon mapping
+const categoryIcons: Record<string, { icon: string; faIcon: React.ReactNode }> = {
+  'Private Chef': { icon: '👨‍🍳', faIcon: <FaUtensils size={20} className="text-white" /> },
+  'Massage & Spa': { icon: '💆', faIcon: <FaSpa size={20} className="text-white" /> },
+  'Yacht Charter': { icon: '🛥️', faIcon: <FaShip size={20} className="text-white" /> },
+  'Photography': { icon: '📸', faIcon: <FaCamera size={20} className="text-white" /> },
+  'Tour Guide': { icon: '🗺️', faIcon: <FaMountain size={20} className="text-white" /> },
+  'Fitness & Yoga': { icon: '🧘', faIcon: <FaSpa size={20} className="text-white" /> },
+  'Wine Tasting': { icon: '🍷', faIcon: <FaWineGlass size={20} className="text-white" /> },
+  'Fishing Charter': { icon: '🎣', faIcon: <FaShip size={20} className="text-white" /> },
+  'Water Sports': { icon: '🌊', faIcon: <FaSwimmer size={20} className="text-white" /> },
+  'Cooking Class': { icon: '👩‍🍳', faIcon: <FaUtensils size={20} className="text-white" /> },
+  'Transportation': { icon: '🚗', faIcon: <FaBicycle size={20} className="text-white" /> },
+  'default': { icon: '✨', faIcon: <FaSpa size={20} className="text-white" /> },
+};
+
 const VendorProfilePreview = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -48,9 +58,6 @@ const VendorProfilePreview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [locationQuery, setLocationQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -184,8 +191,9 @@ const VendorProfilePreview = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24">
-        <div className="max-w-2xl mx-auto">
-          <Skeleton className="h-72 w-full" />
+        <div className="max-w-[375px] mx-auto">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-[280px] w-full mt-4" />
           <div className="p-4 space-y-4">
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
@@ -210,287 +218,270 @@ const VendorProfilePreview = () => {
     );
   }
 
-  const photos = profile.photos || [];
-  const isExperience = profile.listing_type === 'experience';
+  const photos = (profile.photos || []).slice(0, 3);
+  const categoryConfig = categoryIcons[profile.category] || categoryIcons['default'];
+  
+  const photoTitles = photos.map((_, idx) => 
+    idx === 0 ? 'Featured' : idx === 1 ? 'In Action' : `View ${idx + 1}`
+  );
+  const photoIcons = photos.map(() => categoryConfig.faIcon);
 
   return (
-    <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
-      {/* Phone Container - Matches AppView */}
-      <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative">
-        
+    <div className="min-h-screen bg-background pb-24">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handlePhotoUpload}
+        className="hidden"
+      />
+
+      <div className="max-w-[375px] mx-auto">
         {/* Preview Banner */}
-        <div className="flex-shrink-0 bg-amber-500 text-amber-950 px-4 py-2 flex items-center justify-between">
+        <div className="sticky top-0 z-50 bg-amber-500 text-amber-950 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
-            <span className="text-sm font-medium">Preview Mode - Guest View</span>
+            <span className="text-sm font-medium">Preview - How Guests See You</span>
           </div>
           <Badge variant={profile.is_published ? "default" : "secondary"} className="text-xs">
-            {profile.is_published ? 'Published' : 'Draft'}
+            {profile.is_published ? 'Live' : 'Draft'}
           </Badge>
         </div>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handlePhotoUpload}
-          className="hidden"
-        />
-
-        <Tabs defaultValue="explore" className="flex-1 flex flex-col overflow-hidden">
-          {/* Sticky Tabs Header */}
-          <div className="flex-shrink-0 sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
-            <TabsList className="w-full justify-start rounded-none bg-transparent h-10 p-0">
-              <TabsTrigger 
-                value="explore" 
-                className="flex-1 rounded-none text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary"
+        {/* Header */}
+        <header className="sticky top-[40px] z-40 bg-card/95 backdrop-blur-sm border-b border-border">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/vendor/dashboard')}
+                className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
               >
-                Explore
-              </TabsTrigger>
-              <TabsTrigger 
-                value="services" 
-                className="flex-1 rounded-none text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <span className="font-semibold">{profile.category}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="h-9 w-9"
               >
-                Services
-              </TabsTrigger>
-              <TabsTrigger 
-                value="about" 
-                className="flex-1 rounded-none text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary"
-              >
-                About
-              </TabsTrigger>
-            </TabsList>
+                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </Button>
+              <Heart className="h-5 w-5 text-muted-foreground" />
+            </div>
           </div>
+        </header>
 
-          <TabsContent value="explore" className="flex-1 overflow-y-auto overflow-x-hidden pb-32 mt-0">
-            {/* Hero Section */}
-            <div className="relative">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ 
-                  backgroundImage: `url(${heroImage})`,
-                  filter: 'blur(1px)',
-                }}
+        {/* Interactive Photo Selector */}
+        <div className="mb-4 relative group">
+          {photos.length > 0 ? (
+            <>
+              <InteractiveSelector 
+                photos={photos}
+                titles={photoTitles}
+                icons={photoIcons}
               />
-              <div className="absolute inset-0 bg-background/70" />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
-
-              {/* Header */}
-              <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-2">
-                <ThemeToggle />
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-full bg-background/80 border border-border text-foreground">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <div className="p-2 rounded-full bg-gradient-to-r from-orange-500 to-purple-600 text-white">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                </div>
+              {/* Photo management overlay on hover */}
+              <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-1 bg-black/50 hover:bg-black/70 text-white border-0"
+                >
+                  <Plus className="h-3 w-3" /> Add
+                </Button>
               </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center py-4">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full max-w-[450px] h-[280px] mx-auto rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex flex-col items-center justify-center gap-2 hover:from-orange-600 hover:to-purple-700 transition-colors cursor-pointer"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-12 w-12 text-white animate-spin" />
+                ) : (
+                  <>
+                    <ImagePlus className="h-12 w-12 text-white/80" />
+                    <span className="text-white font-medium">Add Photos</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
 
-              {/* Hero Content */}
-              <div className="relative z-10 px-4 pb-4 pt-4 text-center">
-                <img src={stackdLogo} alt="stackd" className="h-40 w-40 mx-auto mb-3" />
-                <h1 className="text-xl font-bold text-foreground mb-1">
-                  Discover Experiences
-                </h1>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Find amazing restaurants & adventures nearby
-                </p>
-
-                {/* Search Section */}
-                <div className="relative">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
-                  <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
-                    <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                    <Input
-                      placeholder="Where to?"
-                      value={locationQuery}
-                      onChange={(e) => setLocationQuery(e.target.value)}
-                      className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground flex-1 min-w-0"
-                      disabled
-                    />
-                    <div className="h-4 w-px bg-border/50 flex-shrink-0" />
-                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 min-w-[100px]" disabled>
-                          <CalendarDays className="h-4 w-4 text-primary" />
-                          <span className="text-xs whitespace-nowrap">
-                            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "When?"}
-                          </span>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => {
-                            setSelectedDate(date);
-                            setCalendarOpen(false);
-                          }}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0" disabled>
-                      <Search className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
+        <div className="px-4 py-6 space-y-6">
+          {/* Experience Header */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="text-4xl">{categoryConfig.icon}</span>
+              <div className="flex-1 space-y-1">
+                <h1 className="text-2xl font-bold leading-tight">{profile.name}</h1>
+                <p className="text-muted-foreground">{profile.category}</p>
               </div>
             </div>
-            
-            <div className="px-3 py-3 space-y-5">
-              {/* Section showing YOUR listing */}
-              <section className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">
-                    {isExperience ? 'Popular Experiences' : 'Restaurants Near You'}
-                  </h2>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
-                    {/* YOUR LISTING - Highlighted */}
-                    <div className="flex-shrink-0 w-36 relative">
-                      {/* Highlight ring */}
-                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-purple-600 rounded-xl opacity-75 blur-sm animate-pulse" />
-                      <div className="relative">
-                        <div className="aspect-square rounded-xl overflow-hidden relative border-2 border-primary">
-                          {photos.length > 0 ? (
-                            <img
-                              src={photos[0]}
-                              alt={profile.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <button
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={isUploading}
-                              className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex flex-col items-center justify-center gap-1 hover:from-orange-600 hover:to-purple-700 transition-colors"
-                            >
-                              {isUploading ? (
-                                <Loader2 className="h-6 w-6 text-white animate-spin" />
-                              ) : (
-                                <>
-                                  <ImagePlus className="h-6 w-6 text-white/80" />
-                                  <span className="text-white text-[10px]">Add photo</span>
-                                </>
-                              )}
-                            </button>
-                          )}
-                          <button className="absolute top-2 right-2 z-10">
-                            <Heart className="h-5 w-5 drop-shadow-md fill-black/40 text-white" />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{profile.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {profile.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{profile.google_rating}</span>
-                                  <span>•</span>
-                                </>
-                              )}
-                              {isExperience && profile.price_per_person ? (
-                                <span>${profile.price_per_person}</span>
-                              ) : (
-                                <span>{profile.category}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        {/* Your listing badge */}
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-20">
-                          <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 shadow-lg">
-                            Your Listing
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Placeholder cards */}
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex-shrink-0 w-36 opacity-50">
-                        <div className="aspect-square rounded-xl overflow-hidden relative bg-muted">
-                          <div className="w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center">
-                            <Store className="h-8 w-8 text-muted-foreground/50" />
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <div className="h-3 bg-white/30 rounded w-20 mb-1" />
-                            <div className="h-2 bg-white/20 rounded w-14" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            <div className="flex items-center gap-4 text-sm">
+              {profile.google_rating && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-semibold">{profile.google_rating}</span>
+                  <span className="text-muted-foreground">(Google Reviews)</span>
                 </div>
-              </section>
-
-              {/* Photo Management Section */}
-              {photos.length > 0 && (
-                <section className="space-y-3 bg-card rounded-xl p-4 border border-border">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">Manage Photos</h2>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="gap-1 text-xs"
-                    >
-                      {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                      Add
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {photos.map((photo, idx) => (
-                      <div
-                        key={idx}
-                        className="aspect-square rounded-lg overflow-hidden relative group"
-                      >
-                        <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => handleDeletePhoto(photo, idx)}
-                          className="absolute top-1 right-1 p-1 bg-red-500/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="h-3 w-3 text-white" />
-                        </button>
-                        {idx === 0 && (
-                          <div className="absolute bottom-1 left-1">
-                            <Badge variant="secondary" className="text-[8px] px-1 py-0">
-                              Main
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
               )}
             </div>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="services" className="flex-1 overflow-y-auto pb-32 mt-0">
-            <div className="p-4 text-center text-muted-foreground text-sm">
-              Services tab preview
+          {/* Quick Info */}
+          <Card className="p-4">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="space-y-1">
+                <Clock className="h-5 w-5 mx-auto text-muted-foreground" />
+                <p className="text-xs font-medium">{profile.duration || 'Varies'}</p>
+              </div>
+              <div className="space-y-1">
+                <Users className="h-5 w-5 mx-auto text-muted-foreground" />
+                <p className="text-xs font-medium">Max {profile.max_guests || 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                {profile.price_per_person && (
+                  <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
+                    ${profile.price_per_person}
+                  </Badge>
+                )}
+                <p className="text-xs text-muted-foreground">per person</p>
+              </div>
             </div>
-          </TabsContent>
+          </Card>
 
-          <TabsContent value="about" className="flex-1 overflow-y-auto pb-32 mt-0">
-            <div className="p-4 text-center text-muted-foreground text-sm">
-              About tab preview
+          {/* Description */}
+          {profile.about_experience && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">About This Experience</h2>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {profile.about_experience}
+                </p>
+              </Card>
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
 
-        {/* Action Bar */}
-        <div className="absolute bottom-16 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4">
-          <div className="flex gap-3">
-            <Button
+          {/* What's Included */}
+          {profile.included_items && profile.included_items.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">What's Included</h2>
+              <Card className="p-4">
+                <ul className="space-y-2">
+                  {profile.included_items.map((item, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          )}
+
+          {/* Links */}
+          {(profile.instagram_url || profile.menu_url || profile.google_reviews_url) && (
+            <div className="flex flex-wrap gap-2">
+              {profile.instagram_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(profile.instagram_url!, '_blank')}
+                  className="gap-2"
+                >
+                  <Instagram className="h-4 w-4" />
+                  Instagram
+                </Button>
+              )}
+              {profile.menu_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(profile.menu_url!, '_blank')}
+                  className="gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  View Menu
+                </Button>
+              )}
+              {profile.google_reviews_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(profile.google_reviews_url!, '_blank')}
+                  className="gap-2"
+                >
+                  <Star className="h-4 w-4" />
+                  Google Reviews
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Photo Gallery Management */}
+          {(profile.photos?.length ?? 0) > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Manage Photos</h2>
+              <Card className="p-4">
+                <div className="grid grid-cols-3 gap-2">
+                  {profile.photos?.map((photo, idx) => (
+                    <div
+                      key={idx}
+                      className="aspect-square rounded-lg overflow-hidden relative group/photo"
+                    >
+                      <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => handleDeletePhoto(photo, idx)}
+                        className="absolute top-1 right-1 p-1.5 bg-red-500/90 rounded-full opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-3 w-3 text-white" />
+                      </button>
+                      {idx === 0 && (
+                        <div className="absolute bottom-1 left-1">
+                          <Badge variant="secondary" className="text-[8px] px-1.5 py-0.5 bg-black/60 text-white">
+                            Main
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {/* Add photo button */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 hover:border-primary hover:bg-primary/5 transition-colors"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <Plus className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground">Add</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed Bottom Actions */}
+        <div className="fixed bottom-16 left-0 right-0 bg-card border-t p-4 shadow-lg z-30">
+          <div className="max-w-[375px] mx-auto flex items-center gap-3">
+            <Button 
               variant="outline"
               className="flex-1 gap-2"
               onClick={() => navigate('/vendor/create-profile')}
@@ -498,8 +489,8 @@ const VendorProfilePreview = () => {
               <Edit className="h-4 w-4" />
               Edit Profile
             </Button>
-            <Button
-              className="flex-1 gap-2"
+            <Button 
+              className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
               onClick={handlePublish}
               disabled={isPublishing}
             >
@@ -508,9 +499,9 @@ const VendorProfilePreview = () => {
             </Button>
           </div>
         </div>
-
-        <VendorBottomNav />
       </div>
+
+      <VendorBottomNav />
     </div>
   );
 };
