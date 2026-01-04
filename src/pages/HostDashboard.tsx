@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight, Handshake, Store } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight, Handshake, Store, CreditCard, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import HostBottomNav from "@/components/HostBottomNav";
 import { dashboardStats, recentBookings } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VendorWithCommission {
   id: string;
@@ -19,8 +22,60 @@ interface VendorWithCommission {
 
 const HostDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [vendors, setVendors] = useState<VendorWithCommission[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  // Check Stripe Connect status
+  const { data: connectStatus, refetch: refetchConnectStatus } = useQuery({
+    queryKey: ['hostConnectStatus'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return { connected: false, onboardingComplete: false };
+
+      const { data, error } = await supabase.functions.invoke('check-connect-status', {
+        body: { accountType: 'host' },
+      });
+
+      if (error) {
+        console.error('Error checking connect status:', error);
+        return { connected: false, onboardingComplete: false };
+      }
+      return data;
+    },
+    staleTime: 30 * 1000,
+  });
+
+  // Handle Stripe Connect return
+  useEffect(() => {
+    if (searchParams.get('stripe_success') === 'true') {
+      toast.success('Stripe account connected successfully!');
+      refetchConnectStatus();
+      window.history.replaceState({}, '', '/host/dashboard');
+    } else if (searchParams.get('stripe_refresh') === 'true') {
+      toast.info('Please complete your Stripe account setup');
+      window.history.replaceState({}, '', '/host/dashboard');
+    }
+  }, [searchParams, refetchConnectStatus]);
+
+  const handleConnectStripe = async () => {
+    setIsConnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-connect-account', {
+        body: { accountType: 'host' },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error connecting Stripe:', error);
+      toast.error('Failed to start Stripe onboarding');
+      setIsConnecting(false);
+    }
+  };
   
   const iconMap = {
     DollarSign,
@@ -71,6 +126,46 @@ const HostDashboard = () => {
                 <LogOut className="h-5 w-5 text-white" />
               </button>
             </div>
+
+            {/* Stripe Connect Status Card */}
+            <Card className="mt-4 p-4 bg-white/10 backdrop-blur-sm border-white/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${connectStatus?.onboardingComplete ? 'bg-green-500/20' : 'bg-yellow-500/20'}`}>
+                    {connectStatus?.onboardingComplete ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-400" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-yellow-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      {connectStatus?.onboardingComplete ? 'Commissions Active' : 'Set Up Payouts'}
+                    </p>
+                    <p className="text-xs text-white/70">
+                      {connectStatus?.onboardingComplete 
+                        ? 'Receive commissions directly to your bank' 
+                        : 'Connect your bank to receive commissions'}
+                    </p>
+                  </div>
+                </div>
+                {!connectStatus?.onboardingComplete && (
+                  <Button
+                    onClick={handleConnectStripe}
+                    disabled={isConnecting}
+                    size="sm"
+                    className="bg-white text-orange-600 hover:bg-white/90 gap-1"
+                  >
+                    {isConnecting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="h-4 w-4" />
+                    )}
+                    {isConnecting ? 'Loading...' : 'Connect'}
+                  </Button>
+                )}
+              </div>
+            </Card>
           </div>
         </div>
 
