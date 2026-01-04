@@ -15,6 +15,11 @@ import VendorBottomNav from '@/components/VendorBottomNav';
 import InteractiveSelector from '@/components/ui/interactive-selector';
 import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
 
+interface PriceTier {
+  name: string;
+  price: number;
+}
+
 interface VendorProfile {
   id: string;
   name: string;
@@ -25,6 +30,7 @@ interface VendorProfile {
   photos: string[] | null;
   menu_url: string | null;
   price_per_person: number | null;
+  price_tiers: PriceTier[] | null;
   duration: string | null;
   max_guests: number | null;
   included_items: string[] | null;
@@ -82,7 +88,25 @@ const VendorProfilePreview = () => {
       const { data, error } = await query.order('created_at', { ascending: false }).limit(1).single();
 
       if (error) throw error;
-      setProfile(data);
+      
+      if (data) {
+        // Parse price_tiers from JSON safely
+        let priceTiers: PriceTier[] = [];
+        if (Array.isArray(data.price_tiers)) {
+          priceTiers = data.price_tiers.map((tier: unknown) => {
+            const t = tier as { name?: string; price?: number };
+            return {
+              name: t.name || '',
+              price: t.price || 0,
+            };
+          });
+        }
+        
+        setProfile({
+          ...data,
+          price_tiers: priceTiers,
+        } as VendorProfile);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
@@ -341,27 +365,45 @@ const VendorProfilePreview = () => {
             </div>
           </div>
 
-          {/* Quick Info */}
-          <Card className="p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="space-y-1">
-                <Clock className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">{profile.duration || 'Varies'}</p>
+          {/* Price Tiers Display */}
+          {profile.price_tiers && profile.price_tiers.length > 0 ? (
+            <Card className="p-4">
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Pricing Options</p>
+                <div className="space-y-2">
+                  {profile.price_tiers.map((tier, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                      <span className="text-sm">{tier.name}</span>
+                      <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
+                        ${tier.price}/person
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-1">
-                <Users className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">Max {profile.max_guests || 'N/A'}</p>
+            </Card>
+          ) : (
+            <Card className="p-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="space-y-1">
+                  <Clock className="h-5 w-5 mx-auto text-muted-foreground" />
+                  <p className="text-xs font-medium">{profile.duration || 'Varies'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Users className="h-5 w-5 mx-auto text-muted-foreground" />
+                  <p className="text-xs font-medium">Max {profile.max_guests || 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                  {profile.price_per_person && (
+                    <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
+                      ${profile.price_per_person}
+                    </Badge>
+                  )}
+                  <p className="text-xs text-muted-foreground">per person</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                {profile.price_per_person && (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
-                    ${profile.price_per_person}
-                  </Badge>
-                )}
-                <p className="text-xs text-muted-foreground">per person</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           {/* Affiliate Commission - Vendor Only */}
           <Card className="p-4 border-amber-500/50 bg-amber-500/5">

@@ -17,14 +17,20 @@ import {
   DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useAuthContext } from '@/contexts/AuthContext';
+
+interface PriceTier {
+  name: string;
+  price: number;
+}
 
 const vendorProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   listingType: z.enum(['restaurant', 'experience'], { required_error: 'Please select a listing type' }),
   category: z.string().min(1, 'Please select a category'),
   instagramUrl: z.string().optional(),
-  pricePerPerson: z.coerce.number().min(1, 'Price must be at least $1'),
+  pricePerPerson: z.coerce.number().min(0).optional(),
   duration: z.string().min(1, 'Please enter duration'),
   maxGuests: z.coerce.number().min(1, 'Must accommodate at least 1 guest'),
   description: z.string().optional(),
@@ -69,6 +75,7 @@ interface ExistingProfile {
   photos: string[] | null;
   menu_url: string | null;
   price_per_person: number | null;
+  price_tiers: PriceTier[] | null;
   duration: string | null;
   max_guests: number | null;
   included_items: string[] | null;
@@ -99,6 +106,11 @@ const CreateVendorProfile = () => {
   // Included items state
   const [includedItems, setIncludedItems] = useState<string[]>([]);
   const [newItem, setNewItem] = useState('');
+  
+  // Price tiers state
+  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
+  const [newTierName, setNewTierName] = useState('');
+  const [newTierPrice, setNewTierPrice] = useState('');
   
   // AI generation state
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
@@ -136,7 +148,23 @@ const CreateVendorProfile = () => {
         if (error) throw error;
 
         if (data) {
-          setExistingProfile(data);
+          // Parse price_tiers from JSON safely
+          let priceTiersData: PriceTier[] = [];
+          if (Array.isArray(data.price_tiers)) {
+            priceTiersData = data.price_tiers.map((tier: unknown) => {
+              const t = tier as { name?: string; price?: number };
+              return {
+                name: t.name || '',
+                price: t.price || 0,
+              };
+            });
+          }
+          
+          setExistingProfile({
+            ...data,
+            price_tiers: priceTiersData,
+          } as ExistingProfile);
+          
           // Pre-populate form with existing data
           reset({
             name: data.name,
@@ -157,6 +185,7 @@ const CreateVendorProfile = () => {
           setScrapedPhotos(data.photos || []);
           setIncludedItems(data.included_items || []);
           setMenuUrl(data.menu_url || null);
+          setPriceTiers(priceTiersData);
         }
       } catch (error) {
         console.error('Error checking existing profile:', error);
@@ -279,6 +308,35 @@ const CreateVendorProfile = () => {
     setIncludedItems(prev => prev.filter(i => i !== item));
   };
 
+  // Add price tier
+  const addPriceTier = () => {
+    if (newTierName.trim() && newTierPrice) {
+      const price = parseFloat(newTierPrice);
+      if (price > 0) {
+        setPriceTiers(prev => [...prev, { name: newTierName.trim(), price }]);
+        setNewTierName('');
+        setNewTierPrice('');
+      }
+    }
+  };
+
+  // Remove price tier
+  const removePriceTier = (index: number) => {
+    setPriceTiers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Update price tier
+  const updatePriceTier = (index: number, field: 'name' | 'price', value: string) => {
+    setPriceTiers(prev => prev.map((tier, i) => {
+      if (i === index) {
+        return field === 'price' 
+          ? { ...tier, price: parseFloat(value) || 0 }
+          : { ...tier, name: value };
+      }
+      return tier;
+    }));
+  };
+
   // Generate AI description
   const handleGenerateDescription = async () => {
     if (!watchedValues.name || !watchedValues.category) {
@@ -323,6 +381,11 @@ const CreateVendorProfile = () => {
     setIsSubmitting(true);
 
     try {
+      // Calculate starting price from tiers if available
+      const startingPrice = priceTiers.length > 0 
+        ? Math.min(...priceTiers.map(t => t.price))
+        : formData.pricePerPerson || null;
+
       const profileData = {
         user_id: user.id,
         name: formData.name,
@@ -333,7 +396,8 @@ const CreateVendorProfile = () => {
         instagram_url: formData.instagramUrl,
         photos: selectedPhotos,
         menu_url: menuUrl,
-        price_per_person: formData.pricePerPerson,
+        price_per_person: startingPrice,
+        price_tiers: priceTiers.map(t => ({ name: t.name, price: t.price })) as Json,
         duration: formData.duration,
         max_guests: formData.maxGuests,
         included_items: includedItems,
@@ -613,24 +677,87 @@ const CreateVendorProfile = () => {
         <Card>
           <CardHeader>
             <CardTitle>Pricing & Details</CardTitle>
-            <CardDescription>Set your pricing and service parameters</CardDescription>
+            <CardDescription>Set your pricing tiers and service parameters</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pricePerPerson" className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  Price per Person *
-                </Label>
+            {/* Price Tiers */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-1">
+                <DollarSign className="h-4 w-4" />
+                Pricing Options
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Add different price tiers for your service (e.g., Breakfast, Lunch, Dinner for a chef)
+              </p>
+              
+              {/* Existing tiers */}
+              {priceTiers.length > 0 && (
+                <div className="space-y-2">
+                  {priceTiers.map((tier, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                      <Input
+                        value={tier.name}
+                        onChange={(e) => updatePriceTier(index, 'name', e.target.value)}
+                        placeholder="Service name"
+                        className="flex-1"
+                      />
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">$</span>
+                        <Input
+                          type="number"
+                          value={tier.price}
+                          onChange={(e) => updatePriceTier(index, 'price', e.target.value)}
+                          placeholder="0"
+                          className="w-24"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removePriceTier(index)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new tier */}
+              <div className="flex items-center gap-2">
                 <Input
-                  id="pricePerPerson"
-                  type="number"
-                  placeholder="150"
-                  {...register('pricePerPerson')}
+                  value={newTierName}
+                  onChange={(e) => setNewTierName(e.target.value)}
+                  placeholder="e.g., Breakfast, Lunch, Dinner"
+                  className="flex-1"
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPriceTier())}
                 />
-                {errors.pricePerPerson && <p className="text-sm text-destructive">{errors.pricePerPerson.message}</p>}
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    value={newTierPrice}
+                    onChange={(e) => setNewTierPrice(e.target.value)}
+                    placeholder="0"
+                    className="w-24"
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPriceTier())}
+                  />
+                </div>
+                <Button type="button" variant="outline" onClick={addPriceTier}>
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
 
+              {priceTiers.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  💡 Tip: Add at least one pricing option so guests can see your rates
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="maxGuests" className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
@@ -644,19 +771,19 @@ const CreateVendorProfile = () => {
                 />
                 {errors.maxGuests && <p className="text-sm text-destructive">{errors.maxGuests.message}</p>}
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="duration" className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Duration *
-              </Label>
-              <Input
-                id="duration"
-                placeholder="e.g., 3 hours"
-                {...register('duration')}
-              />
-              {errors.duration && <p className="text-sm text-destructive">{errors.duration.message}</p>}
+              <div className="space-y-2">
+                <Label htmlFor="duration" className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  Duration *
+                </Label>
+                <Input
+                  id="duration"
+                  placeholder="e.g., 3 hours"
+                  {...register('duration')}
+                />
+                {errors.duration && <p className="text-sm text-destructive">{errors.duration.message}</p>}
+              </div>
             </div>
 
             {/* Included Items */}
