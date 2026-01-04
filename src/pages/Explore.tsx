@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, ArrowLeft, User, Sparkles, LogIn, UserPlus, Star } from "lucide-react";
+import { Search, MapPin, ArrowLeft, User, Sparkles, LogIn, UserPlus, Star, Store, Heart, Percent } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import { mockRestaurants } from "@/data/mockRestaurants";
@@ -11,6 +11,10 @@ import stackdLogo from "@/assets/stackd-logo-new.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExperienceCard } from "@/components/ExperienceCard";
 import RestaurantCard from "@/components/RestaurantCard";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +22,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthContext } from "@/contexts/AuthContext";
+
+interface VendorProfile {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  photos: string[] | null;
+  price_per_person: number | null;
+  google_rating: number | null;
+  is_published: boolean | null;
+  listing_type: string;
+  commission_percentage: number | null;
+}
 
 const experienceCategories = [
   { id: "all", name: "All", icon: "✨" },
@@ -27,6 +44,7 @@ const experienceCategories = [
   { id: "Food & Dining", name: "Food", icon: "🍷" },
   { id: "Wellness", name: "Wellness", icon: "💆" },
   { id: "Photography", name: "Photo", icon: "📸" },
+  { id: "Private Chef", name: "Chef", icon: "👨‍🍳" },
 ];
 
 const restaurantCategories = [
@@ -43,12 +61,68 @@ const Explore = () => {
   const [selectedExperienceCategory, setSelectedExperienceCategory] = useState("all");
   const [selectedRestaurantCategory, setSelectedRestaurantCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [vendorProfiles, setVendorProfiles] = useState<VendorProfile[]>([]);
+  const [vendorFavorites, setVendorFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem("vendorFavorites");
+    return saved ? JSON.parse(saved) : [];
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, role } = useAuthContext();
   
   // Check if we're in host mode (came from host vendors page)
   const isHostMode = searchParams.get('mode') === 'host' || (isAuthenticated && role === 'host');
+
+  useEffect(() => {
+    fetchVendorProfiles();
+  }, []);
+
+  const fetchVendorProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type, commission_percentage')
+        .eq('is_published', true);
+
+      if (error) throw error;
+      setVendorProfiles(data || []);
+    } catch (error) {
+      console.error('Error fetching vendor profiles:', error);
+    }
+  };
+
+  const toggleVendorFavorite = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setVendorFavorites((prev) => {
+      const newFavorites = prev.includes(id)
+        ? prev.filter((fav) => fav !== id)
+        : [...prev, id];
+      
+      localStorage.setItem("vendorFavorites", JSON.stringify(newFavorites));
+      
+      toast({
+        title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
+        duration: 2000,
+      });
+      
+      return newFavorites;
+    });
+  };
+
+  // Filter vendor profiles (experiences)
+  const vendorExperiences = vendorProfiles.filter(v => v.listing_type === 'experience');
+  const vendorRestaurants = vendorProfiles.filter(v => v.listing_type === 'restaurant');
+
+  const filteredVendorExperiences = vendorExperiences.filter((vendor) => {
+    const matchesCategory = selectedExperienceCategory === "all" || 
+      vendor.category.toLowerCase().includes(selectedExperienceCategory.toLowerCase());
+    const matchesSearch = searchQuery === "" || 
+      vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vendor.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (vendor.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+    return matchesCategory && matchesSearch;
+  });
 
   const filteredExperiences = experiences.filter((exp) => {
     const matchesCategory = selectedExperienceCategory === "all" || exp.category === selectedExperienceCategory;
@@ -197,7 +271,67 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Experiences - Horizontal Scroll */}
+              {/* Real Vendor Profiles - Show First */}
+              {filteredVendorExperiences.length > 0 && (
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                  <div className="flex gap-3 w-max pb-2">
+                    {filteredVendorExperiences.map((vendor) => (
+                      <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="flex-shrink-0 w-40 block">
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          {vendor.photos && vendor.photos.length > 0 ? (
+                            <img
+                              src={vendor.photos[0]}
+                              alt={vendor.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          {/* Commission Badge - Visible to hosts only */}
+                          {isHostMode && vendor.commission_percentage && (
+                            <Badge className="absolute top-2 left-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5">
+                              <Percent className="h-2.5 w-2.5 mr-0.5" />
+                              {vendor.commission_percentage}%
+                            </Badge>
+                          )}
+                          
+                          {/* Favorite Button */}
+                          <button
+                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                            className="absolute top-2 right-2 z-10"
+                          >
+                            <Heart className={`h-5 w-5 drop-shadow-md ${vendorFavorites.includes(vendor.id) ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+                          </button>
+                          
+                          {/* Content Overlay */}
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              {vendor.google_rating && (
+                                <>
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{vendor.google_rating}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              <span>${vendor.price_per_person || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-1.5">
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mock Experiences - Horizontal Scroll */}
               <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                 <div className="flex gap-3 w-max pb-2">
                   {filteredExperiences.map((experience) => (
@@ -211,7 +345,7 @@ const Explore = () => {
                 </div>
               </div>
 
-              {filteredExperiences.length === 0 && (
+              {filteredExperiences.length === 0 && filteredVendorExperiences.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground text-sm">No experiences found</p>
                 </div>
