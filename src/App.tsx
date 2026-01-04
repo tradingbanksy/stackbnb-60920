@@ -77,6 +77,7 @@ import VendorProfilePreview from "./pages/VendorProfilePreview";
 import VendorPublicProfile from "./pages/VendorPublicProfile";
 import VendorBookingForm from "./pages/VendorBookingForm";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import PlatformSettings from "./pages/PlatformSettings";
 
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, role } = useAuthContext();
@@ -166,6 +167,9 @@ const AppRoutes = () => (
     <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
     <Route path="/vendor/preview/:id" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
+    
+    {/* Admin Routes */}
+    <Route path="/admin/settings" element={<PlatformSettings />} />
     
     {/* Legacy routes */}
     <Route path="/storefront/:id" element={<Storefront />} />
