@@ -73,14 +73,22 @@ const HostAuth = () => {
 
     setIsResettingPassword(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use edge function to generate direct reset link (dev mode)
+      const { data, error } = await supabase.functions.invoke('generate-reset-link', {
+        body: { email: trimmedEmail }
       });
+
       if (error) throw error;
 
-      toast.success("Reset email sent. Check your inbox.");
+      if (data?.link) {
+        // Open the reset link directly
+        window.open(data.link, '_blank');
+        toast.success("Reset link opened in new tab!");
+      } else {
+        toast.error("Could not generate reset link");
+      }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to send reset email");
+      toast.error(err?.message || "Failed to generate reset link");
     } finally {
       setIsResettingPassword(false);
     }
