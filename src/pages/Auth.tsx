@@ -36,15 +36,35 @@ const Auth = () => {
 
   // Only redirect authenticated users who have an existing role in the database
   useEffect(() => {
-    if (!isLoading && isAuthenticated && userRole) {
-      if (userRole === "host") {
-        navigate("/host/dashboard", { replace: true });
-      } else if (userRole === "vendor") {
-        navigate("/test-instagram", { replace: true });
-      } else if (userRole === "user") {
-        navigate("/appview", { replace: true });
+    const handleRedirect = async () => {
+      if (!isLoading && isAuthenticated && userRole) {
+        if (userRole === "host") {
+          navigate("/host/dashboard", { replace: true });
+        } else if (userRole === "vendor") {
+          // Check if vendor already has a profile
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: vendorProfile } = await supabase
+              .from('vendor_profiles')
+              .select('id')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            
+            if (vendorProfile) {
+              // Existing vendor with profile - go to dashboard
+              navigate("/vendor/dashboard", { replace: true });
+            } else {
+              // New vendor without profile - go to create profile
+              navigate("/test-instagram", { replace: true });
+            }
+          }
+        } else if (userRole === "user") {
+          navigate("/appview", { replace: true });
+        }
       }
-    }
+    };
+    
+    handleRedirect();
   }, [isAuthenticated, isLoading, userRole, navigate]);
 
   // Handle OAuth callback - save pending role after Google sign-in
@@ -106,9 +126,9 @@ const Auth = () => {
     setSearchParams({ role: selectedRole });
   };
 
-  const getRedirectPath = (selectedRole: string | null) => {
+  const getRedirectPath = (selectedRole: string | null, hasVendorProfile: boolean = false) => {
     if (selectedRole === "host") return "/host/dashboard";
-    if (selectedRole === "vendor") return "/test-instagram";
+    if (selectedRole === "vendor") return hasVendorProfile ? "/vendor/dashboard" : "/test-instagram";
     return "/appview";
   };
 
@@ -292,8 +312,18 @@ const Auth = () => {
             .maybeSingle();
           
           if (roleData?.role) {
-            // User has a role, redirect to their dashboard
-            const redirectPath = getRedirectPath(roleData.role);
+            // User has a role, check for vendor profile if vendor
+            let hasVendorProfile = false;
+            if (roleData.role === 'vendor') {
+              const { data: vendorProfile } = await supabase
+                .from('vendor_profiles')
+                .select('id')
+                .eq('user_id', signInData.user.id)
+                .maybeSingle();
+              hasVendorProfile = !!vendorProfile;
+            }
+            
+            const redirectPath = getRedirectPath(roleData.role, hasVendorProfile);
             toast({
               title: "Welcome back!",
               description: "Successfully signed in.",
