@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, ArrowLeft, User, Sparkles, LogIn, UserPlus, Star, Store, Heart, Percent } from "lucide-react";
+import { Search, MapPin, ArrowLeft, User, Sparkles, LogIn, UserPlus, Star, Store, Plus, Check, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import { mockRestaurants } from "@/data/mockRestaurants";
@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,16 +63,15 @@ const Explore = () => {
   const [selectedRestaurantCategory, setSelectedRestaurantCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [vendorProfiles, setVendorProfiles] = useState<VendorProfile[]>([]);
-  const [vendorFavorites, setVendorFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem("vendorFavorites");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [loadingVendors, setLoadingVendors] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, role } = useAuthContext();
+  const { hasRecommendation, addRecommendation, removeRecommendation } = useProfile();
   
   // Check if we're in host mode (came from host vendors page)
   const isHostMode = searchParams.get('mode') === 'host' || (isAuthenticated && role === 'host');
+  const isHost = isAuthenticated && role === 'host';
 
   useEffect(() => {
     fetchVendorProfiles();
@@ -91,23 +91,43 @@ const Explore = () => {
     }
   };
 
-  const toggleVendorFavorite = (id: string, e: React.MouseEvent) => {
+  const handleAddVendor = async (vendorId: string, vendorName: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setVendorFavorites((prev) => {
-      const newFavorites = prev.includes(id)
-        ? prev.filter((fav) => fav !== id)
-        : [...prev, id];
-      
-      localStorage.setItem("vendorFavorites", JSON.stringify(newFavorites));
-      
+    
+    if (!isHost) {
       toast({
-        title: prev.includes(id) ? "Removed from favorites" : "Added to favorites",
-        duration: 2000,
+        title: 'Sign in required',
+        description: 'Please sign in as a host to add vendors to your list.',
       });
-      
-      return newFavorites;
-    });
+      return;
+    }
+    
+    setLoadingVendors(prev => ({ ...prev, [vendorId]: true }));
+    try {
+      const isSaved = hasRecommendation(vendorId, 'vendor');
+      if (isSaved) {
+        await removeRecommendation(vendorId, 'vendor');
+        toast({
+          title: 'Removed from Vendor List',
+          description: `${vendorName} has been removed from your vendors.`,
+        });
+      } else {
+        await addRecommendation({ id: vendorId, type: 'vendor' });
+        toast({
+          title: 'Added to Vendor List',
+          description: `${vendorName} has been added to your vendors.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update your vendor list. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingVendors(prev => ({ ...prev, [vendorId]: false }));
+    }
   };
 
   // Filter vendor profiles (experiences)
@@ -291,21 +311,33 @@ const Explore = () => {
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          {/* Commission Badge - Visible to hosts only */}
+                          {/* Add Button for Hosts - Top Left */}
+                          {isHostMode && (
+                            <button
+                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                              disabled={loadingVendors[vendor.id]}
+                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                                hasRecommendation(vendor.id, 'vendor')
+                                  ? 'bg-green-500 text-white' 
+                                  : 'bg-white/95 text-foreground hover:bg-primary hover:text-white'
+                              }`}
+                            >
+                              {loadingVendors[vendor.id] ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : hasRecommendation(vendor.id, 'vendor') ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          
+                          {/* Commission Badge - Top Right (Visible to hosts only) */}
                           {isHostMode && vendor.commission_percentage && (
-                            <Badge className="absolute top-2 left-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5">
-                              <Percent className="h-2.5 w-2.5 mr-0.5" />
+                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
                               {vendor.commission_percentage}%
                             </Badge>
                           )}
-                          
-                          {/* Favorite Button */}
-                          <button
-                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
-                            className="absolute top-2 right-2 z-10"
-                          >
-                            <Heart className={`h-5 w-5 drop-shadow-md ${vendorFavorites.includes(vendor.id) ? 'fill-red-500 text-red-500' : 'text-white'}`} />
-                          </button>
                           
                           {/* Content Overlay */}
                           <div className="absolute bottom-2 left-2 right-2">
