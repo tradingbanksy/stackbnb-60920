@@ -9,6 +9,7 @@ export interface BookingData {
   guests: number;
   pricePerPerson: number;
   totalPrice: number;
+  hostId?: string; // The host who referred the guest (for commission tracking)
 }
 
 // SECURITY: Payment card data removed entirely - should use tokenized payment processor
@@ -35,6 +36,7 @@ const initialBookingData: BookingData = {
   guests: 1,
   pricePerPerson: 0,
   totalPrice: 0,
+  hostId: undefined,
 };
 
 const initialGuestData: GuestData = {

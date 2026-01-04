@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2, Lock } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useBooking } from "@/contexts/BookingContext";
 import { useToast } from "@/hooks/use-toast";
@@ -10,11 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 const PaymentPage = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { bookingData } = useBooking();
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Get hostId from URL or booking context
+  const hostId = searchParams.get('host') || bookingData.hostId;
 
   const handleStripeCheckout = async () => {
     if (!isAuthenticated) {
@@ -49,6 +53,7 @@ const PaymentPage = () => {
           guests: bookingData.guests,
           totalPrice: bookingData.totalPrice,
           vendorId: id,
+          hostId: hostId || null, // Pass hostId for commission split
         },
       });
 

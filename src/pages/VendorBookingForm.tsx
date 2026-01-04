@@ -59,6 +59,9 @@ const VendorBookingForm = () => {
     guests: 1,
   });
 
+  // Get hostId from URL if guest came from a host's guide
+  const hostId = searchParams.get('host');
+
   useEffect(() => {
     if (id) {
       fetchVendor();
@@ -187,9 +190,15 @@ const VendorBookingForm = () => {
       guests: formData.guests,
       pricePerPerson: pricePerPerson,
       totalPrice: subtotal,
+      hostId: hostId || undefined, // Pass hostId for commission tracking
     });
 
-    navigate(`/vendor/${id}/payment`);
+    // Pass hostId to payment page via URL
+    const params = new URLSearchParams();
+    if (hostId) {
+      params.set('host', hostId);
+    }
+    navigate(`/vendor/${id}/payment${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   const incrementGuests = () => {

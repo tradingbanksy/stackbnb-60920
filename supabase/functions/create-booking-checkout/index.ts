@@ -141,12 +141,23 @@ serve(async (req) => {
     }
 
     // Calculate payment splits
-    // Host gets: hostCommissionPercent (set by vendor)
-    // Platform gets: platformFeePercent (3%)
-    // Vendor gets: remainder
+    // If host is valid: Host gets hostCommissionPercent, Platform gets 3%, Vendor gets rest
+    // If no host: Platform gets hostCommissionPercent + 3%, Vendor gets rest
     const totalAmountCents = Math.round(totalPrice * 100);
-    const platformFeeCents = Math.round(totalAmountCents * (platformFeePercent / 100));
-    const hostPayoutCents = validHostId ? Math.round(totalAmountCents * (hostCommissionPercent / 100)) : 0;
+    
+    let platformFeeCents: number;
+    let hostPayoutCents: number;
+    
+    if (validHostId) {
+      // Host exists and is linked - they get the commission
+      platformFeeCents = Math.round(totalAmountCents * (platformFeePercent / 100));
+      hostPayoutCents = Math.round(totalAmountCents * (hostCommissionPercent / 100));
+    } else {
+      // No host - platform gets the host's commission too
+      platformFeeCents = Math.round(totalAmountCents * ((platformFeePercent + hostCommissionPercent) / 100));
+      hostPayoutCents = 0;
+    }
+    
     const vendorPayoutCents = totalAmountCents - platformFeeCents - hostPayoutCents;
 
     logStep("Payment splits calculated", {
@@ -155,7 +166,8 @@ serve(async (req) => {
       hostPayoutCents,
       vendorPayoutCents,
       platformFeePercent,
-      hostCommissionPercent
+      hostCommissionPercent,
+      hasValidHost: !!validHostId
     });
 
     // Create checkout session

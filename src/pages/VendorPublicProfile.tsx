@@ -69,6 +69,9 @@ const VendorPublicProfile = () => {
   // This prevents it from appearing while casually exploring the public vendor page.
   const isHostContext = searchParams.get('mode') === 'host';
   const canSeeCommission = isAuthenticated && role === 'host' && isHostContext;
+  
+  // Get hostId from URL if guest came from a host's guide
+  const hostId = searchParams.get('host');
 
   useEffect(() => {
     if (id) {
@@ -410,6 +413,10 @@ const VendorPublicProfile = () => {
                 const params = new URLSearchParams();
                 if (profile.price_tiers && profile.price_tiers.length > 0) {
                   params.set('tier', selectedTierIndex.toString());
+                }
+                // Pass hostId through to booking form if present
+                if (hostId) {
+                  params.set('host', hostId);
                 }
                 navigate(`/vendor/${id}/book${params.toString() ? `?${params.toString()}` : ''}`);
               }}

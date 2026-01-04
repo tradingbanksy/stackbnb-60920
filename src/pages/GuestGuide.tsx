@@ -217,7 +217,7 @@ const GuestGuide = () => {
                   {recommendedExperiences.map((experience) => (
                     <Link
                       key={experience!.id}
-                      to={`/experience/${experience!.id}`}
+                      to={`/experience/${experience!.id}?host=${hostId}`}
                       className="group"
                     >
                       <div className="space-y-2">
