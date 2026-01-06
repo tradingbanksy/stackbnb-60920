@@ -54,11 +54,26 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      // If no profile exists, create one
+      if (!data && !error) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id, email: user.email })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('Error creating profile:', createError);
+        } else {
+          data = newProfile;
+        }
+      }
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -92,7 +107,37 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   const recommendations = profile?.recommendations ?? [];
 
   const addRecommendation = useCallback(async (item: Omit<RecommendationItem, 'addedAt'>) => {
-    if (!user || !profile) return;
+    if (!user) {
+      throw new Error('You must be signed in to add vendors to your list.');
+    }
+    
+    // If no profile yet, try to create one
+    if (!profile) {
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({ user_id: user.id, email: user.email })
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        throw new Error('Unable to create profile. Please try again.');
+      }
+      
+      // Set the profile immediately
+      setProfile({
+        id: newProfile.id,
+        user_id: newProfile.user_id,
+        full_name: newProfile.full_name,
+        email: newProfile.email,
+        phone: newProfile.phone,
+        city: newProfile.city,
+        zip_code: newProfile.zip_code,
+        recommendations: parseRecommendations(newProfile.recommendations),
+        created_at: newProfile.created_at,
+        updated_at: newProfile.updated_at,
+      });
+    }
 
     const newItem: RecommendationItem = {
       ...item,
@@ -119,7 +164,10 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   }, [user, profile, recommendations]);
 
   const removeRecommendation = useCallback(async (id: string, type: RecommendationItem['type']) => {
-    if (!user || !profile) return;
+    if (!user) {
+      throw new Error('You must be signed in to remove vendors from your list.');
+    }
+    if (!profile) return; // Can't remove from empty list
 
     const updatedRecommendations = recommendations.filter(
       r => !(r.id === id && r.type === type)

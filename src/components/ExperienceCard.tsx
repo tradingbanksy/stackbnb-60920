@@ -79,11 +79,22 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
     e.preventDefault();
     e.stopPropagation();
     
-    // Redirect to auth if not authenticated as host
-    if (!isHost) {
+    // Redirect to auth if not authenticated
+    if (!isAuthenticated) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in as a host to add vendors to your list.',
+        description: 'Redirecting to sign in...',
+      });
+      // Navigate to auth with host role and return URL
+      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/auth?role=host&returnTo=${returnUrl}`;
+      return;
+    }
+    
+    if (role !== 'host') {
+      toast({
+        title: 'Host account required',
+        description: 'Only hosts can add vendors to their list.',
       });
       return;
     }

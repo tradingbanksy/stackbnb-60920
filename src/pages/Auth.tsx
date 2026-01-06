@@ -19,6 +19,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const role = searchParams.get("role") as "host" | "vendor" | "user" | null;
+  const returnTo = searchParams.get("returnTo");
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -38,8 +39,14 @@ const Auth = () => {
   useEffect(() => {
     const handleRedirect = async () => {
       if (!isLoading && isAuthenticated && userRole) {
+        // If there's a returnTo parameter, use it
+        if (returnTo) {
+          navigate(returnTo, { replace: true });
+          return;
+        }
+        
         if (userRole === "host") {
-          navigate("/host/dashboard", { replace: true });
+          navigate("/host/vendors", { replace: true });
         } else if (userRole === "vendor") {
           // Check if vendor already has a profile
           const { data: { user } } = await supabase.auth.getUser();
@@ -65,7 +72,7 @@ const Auth = () => {
     };
     
     handleRedirect();
-  }, [isAuthenticated, isLoading, userRole, navigate]);
+  }, [isAuthenticated, isLoading, userRole, navigate, returnTo]);
 
   // Handle OAuth callback - save pending role after Google sign-in
   useEffect(() => {
@@ -115,7 +122,9 @@ const Auth = () => {
   };
 
   const getRedirectPath = (selectedRole: string | null, hasVendorProfile: boolean = false) => {
-    if (selectedRole === "host") return "/host/dashboard";
+    // Check for returnTo parameter first
+    if (returnTo) return returnTo;
+    if (selectedRole === "host") return "/host/vendors";
     if (selectedRole === "vendor") return hasVendorProfile ? "/vendor/dashboard" : "/test-instagram";
     return "/appview";
   };

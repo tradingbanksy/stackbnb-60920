@@ -95,10 +95,20 @@ const Explore = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!isHost) {
+    if (!isAuthenticated) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in as a host to add vendors to your list.',
+        description: 'Redirecting to sign in...',
+      });
+      const returnUrl = encodeURIComponent(window.location.pathname + '?mode=host');
+      navigate(`/auth?role=host&returnTo=${returnUrl}`);
+      return;
+    }
+    
+    if (role !== 'host') {
+      toast({
+        title: 'Host account required',
+        description: 'Only hosts can add vendors to their list.',
       });
       return;
     }
@@ -120,9 +130,10 @@ const Explore = () => {
         });
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update your vendor list. Please try again.';
       toast({
         title: 'Error',
-        description: 'Failed to update your vendor list. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
