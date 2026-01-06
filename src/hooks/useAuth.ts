@@ -14,18 +14,29 @@ interface AuthState {
 
 const fetchUserRole = async (userId: string): Promise<UserRole> => {
   try {
+    // Fetch all roles for the user (handles cases with multiple roles)
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', userId);
 
     if (error) {
       console.error('Error fetching user role:', error);
       return null;
     }
 
-    return (data?.role as UserRole) ?? null;
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    // Priority: admin > host > vendor > user
+    const roles = data.map(r => r.role);
+    if (roles.includes('admin')) return 'host'; // Admin acts as host for UI purposes
+    if (roles.includes('host')) return 'host';
+    if (roles.includes('vendor')) return 'vendor';
+    if (roles.includes('user')) return 'user';
+    
+    return (data[0]?.role as UserRole) ?? null;
   } catch (err) {
     console.error('Error fetching user role:', err);
     return null;
