@@ -222,13 +222,13 @@ const Explore = () => {
                     {isAuthenticated ? (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                          <Link to="/host/dashboard" className="flex items-center gap-2 cursor-pointer">
                             <User className="h-4 w-4" />
                             Profile
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                          <Link to="/host/profile" className="flex items-center gap-2 cursor-pointer">
                             <Settings className="h-4 w-4" />
                             Settings
                           </Link>
