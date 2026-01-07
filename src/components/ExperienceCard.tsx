@@ -65,7 +65,7 @@ interface ExperienceCardProps {
 }
 
 export const ExperienceCard = ({ experience, showAddButton = false }: ExperienceCardProps) => {
-  const { isAuthenticated, role } = useAuthContext();
+  const { isAuthenticated, role, isLoading: authLoading } = useAuthContext();
   const { hasRecommendation, addRecommendation, removeRecommendation } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,6 +88,15 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
       // Navigate to auth with host role and return URL
       const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.href = `/auth?role=host&returnTo=${returnUrl}`;
+      return;
+    }
+    
+    // Wait for role to be loaded
+    if (authLoading) {
+      toast({
+        title: 'Loading...',
+        description: 'Please wait while we load your account.',
+      });
       return;
     }
     

@@ -66,7 +66,7 @@ const Explore = () => {
   const [loadingVendors, setLoadingVendors] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, role } = useAuthContext();
+  const { isAuthenticated, role, isLoading: authLoading } = useAuthContext();
   const { hasRecommendation, addRecommendation, removeRecommendation } = useProfile();
   
   // Check if we're in host mode (came from host vendors page)
@@ -102,6 +102,15 @@ const Explore = () => {
       });
       const returnUrl = encodeURIComponent(window.location.pathname + '?mode=host');
       navigate(`/auth?role=host&returnTo=${returnUrl}`);
+      return;
+    }
+    
+    // Wait for role to be loaded
+    if (authLoading) {
+      toast({
+        title: 'Loading...',
+        description: 'Please wait while we load your account.',
+      });
       return;
     }
     
