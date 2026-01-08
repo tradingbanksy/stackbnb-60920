@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Search, MapPin, X, Loader2, Utensils } from "lucide-react";
-import { autocompleteSearch, type AutocompleteSuggestion } from "@/services/geoapifyService";
+import { autocompleteSearch, type AutocompleteSuggestion } from "@/services/googleMapsService";
 
 interface LocationSearchProps {
   city: string;

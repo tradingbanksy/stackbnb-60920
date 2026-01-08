@@ -13,7 +13,7 @@ import {
   type Restaurant 
 } from "@/data/mockRestaurants";
 import { useNearbyPlaces } from "@/hooks/useNearbyPlaces";
-import { type GeoapifyPlace, type AutocompleteSuggestion } from "@/services/geoapifyService";
+import { type GeoapifyPlace, type AutocompleteSuggestion } from "@/services/googleMapsService";
 
 const convertApiPlaceToRestaurant = (place: GeoapifyPlace): Restaurant => ({
   id: place.id,

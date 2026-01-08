@@ -3,7 +3,7 @@ import {
   reverseGeocode, 
   geocodeLocation,
   type GeoapifyPlace 
-} from '@/services/geoapifyService';
+} from '@/services/googleMapsService';
 import { searchNearbyRestaurants } from '@/services/tripadvisorService';
 import { Restaurant } from '@/data/mockRestaurants';
 import { toast } from '@/hooks/use-toast';
