@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,10 +28,21 @@ export function PasswordResetOTPDialog({
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [devOtp, setDevOtp] = useState<string | null>(null);
+  const [hasSent, setHasSent] = useState(false);
 
   // Send OTP when dialog opens
+  useEffect(() => {
+    if (open && email && !hasSent) {
+      sendOTP();
+    }
+    if (!open) {
+      setHasSent(false);
+    }
+  }, [open, email]);
+
   const sendOTP = async () => {
     setStep("sending");
+    setHasSent(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-reset-otp', {
         body: { email }
@@ -50,6 +61,7 @@ export function PasswordResetOTPDialog({
         description: "Check your email for the 6-digit verification code.",
       });
     } catch (err) {
+      console.error("Send OTP error:", err);
       toast({
         title: "Error",
         description: err instanceof Error ? err.message : "Failed to send verification code",
@@ -110,13 +122,12 @@ export function PasswordResetOTPDialog({
 
   // Handle dialog open state
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      sendOTP();
-    } else {
+    if (!newOpen) {
       // Reset state when closing
       setStep("sending");
       setOtp("");
       setDevOtp(null);
+      setHasSent(false);
     }
     onOpenChange(newOpen);
   };
