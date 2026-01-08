@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { formatDistance } from "@/services/geoapifyService";
+import { formatDistance } from "@/services/googleMapsService";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAuthContext } from "@/contexts/AuthContext";
 
