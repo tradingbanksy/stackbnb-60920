@@ -399,17 +399,24 @@ const Auth = () => {
 
     setIsResettingPassword(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use edge function to generate direct reset link
+      const { data, error } = await supabase.functions.invoke('generate-reset-link', {
+        body: { email }
       });
+
       if (error) throw error;
 
-      toast({
-        title: "Reset email sent",
-        description: "Check your inbox for a password reset link.",
-      });
+      if (data?.link) {
+        window.open(data.link, '_blank');
+        toast({
+          title: "Reset link opened",
+          description: "A new tab has opened with your password reset page.",
+        });
+      } else {
+        throw new Error("Could not generate reset link");
+      }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to send reset email";
+      const msg = err instanceof Error ? err.message : "Failed to generate reset link";
       toast({
         title: "Couldn't send reset email",
         description: msg,
