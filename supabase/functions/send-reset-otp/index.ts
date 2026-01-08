@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,9 +41,8 @@ serve(async (req) => {
     
     if (userError) {
       console.error("Error checking user:", userError);
-      // Don't reveal if user exists or not for security
       return new Response(
-        JSON.stringify({ success: true, message: "If an account exists, an OTP has been generated." }),
+        JSON.stringify({ success: true, message: "If an account exists, an OTP has been sent." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -48,10 +50,9 @@ serve(async (req) => {
     const userExists = userData.users.some(u => u.email?.toLowerCase() === email.toLowerCase());
     
     if (!userExists) {
-      // Don't reveal if user exists or not
       console.log("User not found for email:", email);
       return new Response(
-        JSON.stringify({ success: true, message: "If an account exists, an OTP has been generated." }),
+        JSON.stringify({ success: true, message: "If an account exists, an OTP has been sent." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -87,16 +88,32 @@ serve(async (req) => {
       );
     }
 
-    console.log(`OTP generated for ${email}: ${otpCode}`);
+    console.log(`OTP generated for ${email}`);
 
-    // For development, return the OTP directly
-    // In production, this would send an email instead
+    // Send OTP via email using Resend
+    const emailResponse = await resend.emails.send({
+      from: "Stackd <onboarding@resend.dev>",
+      to: [email],
+      subject: "Your Password Reset Code",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #333; text-align: center;">Password Reset</h1>
+          <p style="color: #666; font-size: 16px;">You requested to reset your password. Use the code below to verify your identity:</p>
+          <div style="background-color: #f5f5f5; padding: 30px; text-align: center; margin: 30px 0; border-radius: 8px;">
+            <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #333;">${otpCode}</span>
+          </div>
+          <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+          <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    console.log("Email sent successfully:", emailResponse);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "OTP sent to your email",
-        // DEVELOPMENT ONLY - remove in production
-        dev_otp: otpCode 
+        message: "OTP sent to your email"
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
