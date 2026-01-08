@@ -1,5 +1,5 @@
 // Geoapify Places API Service
-const GEOAPIFY_API_KEY = 'ab4635ee8a9c40a7b4598a8d618a8481';
+const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '';
 
 export interface GeoapifyPlace {
   id: string;

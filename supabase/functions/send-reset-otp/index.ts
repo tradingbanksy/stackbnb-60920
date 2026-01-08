@@ -4,9 +4,18 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'https://stackbnb-60920.lovable.app',
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const isAllowed = origin && (allowedOrigins.includes(origin) || origin.endsWith('.lovable.app'));
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
 };
 
 // Generate a 6-digit OTP
@@ -15,6 +24,9 @@ function generateOTP(): string {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
