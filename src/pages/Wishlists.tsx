@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Heart, Trash2, MoreHorizontal, Star, Utensils, Compass, Store } from "lucide-react";
+import { ArrowLeft, Plus, Heart, Trash2, MoreHorizontal, Star, Utensils, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { experiences } from "@/data/mockData";
 import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
@@ -79,7 +79,7 @@ const Wishlists = () => {
   const [newWishlistName, setNewWishlistName] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("services");
+  const [activeTab, setActiveTab] = useState("experiences");
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -280,9 +280,9 @@ const Wishlists = () => {
   };
 
   // Get total favorites count
-  const totalExperienceFavorites = wishlists.reduce((sum, w) => sum + (w.items?.length || 0), 0);
+  const wishlistExperienceCount = wishlists.reduce((sum, w) => sum + (w.items?.length || 0), 0);
+  const totalExperienceFavorites = favoriteVendors.length + wishlistExperienceCount;
   const totalRestaurantFavorites = favoriteRestaurants.length;
-  const totalVendorFavorites = favoriteVendors.length;
 
   if (loading) {
     return (
@@ -395,16 +395,7 @@ const Wishlists = () => {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="services" className="flex items-center gap-2">
-              <Store className="h-4 w-4" />
-              Services
-              {totalVendorFavorites > 0 && (
-                <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">
-                  {totalVendorFavorites}
-                </span>
-              )}
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="experiences" className="flex items-center gap-2">
               <Compass className="h-4 w-4" />
               Experiences
@@ -425,147 +416,139 @@ const Wishlists = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="services">
-            {favoriteVendors.length === 0 ? (
+          <TabsContent value="experiences">
+            {favoriteVendors.length === 0 && wishlists.length === 0 ? (
               <div className="text-center py-16">
-                <Store className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <h2 className="text-lg font-semibold mb-2">No favorite services yet</h2>
+                <Compass className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <h2 className="text-lg font-semibold mb-2">No favorite experiences yet</h2>
                 <p className="text-muted-foreground mb-6">
-                  Heart local services to save them here
+                  Heart experiences to save them here
                 </p>
                 <Button variant="outline" onClick={() => navigate("/appview")}>
-                  Explore Services
+                  Explore Experiences
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {favoriteVendors.map((vendor) => (
-                  <Card 
-                    key={vendor.id} 
-                    className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/vendor/${vendor.id}`)}
-                  >
-                    <div className="relative aspect-[4/3]">
-                      <img
-                        src={vendor.photos?.[0] || '/placeholder.svg'}
-                        alt={vendor.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeVendorFavorite(vendor.id);
-                        }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white transition-colors"
+              <div className="space-y-6">
+                {/* Favorite Vendors */}
+                {favoriteVendors.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {favoriteVendors.map((vendor) => (
+                      <Card 
+                        key={vendor.id} 
+                        className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => navigate(`/vendor/${vendor.id}`)}
                       >
-                        <Heart className="h-5 w-5 fill-red-500 text-red-500" />
-                      </button>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold line-clamp-1">{vendor.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {vendor.category}
-                      </p>
-                      {vendor.google_rating !== null && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">{vendor.google_rating.toFixed(1)}</span>
-                        </div>
-                      )}
-                      {vendor.price_per_person !== null && (
-                        <p className="mt-1 text-sm font-medium">
-                          ${vendor.price_per_person} <span className="font-normal text-muted-foreground">per person</span>
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="experiences">
-            {wishlists.length === 0 ? (
-              <div className="text-center py-16">
-                <Heart className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <h2 className="text-lg font-semibold mb-2">Create your first wishlist</h2>
-                <p className="text-muted-foreground mb-6">
-                  Save your favorite experiences to wishlists
-                </p>
-                <Button onClick={() => setIsCreateOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Wishlist
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {wishlists.map((wishlist) => {
-                  const thumbnails = getWishlistThumbnails(wishlist);
-                  const itemCount = wishlist.items?.length || 0;
-
-                  return (
-                    <Card
-                      key={wishlist.id}
-                      className="overflow-hidden cursor-pointer group hover:shadow-lg transition-shadow"
-                      onClick={() => setSelectedWishlist(wishlist)}
-                    >
-                      <div className="relative aspect-square">
-                        {thumbnails.length === 0 ? (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <Heart className="h-8 w-8 text-muted-foreground/30" />
-                          </div>
-                        ) : thumbnails.length === 1 ? (
+                        <div className="relative aspect-[4/3]">
                           <img
-                            src={thumbnails[0]}
-                            alt=""
+                            src={vendor.photos?.[0] || '/placeholder.svg'}
+                            alt={vendor.name}
                             className="w-full h-full object-cover"
                           />
-                        ) : (
-                          <div className="grid grid-cols-2 h-full">
-                            {[0, 1, 2, 3].map((i) => (
-                              <div key={i} className="relative">
-                                {thumbnails[i] ? (
-                                  <img
-                                    src={thumbnails[i]}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-muted" />
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <div className="absolute top-2 right-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="secondary" size="icon" className="h-8 w-8 bg-white/90 hover:bg-white">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteWishlist(wishlist.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeVendorFavorite(vendor.id);
+                            }}
+                            className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white transition-colors"
+                          >
+                            <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+                          </button>
                         </div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold">{wishlist.name}</h3>
-                        <p className="text-sm text-muted-foreground">{itemCount} saved</p>
-                      </div>
-                    </Card>
-                  );
-                })}
+                        <div className="p-4">
+                          <h3 className="font-semibold line-clamp-1">{vendor.name}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-1">
+                            {vendor.category}
+                          </p>
+                          {vendor.google_rating !== null && (
+                            <div className="flex items-center gap-1 mt-2">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="text-sm font-medium">{vendor.google_rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                          {vendor.price_per_person !== null && (
+                            <p className="mt-1 text-sm font-medium">
+                              ${vendor.price_per_person} <span className="font-normal text-muted-foreground">per person</span>
+                            </p>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Wishlists */}
+                {wishlists.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {wishlists.map((wishlist) => {
+                      const thumbnails = getWishlistThumbnails(wishlist);
+                      const itemCount = wishlist.items?.length || 0;
+
+                      return (
+                        <Card
+                          key={wishlist.id}
+                          className="overflow-hidden cursor-pointer group hover:shadow-lg transition-shadow"
+                          onClick={() => setSelectedWishlist(wishlist)}
+                        >
+                          <div className="relative aspect-square">
+                            {thumbnails.length === 0 ? (
+                              <div className="w-full h-full bg-muted flex items-center justify-center">
+                                <Heart className="h-8 w-8 text-muted-foreground/30" />
+                              </div>
+                            ) : thumbnails.length === 1 ? (
+                              <img
+                                src={thumbnails[0]}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="grid grid-cols-2 h-full">
+                                {[0, 1, 2, 3].map((i) => (
+                                  <div key={i} className="relative">
+                                    {thumbnails[i] ? (
+                                      <img
+                                        src={thumbnails[i]}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-muted" />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="secondary" size="icon" className="h-8 w-8 bg-white/90 hover:bg-white">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteWishlist(wishlist.id);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold">{wishlist.name}</h3>
+                            <p className="text-sm text-muted-foreground">{itemCount} saved</p>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
