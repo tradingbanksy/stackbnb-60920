@@ -139,10 +139,10 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
     if (!priceData) return null;
     switch (priceData.priceAssessment) {
       case 'below_average':
-        return <TrendingDown className="h-4 w-4 text-green-500" />;
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
       case 'above_average':
       case 'premium':
-        return <TrendingUp className="h-4 w-4 text-amber-500" />;
+        return <TrendingDown className="h-4 w-4 text-amber-500" />;
       default:
         return <Minus className="h-4 w-4 text-blue-500" />;
     }
