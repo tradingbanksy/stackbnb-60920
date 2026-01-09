@@ -5,24 +5,101 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import VendorBottomNav from "@/components/VendorBottomNav";
-import { vendorDashboardStats, upcomingBookings } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const fetchVendorStats = async () => {
-  // Ready for real API integration
-  return vendorDashboardStats;
-};
-
-const fetchUpcomingBookings = async () => {
-  // Ready for real API integration
-  return upcomingBookings;
-};
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isConnecting, setIsConnecting] = useState(false);
+  const { user } = useAuthContext();
+
+  // Fetch real vendor stats from database
+  const { data: stats = [], isLoading: isLoadingStats } = useQuery({
+    queryKey: ['vendorDashboardStats', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      // Fetch bookings for this vendor
+      const { data: vendorProfile } = await supabase
+        .from('vendor_profiles')
+        .select('id, google_rating')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!vendorProfile) {
+        return [
+          { label: "Total Revenue", value: "$0", icon: "DollarSign" },
+          { label: "Bookings", value: "0", icon: "Calendar" },
+          { label: "Active Hosts", value: "0", icon: "Users" },
+          { label: "Rating", value: "N/A", icon: "Star" },
+        ];
+      }
+
+      // Fetch bookings for this vendor profile
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('total_amount, vendor_payout_amount')
+        .eq('vendor_profile_id', vendorProfile.id)
+        .eq('status', 'completed');
+
+      const totalRevenue = bookings?.reduce((sum, b) => sum + (b.vendor_payout_amount || b.total_amount || 0), 0) || 0;
+      const bookingCount = bookings?.length || 0;
+
+      // Fetch host links count
+      const { count: hostCount } = await supabase
+        .from('host_vendor_links')
+        .select('*', { count: 'exact', head: true })
+        .eq('vendor_profile_id', vendorProfile.id);
+
+      const rating = vendorProfile.google_rating ? vendorProfile.google_rating.toFixed(1) : "N/A";
+
+      return [
+        { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, icon: "DollarSign" },
+        { label: "Bookings", value: bookingCount.toString(), icon: "Calendar" },
+        { label: "Active Hosts", value: (hostCount || 0).toString(), icon: "Users" },
+        { label: "Rating", value: rating, icon: "Star" },
+      ];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch real upcoming bookings from database
+  const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
+    queryKey: ['vendorUpcomingBookings', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data: vendorProfile } = await supabase
+        .from('vendor_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!vendorProfile) return [];
+
+      const { data: bookingsData } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('vendor_profile_id', vendorProfile.id)
+        .gte('booking_date', new Date().toISOString().split('T')[0])
+        .order('booking_date', { ascending: true })
+        .limit(5);
+
+      return bookingsData?.map(b => ({
+        service: b.experience_name,
+        date: b.booking_date,
+        time: b.booking_time,
+        guest: `${b.guests} guest${b.guests > 1 ? 's' : ''}`,
+        host: b.vendor_name || 'Direct Booking',
+      })) || [];
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
 
   // Check Stripe Connect status
   const { data: connectStatus, refetch: refetchConnectStatus } = useQuery({
@@ -49,11 +126,9 @@ const VendorDashboard = () => {
     if (searchParams.get('stripe_success') === 'true') {
       toast.success('Stripe account connected successfully!');
       refetchConnectStatus();
-      // Clean up URL
       window.history.replaceState({}, '', '/vendor/dashboard');
     } else if (searchParams.get('stripe_refresh') === 'true') {
       toast.info('Please complete your Stripe account setup');
-      // Clean up URL
       window.history.replaceState({}, '', '/vendor/dashboard');
     }
   }, [searchParams, refetchConnectStatus]);
@@ -75,18 +150,6 @@ const VendorDashboard = () => {
       setIsConnecting(false);
     }
   };
-  
-  const { data: stats = [] } = useQuery({
-    queryKey: ['vendorDashboardStats'],
-    queryFn: fetchVendorStats,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: bookings = [] } = useQuery({
-    queryKey: ['vendorUpcomingBookings'],
-    queryFn: fetchUpcomingBookings,
-    staleTime: 2 * 60 * 1000,
-  });
   
   const iconMap = {
     DollarSign,
@@ -170,57 +233,72 @@ const VendorDashboard = () => {
 
         {/* Stats Cards - Overlapping Hero */}
         <div className="px-4 -mt-12 relative z-20 space-y-3">
-          {stats.map((stat) => {
-            const Icon = iconMap[stat.icon as keyof typeof iconMap];
-            
-            // Define navigation routes for each stat
-            const getNavigationRoute = () => {
-              switch(stat.label) {
-                case "Total Revenue":
-                  return "/vendor/revenue";
-                case "Bookings":
-                  return "/vendor/bookings";
-                case "Active Hosts":
-                  return "/vendor/hosts";
-                case "Rating":
-                  return "/vendor/ratings";
-                default:
-                  return null;
-              }
-            };
-            
-            const route = getNavigationRoute();
-            const CardWrapper = route ? 'button' : 'div';
-            
-            return (
-              <Card 
-                key={stat.label} 
-                className="p-5 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 bg-card/80 backdrop-blur-sm border-2"
-              >
-                <CardWrapper
-                  onClick={route ? () => navigate(route) : undefined}
-                  className={route ? 'w-full text-left' : ''}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-pink-500/20 ring-1 ring-orange-500/20">
-                        <Icon className="h-6 w-6 text-orange-500" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
-                        <p className="text-3xl font-bold mt-1 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                          {stat.value}
-                        </p>
-                      </div>
+          {isLoadingStats ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="p-5 bg-card/80 backdrop-blur-sm border-2">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-2xl" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-8 w-16" />
                     </div>
-                    {route && (
-                      <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
-                    )}
                   </div>
-                </CardWrapper>
-              </Card>
-            );
-          })}
+                </Card>
+              ))}
+            </>
+          ) : (
+            stats.map((stat) => {
+              const Icon = iconMap[stat.icon as keyof typeof iconMap];
+              
+              const getNavigationRoute = () => {
+                switch(stat.label) {
+                  case "Total Revenue":
+                    return "/vendor/revenue";
+                  case "Bookings":
+                    return "/vendor/bookings";
+                  case "Active Hosts":
+                    return "/vendor/hosts";
+                  case "Rating":
+                    return "/vendor/ratings";
+                  default:
+                    return null;
+                }
+              };
+              
+              const route = getNavigationRoute();
+              const CardWrapper = route ? 'button' : 'div';
+              
+              return (
+                <Card 
+                  key={stat.label} 
+                  className="p-5 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 bg-card/80 backdrop-blur-sm border-2"
+                >
+                  <CardWrapper
+                    onClick={route ? () => navigate(route) : undefined}
+                    className={route ? 'w-full text-left' : ''}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-pink-500/20 ring-1 ring-orange-500/20">
+                          <Icon className="h-6 w-6 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                          <p className="text-3xl font-bold mt-1 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                            {stat.value}
+                          </p>
+                        </div>
+                      </div>
+                      {route && (
+                        <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardWrapper>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Upcoming Bookings Section */}
@@ -240,30 +318,50 @@ const VendorDashboard = () => {
           </div>
           
           <div className="space-y-3">
-            {bookings.map((booking, index) => (
-              <Card
-                key={index}
-                className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 group border-l-4 border-l-transparent hover:border-l-orange-500"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-base leading-tight group-hover:text-orange-500 transition-colors">{booking.service}</h3>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{booking.date}</span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium">Time:</span> {booking.time}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium">Guest:</span> {booking.guest}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium">Host:</span> {booking.host}
-                    </p>
-                  </div>
-                </div>
+            {isLoadingBookings ? (
+              <>
+                {[1, 2].map((i) => (
+                  <Card key={i} className="p-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </Card>
+                ))}
+              </>
+            ) : bookings.length === 0 ? (
+              <Card className="p-6 text-center">
+                <CalendarCheck className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No upcoming bookings yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Bookings will appear here once customers make reservations</p>
               </Card>
-            ))}
+            ) : (
+              bookings.map((booking, index) => (
+                <Card
+                  key={index}
+                  className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 group border-l-4 border-l-transparent hover:border-l-orange-500"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold text-base leading-tight group-hover:text-orange-500 transition-colors">{booking.service}</h3>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{booking.date}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">Time:</span> {booking.time}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">Guest:</span> {booking.guest}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">Host:</span> {booking.host}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </div>
