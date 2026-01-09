@@ -272,26 +272,34 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
           </div>
 
           {/* Price Range Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>${priceData.priceRange.low}</span>
-              <span>Market Range</span>
-              <span>${priceData.priceRange.high}</span>
+          <div className="space-y-3">
+            <div className="flex justify-between text-xs text-muted-foreground font-medium">
+              <span className="text-green-600">${priceData.priceRange.low}</span>
+              <span className="uppercase tracking-wider text-[10px]">Market Range</span>
+              <span className="text-amber-600">${priceData.priceRange.high}</span>
             </div>
-            <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+            <div className="relative h-3 rounded-full overflow-hidden shadow-inner bg-gradient-to-r from-muted/80 via-muted to-muted/80">
+              {/* Gradient track with shimmer */}
               <div 
-                className="absolute h-full bg-gradient-to-r from-green-500 via-blue-500 to-amber-500 rounded-full"
-                style={{ width: '100%' }}
+                className="absolute inset-0 bg-gradient-to-r from-green-500/90 via-emerald-400/80 via-40% via-blue-400/80 via-60% to-amber-500/90 rounded-full"
               />
+              {/* Shine overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent rounded-full" />
+              {/* Tick marks */}
+              <div className="absolute inset-0 flex justify-between px-1 items-center">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-px h-1.5 bg-white/40 rounded-full" />
+                ))}
+              </div>
               {/* Current price marker */}
               <div 
-                className="absolute top-1/2 -translate-y-1/2"
+                className="absolute top-1/2 -translate-y-1/2 z-10"
                 style={{ 
                   left: `${Math.min(100, Math.max(0, ((currentPrice - priceData.priceRange.low) / (priceData.priceRange.high - priceData.priceRange.low)) * 100))}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
               >
-                <div className={`w-3 h-3 bg-foreground rounded-full border-2 border-background ${getMarkerGlowColor()} animate-glow-pulse`} />
+                <div className={`w-4 h-4 bg-foreground rounded-full border-2 border-background ${getMarkerGlowColor()} animate-glow-pulse`} />
               </div>
             </div>
             <p className="text-xs text-center text-muted-foreground">
