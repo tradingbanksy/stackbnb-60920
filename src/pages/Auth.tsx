@@ -139,7 +139,7 @@ const Auth = () => {
           <div className="w-full max-w-md space-y-8">
             {/* Back Button */}
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/appview")}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -438,7 +438,7 @@ const Auth = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/appview")}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
