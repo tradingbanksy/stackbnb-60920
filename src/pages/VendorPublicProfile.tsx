@@ -250,7 +250,7 @@ const VendorPublicProfile = () => {
           {/* Experience Header */}
           <div className="space-y-3">
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold leading-tight">{profile.name}</h1>
+              <h1 className="text-2xl font-medium leading-tight">{profile.name}</h1>
               <p className="text-muted-foreground">{profile.category}</p>
             </div>
 
