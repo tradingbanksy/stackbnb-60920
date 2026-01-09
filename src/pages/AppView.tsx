@@ -282,8 +282,18 @@ const AppView = () => {
                 <ThemeToggle />
                 <div className="flex items-center gap-2">
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="p-2 rounded-full bg-background/80 border border-border text-foreground hover:bg-accent transition-colors">
+                    <DropdownMenuTrigger className="p-2 rounded-full bg-background/80 border border-border text-foreground hover:bg-accent transition-colors relative">
                       <User className="h-4 w-4" />
+                      {role && (
+                        <span className={cn(
+                          "absolute -bottom-1 -right-1 text-[8px] font-bold px-1 rounded-full capitalize",
+                          role === 'host' ? "bg-orange-500 text-white" :
+                          role === 'vendor' ? "bg-purple-500 text-white" :
+                          "bg-muted text-muted-foreground"
+                        )}>
+                          {role === 'host' ? 'H' : role === 'vendor' ? 'V' : 'U'}
+                        </span>
+                      )}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                       {isAuthenticated ? (
@@ -1147,9 +1157,21 @@ const AppView = () => {
 
             <Link 
               to={getProfileRoute()}
-              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground relative"
             >
-              <User className="h-5 w-5" />
+              <div className="relative">
+                <User className="h-5 w-5" />
+                {role && (
+                  <span className={cn(
+                    "absolute -bottom-0.5 -right-1.5 text-[6px] font-bold px-0.5 rounded-full",
+                    role === 'host' ? "bg-orange-500 text-white" :
+                    role === 'vendor' ? "bg-purple-500 text-white" :
+                    "bg-muted text-muted-foreground"
+                  )}>
+                    {role === 'host' ? 'H' : role === 'vendor' ? 'V' : 'U'}
+                  </span>
+                )}
+              </div>
               <span className="text-[9px]">Profile</span>
             </Link>
 
