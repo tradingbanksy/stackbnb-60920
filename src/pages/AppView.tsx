@@ -125,6 +125,8 @@ const AppView = () => {
   const [myBusinesses, setMyBusinesses] = useState<Vendor[]>([]);
   const [vendorRestaurants, setVendorRestaurants] = useState<VendorProfile[]>([]);
   const [vendorExperiences, setVendorExperiences] = useState<VendorProfile[]>([]);
+  const [googleRestaurants, setGoogleRestaurants] = useState<any[]>([]);
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -139,7 +141,28 @@ const AppView = () => {
   useEffect(() => {
     fetchMyBusinesses();
     fetchPublishedVendors();
+    fetchGoogleRestaurants();
   }, []);
+
+  const fetchGoogleRestaurants = async () => {
+    setIsLoadingRestaurants(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-places-restaurants');
+      
+      if (error) {
+        console.error('Error fetching Google restaurants:', error);
+        return;
+      }
+      
+      if (data?.restaurants) {
+        setGoogleRestaurants(data.restaurants);
+      }
+    } catch (error) {
+      console.error('Error fetching Google restaurants:', error);
+    } finally {
+      setIsLoadingRestaurants(false);
+    }
+  };
 
   const fetchMyBusinesses = async () => {
     try {
@@ -425,10 +448,10 @@ const AppView = () => {
                 </section>
               )}
 
-              {/* Restaurants Near You */}
+              {/* Top Restaurants in Tulum */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">Restaurants Near You</h2>
+                  <h2 className="text-sm font-semibold">Top Restaurants in Tulum</h2>
                   <Link to="/restaurants" className="flex items-center text-muted-foreground">
                     <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -482,30 +505,54 @@ const AppView = () => {
                         </div>
                       </Link>
                     ))}
-                    {/* Mock restaurants */}
-                    {restaurants.map((restaurant) => (
-                      <Link
+                    
+                    {/* Loading state */}
+                    {isLoadingRestaurants && googleRestaurants.length === 0 && (
+                      <>
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="flex-shrink-0 w-36">
+                            <div className="aspect-square rounded-xl bg-muted animate-pulse" />
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Google Places restaurants */}
+                    {googleRestaurants.map((restaurant) => (
+                      <a
                         key={restaurant.id}
-                        to={`/restaurant/${restaurant.id}`}
+                        href={`https://www.google.com/maps/place/?q=place_id:${restaurant.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex-shrink-0 w-36"
                       >
                         <div className="aspect-square rounded-xl overflow-hidden relative">
-                          <img
-                            src={restaurant.photos[0]}
-                            alt={restaurant.name}
-                            className="w-full h-full object-cover"
-                          />
+                          {restaurant.photo ? (
+                            <img
+                              src={restaurant.photo}
+                              alt={restaurant.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-white/80" />
+                            </div>
+                          )}
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
                             <div className="flex items-center gap-1 text-white/80 text-[10px]">
                               <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                              <span>{restaurant.rating}</span>
-                              <span>•</span>
-                              <span>{restaurant.priceRange}</span>
+                              <span>{restaurant.rating?.toFixed(1)}</span>
+                              {restaurant.reviewCount && (
+                                <>
+                                  <span>•</span>
+                                  <span>{restaurant.reviewCount} reviews</span>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </Link>
+                      </a>
                     ))}
                   </div>
                 </div>

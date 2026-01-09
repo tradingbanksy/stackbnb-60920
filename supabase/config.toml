@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.scrape-airbnb-reviews]
 verify_jwt = false
+
+[functions.google-places-restaurants]
+verify_jwt = false
