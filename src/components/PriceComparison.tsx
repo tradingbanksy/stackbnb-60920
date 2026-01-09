@@ -33,11 +33,12 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [loadedForPrice, setLoadedForPrice] = useState<number | null>(null);
 
   // Generate a unique cache key based on experience details
   const cacheKey = `price-comparison-${category}-${experienceName}-${currentPrice}-${duration || 'none'}`.replace(/\s+/g, '-').toLowerCase();
 
-  // Check for cached data on mount
+  // Check for cached data on mount and when price changes
   useEffect(() => {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
@@ -47,6 +48,8 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
         if (parsed.timestamp && Date.now() - parsed.timestamp < 60 * 60 * 1000) {
           setPriceData(parsed.data);
           setHasLoaded(true);
+          setLoadedForPrice(currentPrice);
+          return;
         } else {
           sessionStorage.removeItem(cacheKey);
         }
@@ -54,10 +57,44 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
         sessionStorage.removeItem(cacheKey);
       }
     }
-  }, [cacheKey]);
+    
+    // Reset state when price changes and no cache exists
+    if (loadedForPrice !== null && loadedForPrice !== currentPrice) {
+      setPriceData(null);
+      setHasLoaded(false);
+      setIsExpanded(false);
+    }
+  }, [cacheKey, currentPrice, loadedForPrice]);
+
+  // Reset when price changes to a different value than what was loaded
+  useEffect(() => {
+    if (loadedForPrice !== null && loadedForPrice !== currentPrice) {
+      // Check if we have cache for the new price
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed.timestamp && Date.now() - parsed.timestamp < 60 * 60 * 1000) {
+            setPriceData(parsed.data);
+            setHasLoaded(true);
+            setLoadedForPrice(currentPrice);
+            setIsExpanded(true); // Keep expanded when switching tiers
+            return;
+          }
+        } catch {
+          // Invalid cache, reset
+        }
+      }
+      // No cache for new price, reset state
+      setPriceData(null);
+      setHasLoaded(false);
+      setLoadedForPrice(null);
+      // Keep expanded state so user can click to load new comparison
+    }
+  }, [currentPrice, loadedForPrice, cacheKey]);
 
   const fetchComparison = async () => {
-    if (hasLoaded) {
+    if (hasLoaded && loadedForPrice === currentPrice) {
       setIsExpanded(!isExpanded);
       return;
     }
@@ -79,6 +116,7 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
       if (data?.success) {
         setPriceData(data.data);
         setHasLoaded(true);
+        setLoadedForPrice(currentPrice);
         setIsExpanded(true);
         
         // Cache the result with timestamp
@@ -138,6 +176,8 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
     }
   };
 
+  const needsRefresh = hasLoaded && loadedForPrice !== currentPrice;
+
   return (
     <div className="space-y-3">
       <Button
@@ -149,12 +189,14 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
       >
         <span className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
-          Compare Prices in Tulum
+          {needsRefresh ? 'Compare New Price in Tulum' : 'Compare Prices in Tulum'}
         </span>
         {isLoading ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        ) : hasLoaded ? (
+        ) : hasLoaded && !needsRefresh ? (
           isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+        ) : needsRefresh ? (
+          <Badge variant="secondary" className="text-xs px-1.5 py-0.5">New</Badge>
         ) : null}
       </Button>
 
