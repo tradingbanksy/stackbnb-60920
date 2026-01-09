@@ -159,15 +159,16 @@ const AppRoutes = () => (
     <Route path="/experiences" element={<AllExperiences />} />
     <Route path="/wishlists" element={<Wishlists />} />
     <Route path="/guide/:hostId" element={<GuestGuide />} />
+    <Route path="/test-instagram" element={<TestInstagramScrape />} />
+    <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
+    <Route path="/vendor/edit-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
+    <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
+    <Route path="/vendor/preview/:id" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
     <Route path="/vendor/:id" element={<VendorPublicProfile />} />
     <Route path="/vendor/:id/book" element={<VendorBookingForm />} />
     <Route path="/vendor/:id/payment" element={<PaymentPage />} />
     <Route path="/booking/:id/success" element={<PaymentSuccess />} />
     <Route path="/vendor/:id/confirmed" element={<BookingConfirmation />} />
-    <Route path="/test-instagram" element={<TestInstagramScrape />} />
-    <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
-    <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
-    <Route path="/vendor/preview/:id" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
     
     {/* Admin Routes */}
     <Route path="/admin/settings" element={<PlatformSettings />} />
