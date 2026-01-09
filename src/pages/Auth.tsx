@@ -270,11 +270,37 @@ const Auth = () => {
         // Save user role if provided - use Edge Function for secure role assignment
         if (signUpData.user && role) {
           // Call Edge Function to assign role securely server-side
-          const { error: roleError } = await supabase.functions.invoke('assign-role', {
-            body: { role }
-          });
-          if (roleError) {
-            console.error("Error setting user role:", roleError);
+          // Retry up to 3 times with delay
+          let roleAssigned = false;
+          for (let attempt = 1; attempt <= 3 && !roleAssigned; attempt++) {
+            try {
+              const { data: roleData, error: roleError } = await supabase.functions.invoke('assign-role', {
+                body: { role }
+              });
+              
+              if (roleError) {
+                console.error(`Attempt ${attempt}: Error setting user role:`, roleError);
+                if (attempt < 3) {
+                  await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+              } else if (roleData?.success) {
+                roleAssigned = true;
+                console.log('Role assigned successfully:', role);
+              }
+            } catch (err) {
+              console.error(`Attempt ${attempt}: Exception setting role:`, err);
+              if (attempt < 3) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+              }
+            }
+          }
+          
+          if (!roleAssigned) {
+            toast({
+              title: "Warning",
+              description: "Account created but role wasn't saved. Please select your role again.",
+              variant: "destructive",
+            });
           }
         }
         
