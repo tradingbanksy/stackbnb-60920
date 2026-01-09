@@ -285,12 +285,14 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
               />
               {/* Current price marker */}
               <div 
-                className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-foreground rounded-full border-2 border-background animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] ${getMarkerGlowColor()}`}
+                className="absolute top-1/2 -translate-y-1/2"
                 style={{ 
                   left: `${Math.min(100, Math.max(0, ((currentPrice - priceData.priceRange.low) / (priceData.priceRange.high - priceData.priceRange.low)) * 100))}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
-              />
+              >
+                <div className={`w-3 h-3 bg-foreground rounded-full border-2 border-background ${getMarkerGlowColor()} animate-glow-pulse`} />
+              </div>
             </div>
             <p className="text-xs text-center text-muted-foreground">
               This experience: <span className="font-semibold text-foreground">${currentPrice}</span>
