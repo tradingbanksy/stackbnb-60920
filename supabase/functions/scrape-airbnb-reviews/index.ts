@@ -61,11 +61,14 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || !data.success) {
       console.error('Firecrawl API error:', data);
+      const errorMessage = data.error?.includes('not currently supported') 
+        ? 'Airbnb scraping is not available with the current Firecrawl plan. Please add reviews manually.'
+        : data.error || 'Failed to scrape Airbnb page';
       return new Response(
-        JSON.stringify({ success: false, error: data.error || 'Failed to scrape Airbnb page' }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: errorMessage }),
+        { status: response.ok ? 400 : response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
