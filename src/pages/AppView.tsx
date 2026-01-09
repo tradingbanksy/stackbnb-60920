@@ -108,11 +108,11 @@ const AppView = () => {
   const { isAuthenticated, signOut, role } = useAuthContext();
   
   // Get profile route based on user role
-  const getProfileRoute = () => {
+  const profileRoute = useMemo(() => {
     if (role === 'host') return '/host/dashboard';
     if (role === 'vendor') return '/vendor/dashboard';
     return '/profile';
-  };
+  }, [role]);
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
@@ -299,7 +299,7 @@ const AppView = () => {
                       {isAuthenticated ? (
                         <>
                           <DropdownMenuItem asChild>
-                            <Link to={getProfileRoute()} className="flex items-center gap-2 cursor-pointer">
+                            <Link to={profileRoute} className="flex items-center gap-2 cursor-pointer">
                               <User className="h-4 w-4" />
                               Profile
                             </Link>
@@ -1156,7 +1156,7 @@ const AppView = () => {
             </Link>
 
             <Link 
-              to={getProfileRoute()}
+              to={profileRoute}
               className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground relative"
             >
               <div className="relative">
