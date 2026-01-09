@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
   Loader2, Instagram, Upload, Sparkles, Check, X, Plus, 
-  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon
+  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
@@ -64,6 +64,13 @@ const CATEGORIES = [
   'Other',
 ];
 
+interface AirbnbReview {
+  reviewerName: string;
+  reviewerAvatar?: string;
+  date: string;
+  comment: string;
+}
+
 interface ExistingProfile {
   id: string;
   name: string;
@@ -83,6 +90,8 @@ interface ExistingProfile {
   google_rating: number | null;
   google_reviews_url: string | null;
   commission_percentage: number | null;
+  airbnb_experience_url: string | null;
+  airbnb_reviews: AirbnbReview[] | null;
 }
 
 const CreateVendorProfile = () => {
@@ -114,6 +123,11 @@ const CreateVendorProfile = () => {
   
   // AI generation state
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  
+  // Airbnb reviews state
+  const [airbnbUrl, setAirbnbUrl] = useState('');
+  const [isScrapingAirbnb, setIsScrapingAirbnb] = useState(false);
+  const [airbnbReviews, setAirbnbReviews] = useState<AirbnbReview[]>([]);
   
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,9 +174,23 @@ const CreateVendorProfile = () => {
             });
           }
           
+          // Parse airbnb_reviews from JSON safely
+          let airbnbReviewsData: AirbnbReview[] = [];
+          if (Array.isArray(data.airbnb_reviews)) {
+            airbnbReviewsData = data.airbnb_reviews.map((review: unknown) => {
+              const r = review as { reviewerName?: string; date?: string; comment?: string };
+              return {
+                reviewerName: r.reviewerName || '',
+                date: r.date || '',
+                comment: r.comment || '',
+              };
+            });
+          }
+          
           setExistingProfile({
             ...data,
             price_tiers: priceTiersData,
+            airbnb_reviews: airbnbReviewsData,
           } as ExistingProfile);
           
           // Pre-populate form with existing data
@@ -186,6 +214,8 @@ const CreateVendorProfile = () => {
           setIncludedItems(data.included_items || []);
           setMenuUrl(data.menu_url || null);
           setPriceTiers(priceTiersData);
+          setAirbnbUrl(data.airbnb_experience_url || '');
+          setAirbnbReviews(airbnbReviewsData);
         }
       } catch (error) {
         console.error('Error checking existing profile:', error);
@@ -371,6 +401,40 @@ const CreateVendorProfile = () => {
     }
   };
 
+  // Scrape Airbnb reviews
+  const handleScrapeAirbnb = async () => {
+    if (!airbnbUrl.trim()) {
+      toast.error('Please enter an Airbnb experience URL');
+      return;
+    }
+
+    setIsScrapingAirbnb(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-airbnb-reviews', {
+        body: { airbnbUrl }
+      });
+
+      if (error) throw new Error(error.message);
+      if (!data.success) throw new Error(data.error || 'Failed to scrape Airbnb reviews');
+
+      const reviews = data.data.reviews || [];
+      setAirbnbReviews(reviews);
+      
+      // If we got a rating, update the Google rating field too
+      if (data.data.rating) {
+        setValue('googleRating', data.data.rating);
+      }
+      
+      toast.success(`Found ${reviews.length} reviews!`);
+    } catch (error) {
+      console.error('Airbnb scrape error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to scrape Airbnb reviews');
+    } finally {
+      setIsScrapingAirbnb(false);
+    }
+  };
+
   // Submit form
   const onSubmit = async (formData: VendorProfileFormData) => {
     if (!user) {
@@ -405,6 +469,8 @@ const CreateVendorProfile = () => {
         google_rating: formData.googleRating || null,
         google_reviews_url: formData.googleReviewsUrl,
         commission_percentage: formData.commissionPercentage || null,
+        airbnb_experience_url: airbnbUrl || null,
+        airbnb_reviews: airbnbReviews.map(r => ({ reviewerName: r.reviewerName, date: r.date, comment: r.comment })) as Json,
       };
 
       if (existingProfile) {
@@ -845,6 +911,65 @@ const CreateVendorProfile = () => {
                 {...register('googleReviewsUrl')}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Airbnb Reviews */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Airbnb Experience Reviews
+            </CardTitle>
+            <CardDescription>Import reviews from your Airbnb experience listing</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://www.airbnb.com/experiences/..."
+                value={airbnbUrl}
+                onChange={(e) => setAirbnbUrl(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="button" onClick={handleScrapeAirbnb} disabled={isScrapingAirbnb}>
+                {isScrapingAirbnb ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Import'}
+              </Button>
+            </div>
+
+            {airbnbReviews.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">{airbnbReviews.length} reviews imported</span>
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {airbnbReviews.map((review, index) => (
+                    <div key={index} className="p-3 bg-muted rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">{review.reviewerName}</span>
+                        <span className="text-xs text-muted-foreground">{review.date}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-3">"{review.comment}"</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs text-destructive hover:text-destructive"
+                        onClick={() => setAirbnbReviews(prev => prev.filter((_, i) => i !== index))}
+                      >
+                        <X className="h-3 w-3 mr-1" /> Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {airbnbReviews.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                💡 Paste your Airbnb experience URL to automatically import guest reviews
+              </p>
+            )}
           </CardContent>
         </Card>
 

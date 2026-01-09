@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.verify-reset-otp]
 verify_jwt = false
+
+[functions.scrape-airbnb-reviews]
+verify_jwt = false

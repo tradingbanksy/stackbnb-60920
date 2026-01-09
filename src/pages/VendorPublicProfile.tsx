@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { 
   ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
-  Instagram, ExternalLink, Store
+  Instagram, ExternalLink, Store, MessageSquare, Quote
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -18,6 +18,12 @@ import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer,
 interface PriceTier {
   name: string;
   price: number;
+}
+
+interface AirbnbReview {
+  reviewerName: string;
+  date: string;
+  comment: string;
 }
 
 interface VendorProfile {
@@ -37,6 +43,8 @@ interface VendorProfile {
   google_rating: number | null;
   google_reviews_url: string | null;
   commission_percentage: number | null;
+  airbnb_experience_url: string | null;
+  airbnb_reviews: AirbnbReview[] | null;
 }
 
 // Category to icon mapping
@@ -104,9 +112,23 @@ const VendorPublicProfile = () => {
           });
         }
         
+        // Parse airbnb_reviews from JSON safely
+        let airbnbReviews: AirbnbReview[] = [];
+        if (Array.isArray(data.airbnb_reviews)) {
+          airbnbReviews = data.airbnb_reviews.map((review: unknown) => {
+            const r = review as { reviewerName?: string; date?: string; comment?: string };
+            return {
+              reviewerName: r.reviewerName || '',
+              date: r.date || '',
+              comment: r.comment || '',
+            };
+          });
+        }
+        
         setProfile({
           ...data,
           price_tiers: priceTiers,
+          airbnb_reviews: airbnbReviews,
         } as VendorProfile);
       }
     } catch (error) {
@@ -347,6 +369,43 @@ const VendorPublicProfile = () => {
                   ))}
                 </ul>
               </Card>
+            </div>
+          )}
+
+          {/* Guest Reviews */}
+          {profile.airbnb_reviews && profile.airbnb_reviews.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Guest Reviews
+              </h2>
+              <div className="space-y-3">
+                {profile.airbnb_reviews.map((review, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">{review.reviewerName}</span>
+                        <span className="text-xs text-muted-foreground">{review.date}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Quote className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                        <p className="text-sm text-muted-foreground italic">{review.comment}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              {profile.airbnb_experience_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(profile.airbnb_experience_url!, '_blank')}
+                  className="gap-2 w-full"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  View All Reviews on Airbnb
+                </Button>
+              )}
             </div>
           )}
 
