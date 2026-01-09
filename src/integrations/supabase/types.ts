@@ -237,6 +237,7 @@ export type Database = {
       vendor_profiles: {
         Row: {
           about_experience: string | null
+          age_restriction: string
           airbnb_experience_url: string | null
           airbnb_reviews: Json | null
           category: string
@@ -268,6 +269,7 @@ export type Database = {
         }
         Insert: {
           about_experience?: string | null
+          age_restriction?: string
           airbnb_experience_url?: string | null
           airbnb_reviews?: Json | null
           category: string
@@ -299,6 +301,7 @@ export type Database = {
         }
         Update: {
           about_experience?: string | null
+          age_restriction?: string
           airbnb_experience_url?: string | null
           airbnb_reviews?: Json | null
           category?: string

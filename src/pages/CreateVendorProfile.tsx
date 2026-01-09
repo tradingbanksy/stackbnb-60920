@@ -29,6 +29,7 @@ const vendorProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   listingType: z.enum(['restaurant', 'experience'], { required_error: 'Please select a listing type' }),
   category: z.string().min(1, 'Please select a category'),
+  ageRestriction: z.enum(['family_friendly', 'adults_only'], { required_error: 'Please select an age restriction' }),
   instagramUrl: z.string().optional(),
   pricePerPerson: z.coerce.number().min(0).optional(),
   duration: z.string().min(1, 'Please enter duration'),
@@ -76,6 +77,7 @@ interface ExistingProfile {
   name: string;
   category: string;
   listing_type: string;
+  age_restriction: 'family_friendly' | 'adults_only';
   description: string | null;
   about_experience: string | null;
   instagram_url: string | null;
@@ -137,6 +139,7 @@ const CreateVendorProfile = () => {
     defaultValues: {
       pricePerPerson: 0,
       maxGuests: 10,
+      ageRestriction: 'family_friendly',
     }
   });
 
@@ -198,6 +201,7 @@ const CreateVendorProfile = () => {
             name: data.name,
             listingType: data.listing_type as 'restaurant' | 'experience',
             category: data.category,
+            ageRestriction: (data.age_restriction as 'family_friendly' | 'adults_only') || 'family_friendly',
             description: data.description || '',
             aboutExperience: data.about_experience || '',
             instagramUrl: data.instagram_url || '',
@@ -455,6 +459,7 @@ const CreateVendorProfile = () => {
         name: formData.name,
         listing_type: formData.listingType,
         category: formData.category,
+        age_restriction: formData.ageRestriction,
         description: formData.description,
         about_experience: formData.aboutExperience,
         instagram_url: formData.instagramUrl,
@@ -606,6 +611,40 @@ const CreateVendorProfile = () => {
                 </SelectContent>
               </Select>
               {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
+            </div>
+
+            {/* Age Restriction Selection */}
+            <div className="space-y-2">
+              <Label>Who is this for? *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setValue('ageRestriction', 'family_friendly')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    watchedValues.ageRestriction === 'family_friendly'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">👨‍👩‍👧‍👦</div>
+                  <p className="font-medium">Family Friendly</p>
+                  <p className="text-xs text-muted-foreground">Suitable for all ages</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue('ageRestriction', 'adults_only')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    watchedValues.ageRestriction === 'adults_only'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🍷</div>
+                  <p className="font-medium">Adults Only</p>
+                  <p className="text-xs text-muted-foreground">21+ or contains mature content</p>
+                </button>
+              </div>
+              {errors.ageRestriction && <p className="text-sm text-destructive">{errors.ageRestriction.message}</p>}
             </div>
 
             <div className="space-y-2">
