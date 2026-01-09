@@ -283,8 +283,12 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
               <div 
                 className="absolute inset-0 bg-gradient-to-r from-green-500/90 via-emerald-400/80 via-40% via-blue-400/80 via-60% to-amber-500/90 rounded-full"
               />
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 overflow-hidden rounded-full">
+                <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
+              </div>
               {/* Shine overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent rounded-full" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-full" />
               {/* Tick marks */}
               <div className="absolute inset-0 flex justify-between px-1 items-center">
                 {[...Array(5)].map((_, i) => (
