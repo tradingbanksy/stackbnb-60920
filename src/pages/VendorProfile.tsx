@@ -65,10 +65,8 @@ const VendorProfile = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: editName.trim(),
-        });
+        .update({ full_name: editName.trim() })
+        .eq('user_id', user.id);
       
       if (error) throw error;
       
