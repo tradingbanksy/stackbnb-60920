@@ -13,6 +13,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import InteractiveSelector from '@/components/ui/interactive-selector';
+import PriceComparison from '@/components/PriceComparison';
 import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
 
 interface PriceTier {
@@ -305,6 +306,20 @@ const VendorPublicProfile = () => {
               </div>
             </Card>
           ) : null}
+
+          {/* Price Comparison */}
+          {(profile.price_per_person || (profile.price_tiers && profile.price_tiers.length > 0)) && (
+            <PriceComparison
+              category={profile.category}
+              experienceName={profile.name}
+              currentPrice={
+                profile.price_tiers && profile.price_tiers.length > 0
+                  ? profile.price_tiers[selectedTierIndex]?.price || 0
+                  : profile.price_per_person || 0
+              }
+              duration={profile.duration || undefined}
+            />
+          )}
 
           {/* Quick Info */}
           <Card className="p-4">

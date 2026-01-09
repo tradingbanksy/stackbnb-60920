@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.scrape-airbnb-reviews]
 verify_jwt = false
+
+[functions.price-comparison]
+verify_jwt = false
