@@ -319,7 +319,7 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
           {/* Comparables */}
           {priceData.comparables && priceData.comparables.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Similar in Tulum</p>
+              <p className="text-xs font-medium text-muted-foreground">Similar in Tulum</p>
               <div className="space-y-2">
                 {priceData.comparables.map((comp, index) => (
                   <div key={index} className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/50">
