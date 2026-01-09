@@ -105,7 +105,14 @@ interface VendorProfile {
 }
 
 const AppView = () => {
-  const { isAuthenticated, signOut } = useAuthContext();
+  const { isAuthenticated, signOut, role } = useAuthContext();
+  
+  // Get profile route based on user role
+  const getProfileRoute = () => {
+    if (role === 'host') return '/host/dashboard';
+    if (role === 'vendor') return '/vendor/dashboard';
+    return '/profile';
+  };
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
@@ -282,13 +289,13 @@ const AppView = () => {
                       {isAuthenticated ? (
                         <>
                           <DropdownMenuItem asChild>
-                            <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                            <Link to={getProfileRoute()} className="flex items-center gap-2 cursor-pointer">
                               <User className="h-4 w-4" />
                               Profile
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                            <Link to={role === 'host' ? '/host/profile' : role === 'vendor' ? '/vendor/profile' : '/profile'} className="flex items-center gap-2 cursor-pointer">
                               <Settings className="h-4 w-4" />
                               Settings
                             </Link>
@@ -1139,7 +1146,7 @@ const AppView = () => {
             </Link>
 
             <Link 
-              to="/profile"
+              to={getProfileRoute()}
               className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
             >
               <User className="h-5 w-5" />
