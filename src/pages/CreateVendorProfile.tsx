@@ -732,7 +732,7 @@ const CreateVendorProfile = () => {
                 <Input
                   value={newTierName}
                   onChange={(e) => setNewTierName(e.target.value)}
-                  placeholder="e.g., Breakfast, Lunch, Dinner"
+                  placeholder="e.g., Service"
                   className="flex-1"
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPriceTier())}
                 />
