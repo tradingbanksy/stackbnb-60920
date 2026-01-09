@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Apple, Building2, Store, Users } from "lucide-react";
+import { ArrowLeft, Apple, Building2, Home, Store, Users } from "lucide-react";
 import { FaAirbnb } from "react-icons/fa";
 import { authSchema, type AuthFormData } from "@/lib/validations";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -137,14 +137,23 @@ const Auth = () => {
       <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-background">
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="w-full max-w-md space-y-8">
-            {/* Back Button */}
-            <button
-              onClick={() => navigate("/appview")}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => navigate("/appview")}
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+              <button
+                onClick={() => navigate("/appview")}
+                className="flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="Go to home"
+              >
+                <Home className="h-5 w-5 text-foreground" />
+              </button>
+            </div>
             {/* Logo */}
             <div className="flex justify-center">
               <img 
@@ -437,13 +446,22 @@ const Auth = () => {
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        <button
-          onClick={() => navigate("/appview")}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => navigate("/appview")}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+          <button
+            onClick={() => navigate("/appview")}
+            className="flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+            aria-label="Go to home"
+          >
+            <Home className="h-5 w-5 text-foreground" />
+          </button>
+        </div>
 
         <Card className="p-6">
           <div className="space-y-6">
