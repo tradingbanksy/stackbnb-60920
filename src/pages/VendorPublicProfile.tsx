@@ -249,12 +249,9 @@ const VendorPublicProfile = () => {
         <div className="px-4 py-6 space-y-6">
           {/* Experience Header */}
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="text-4xl">{categoryConfig.icon}</span>
-              <div className="flex-1 space-y-1">
-                <h1 className="text-2xl font-bold leading-tight">{profile.name}</h1>
-                <p className="text-muted-foreground">{profile.category}</p>
-              </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold leading-tight">{profile.name}</h1>
+              <p className="text-muted-foreground">{profile.category}</p>
             </div>
 
             <div className="flex items-center gap-4 text-sm">
