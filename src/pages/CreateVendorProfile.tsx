@@ -463,7 +463,7 @@ const CreateVendorProfile = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-4 p-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/vendor/profile')}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
