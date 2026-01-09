@@ -1,17 +1,97 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronRight, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut, Eye } from "lucide-react";
+import { ChevronRight, CreditCard, Receipt, UserPen, Lock, HelpCircle, LogOut, Eye, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import VendorBottomNav from "@/components/VendorBottomNav";
-import { useSignup } from "@/contexts/SignupContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const VendorProfile = () => {
   const navigate = useNavigate();
-  const { vendorSignupData, businessData } = useSignup();
+  const { user } = useAuthContext();
+  const { toast } = useToast();
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [editName, setEditName] = useState("");
 
-  const contactName = vendorSignupData.contactName || "John Smith";
-  const businessName = vendorSignupData.businessName || "Ocean Adventures";
-  const initials = contactName.split(' ').map(n => n[0]).join('').toUpperCase() || "JS";
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
+  const fetchProfileData = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      // Fetch user profile for contact name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      // Fetch vendor profile for business name
+      const { data: vendorData } = await supabase
+        .from('vendor_profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setContactName(profileData?.full_name || "");
+      setEditName(profileData?.full_name || "");
+      setBusinessName(vendorData?.name || "");
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!user || !editName.trim()) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          full_name: editName.trim(),
+        });
+      
+      if (error) throw error;
+      
+      setContactName(editName.trim());
+      setIsEditing(false);
+      toast({
+        title: "Success",
+        description: "Your name has been updated.",
+      });
+    } catch (error) {
+      console.error('Error saving name:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update name. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const displayName = contactName || "Your Name";
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || "VN";
 
   const menuItems = [
     { 
@@ -82,17 +162,76 @@ const VendorProfile = () => {
         
         {/* Profile Header Card */}
         <Card className="p-5">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-16 w-16 bg-gradient-to-r from-orange-500 to-pink-500 flex-shrink-0">
-              <AvatarFallback className="text-white text-xl font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-bold truncate">{contactName}</h2>
-              <p className="text-sm text-muted-foreground truncate">{businessName}</p>
+          {isLoading ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </div>
             </div>
-          </div>
+          ) : isEditing ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-16 w-16 bg-gradient-to-r from-orange-500 to-pink-500 flex-shrink-0">
+                  <AvatarFallback className="text-white text-xl font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="font-medium"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditName(contactName);
+                    setIsEditing(false);
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveName}
+                  disabled={isSaving || !editName.trim()}
+                >
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-16 w-16 bg-gradient-to-r from-orange-500 to-pink-500 flex-shrink-0">
+                <AvatarFallback className="text-white text-xl font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold truncate">{displayName}</h2>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-1 rounded hover:bg-muted transition-colors"
+                    aria-label="Edit name"
+                  >
+                    <UserPen className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground truncate">
+                  {businessName || "No business profile yet"}
+                </p>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* Menu Items */}
