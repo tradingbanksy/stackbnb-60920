@@ -34,6 +34,28 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
 
+  // Generate a unique cache key based on experience details
+  const cacheKey = `price-comparison-${category}-${experienceName}-${currentPrice}-${duration || 'none'}`.replace(/\s+/g, '-').toLowerCase();
+
+  // Check for cached data on mount
+  useEffect(() => {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        // Check if cache is less than 1 hour old
+        if (parsed.timestamp && Date.now() - parsed.timestamp < 60 * 60 * 1000) {
+          setPriceData(parsed.data);
+          setHasLoaded(true);
+        } else {
+          sessionStorage.removeItem(cacheKey);
+        }
+      } catch {
+        sessionStorage.removeItem(cacheKey);
+      }
+    }
+  }, [cacheKey]);
+
   const fetchComparison = async () => {
     if (hasLoaded) {
       setIsExpanded(!isExpanded);
@@ -58,6 +80,12 @@ const PriceComparison = ({ category, experienceName, currentPrice, duration }: P
         setPriceData(data.data);
         setHasLoaded(true);
         setIsExpanded(true);
+        
+        // Cache the result with timestamp
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          data: data.data,
+          timestamp: Date.now()
+        }));
       } else {
         throw new Error(data?.error || 'Failed to get price comparison');
       }
