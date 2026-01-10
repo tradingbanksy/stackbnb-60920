@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Lock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Loader2, Lock, Tag, Check, X } from "lucide-react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useBooking } from "@/contexts/BookingContext";
@@ -12,13 +13,77 @@ const PaymentPage = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { bookingData } = useBooking();
+  const { bookingData, updateBookingData } = useBooking();
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [promoCode, setPromoCode] = useState(bookingData.promoCode || '');
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoApplied, setPromoApplied] = useState(!!bookingData.promoCode);
+  const [promoError, setPromoError] = useState('');
 
   // Get hostId from URL or booking context
   const hostId = searchParams.get('host') || bookingData.hostId;
+
+  // Calculate the final price to display
+  const displayPrice = bookingData.finalPrice ?? bookingData.totalPrice;
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a promo code');
+      return;
+    }
+
+    setIsValidatingPromo(true);
+    setPromoError('');
+
+    try {
+      const { data, error } = await supabase.rpc('validate_promo_code', {
+        p_code: promoCode.trim(),
+        p_order_amount: bookingData.totalPrice
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const result = data[0];
+        if (result.valid) {
+          const discountAmount = Number(result.discount_amount);
+          const finalPrice = Math.max(0, bookingData.totalPrice - discountAmount);
+          
+          updateBookingData({
+            promoCode: promoCode.trim().toUpperCase(),
+            discountAmount,
+            finalPrice
+          });
+          
+          setPromoApplied(true);
+          toast({
+            title: "Promo code applied!",
+            description: result.message,
+          });
+        } else {
+          setPromoError(result.message || 'Invalid promo code');
+        }
+      }
+    } catch (error) {
+      console.error('Promo validation error:', error);
+      setPromoError('Failed to validate promo code');
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode('');
+    setPromoApplied(false);
+    setPromoError('');
+    updateBookingData({
+      promoCode: undefined,
+      discountAmount: undefined,
+      finalPrice: undefined
+    });
+  };
 
   const handleStripeCheckout = async () => {
     if (!isAuthenticated) {
@@ -51,16 +116,18 @@ const PaymentPage = () => {
           date: bookingData.date,
           time: bookingData.time,
           guests: bookingData.guests,
-          totalPrice: bookingData.totalPrice,
+          totalPrice: displayPrice,
+          originalPrice: bookingData.totalPrice,
           vendorId: id,
-          hostId: hostId || null, // Pass hostId for commission split
+          hostId: hostId || null,
+          promoCode: bookingData.promoCode || null,
+          discountAmount: bookingData.discountAmount || 0,
         },
       });
 
       if (error) throw error;
 
       if (data?.url) {
-        // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');
@@ -135,11 +202,95 @@ const PaymentPage = () => {
                 <span className="text-muted-foreground">Guests</span>
                 <span className="font-medium">{bookingData.guests}</span>
               </div>
-              <div className="pt-2 mt-2 border-t flex justify-between">
-                <span className="font-semibold">Total</span>
-                <span className="font-bold text-lg">${bookingData.totalPrice}</span>
+              
+              <div className="pt-2 mt-2 border-t space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium">${bookingData.totalPrice}</span>
+                </div>
+                
+                {promoApplied && bookingData.discountAmount && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      Promo ({bookingData.promoCode})
+                    </span>
+                    <span>-${bookingData.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between pt-2 border-t">
+                  <span className="font-semibold">Total</span>
+                  <div className="text-right">
+                    {promoApplied && bookingData.discountAmount ? (
+                      <>
+                        <span className="text-muted-foreground line-through text-sm mr-2">${bookingData.totalPrice}</span>
+                        <span className="font-bold text-lg text-green-600">${displayPrice.toFixed(2)}</span>
+                      </>
+                    ) : (
+                      <span className="font-bold text-lg">${bookingData.totalPrice}</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
+          </Card>
+
+          {/* Promo Code Section */}
+          <Card className="p-4 bg-muted/30">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Promo Code
+            </h3>
+            
+            {promoApplied ? (
+              <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="font-medium text-green-600">{bookingData.promoCode}</span>
+                  <span className="text-sm text-muted-foreground">
+                    (-${bookingData.discountAmount?.toFixed(2)})
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleRemovePromo}
+                  className="h-8 w-8 p-0 hover:bg-destructive/10"
+                >
+                  <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter promo code"
+                    value={promoCode}
+                    onChange={(e) => {
+                      setPromoCode(e.target.value.toUpperCase());
+                      setPromoError('');
+                    }}
+                    className="flex-1 uppercase"
+                    disabled={isValidatingPromo}
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleApplyPromo}
+                    disabled={isValidatingPromo || !promoCode.trim()}
+                  >
+                    {isValidatingPromo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Apply'
+                    )}
+                  </Button>
+                </div>
+                {promoError && (
+                  <p className="text-sm text-destructive animate-fade-in">{promoError}</p>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* User Info */}
@@ -165,7 +316,7 @@ const PaymentPage = () => {
                   Redirecting to checkout...
                 </>
               ) : (
-                <>Proceed to Payment - ${bookingData.totalPrice}</>
+                <>Proceed to Payment - ${displayPrice.toFixed(2)}</>
               )}
             </Button>
 
