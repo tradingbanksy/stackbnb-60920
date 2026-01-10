@@ -304,12 +304,16 @@ serve(async (req) => {
 
       // Transfer host's portion if applicable
       if (hostUserId && hostPayoutCents > 0) {
-        // Get host's Stripe account
+        // Get host's Stripe account and email
         const { data: hostProfile } = await supabaseAdmin
           .from("profiles")
           .select("stripe_account_id, stripe_onboarding_complete")
           .eq("user_id", hostUserId)
           .single();
+
+        // Get host email for notification
+        const { data: hostUserData } = await supabaseAdmin.auth.admin.getUserById(hostUserId);
+        const hostEmail = hostUserData?.user?.email;
 
         if (hostProfile?.stripe_account_id && hostProfile?.stripe_onboarding_complete) {
           try {
@@ -338,6 +342,47 @@ serve(async (req) => {
           }
         } else {
           logStep("Host not set up for Stripe Connect, skipping transfer", { hostUserId });
+        }
+
+        // Send host commission notification
+        if (hostEmail) {
+          try {
+            const hostNotificationPayload = {
+              type: "host_commission",
+              hostEmail,
+              experienceName,
+              vendorName,
+              date: bookingDate,
+              time: bookingTime,
+              guests,
+              totalAmount: (session.amount_total || 0) / 100,
+              hostPayoutAmount: hostPayoutCents / 100,
+              currency: session.currency || "usd",
+            };
+
+            const hostNotifResponse = await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-admin-notification`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                },
+                body: JSON.stringify(hostNotificationPayload),
+              }
+            );
+
+            if (hostNotifResponse.ok) {
+              logStep("Host commission notification sent", { hostEmail });
+            } else {
+              const errorText = await hostNotifResponse.text();
+              logStep("Host commission notification failed", { error: errorText });
+            }
+          } catch (hostNotifError) {
+            const hostNotifErrorMsg = hostNotifError instanceof Error ? hostNotifError.message : String(hostNotifError);
+            logStep("Host commission notification error", { error: hostNotifErrorMsg });
+            // Don't fail the webhook for notification errors
+          }
         }
       }
     }

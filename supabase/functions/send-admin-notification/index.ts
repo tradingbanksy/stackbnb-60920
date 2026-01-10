@@ -10,10 +10,11 @@ const corsHeaders = {
 };
 
 interface BookingNotification {
-  type: "booking" | "promo_used" | "vendor_booking" | "guest_confirmation" | "booking_reminder";
+  type: "booking" | "promo_used" | "vendor_booking" | "guest_confirmation" | "booking_reminder" | "host_commission";
   experienceName?: string;
   vendorName?: string;
   vendorEmail?: string;
+  hostEmail?: string;
   guestEmail?: string;
   guestName?: string;
   date?: string;
@@ -21,6 +22,7 @@ interface BookingNotification {
   guests?: number;
   totalAmount?: number;
   vendorPayoutAmount?: number;
+  hostPayoutAmount?: number;
   currency?: string;
   promoCode?: string;
   discountAmount?: number;
@@ -328,6 +330,80 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("[ADMIN-NOTIFICATION] Booking reminder email sent:", reminderEmailResponse);
 
       return new Response(JSON.stringify({ success: true, emailResponse: reminderEmailResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } else if (notification.type === "host_commission") {
+      // Host commission notification
+      subject = `💰 You Earned a Commission: ${notification.experienceName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #16a34a; margin-bottom: 10px;">💰 Commission Earned!</h1>
+            <p style="color: #64748b; font-size: 16px; margin: 0;">Great news! You've earned a referral commission from a booking.</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #86efac;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <p style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase;">Your Commission</p>
+              <p style="margin: 8px 0 0 0; font-weight: 700; font-size: 36px; color: #16a34a;">$${notification.hostPayoutAmount?.toFixed(2)}</p>
+              <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">${notification.currency?.toUpperCase()}</p>
+            </div>
+          </div>
+          
+          <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #1e293b;">Booking Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Experience</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.experienceName}</td>
+              </tr>
+              ${notification.vendorName ? `
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Vendor</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.vendorName}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Date</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.date}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Time</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.time}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Guests</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.guests}</td>
+              </tr>
+              <tr style="border-top: 2px solid #e2e8f0;">
+                <td style="padding: 12px 0; color: #64748b;">Total Booking Amount</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: 600;">$${notification.totalAmount?.toFixed(2)}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="background: #fffbeb; border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid #fde68a;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+              <strong>💡 Note:</strong> Your commission will be transferred to your connected Stripe account. Make sure your payment settings are up to date.
+            </p>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; text-align: center;">Thank you for being a valued host partner! 🎉</p>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center;">This is an automated notification from Stackd.</p>
+        </div>
+      `;
+
+      const hostEmailResponse = await resend.emails.send({
+        from: "Stackd <notifications@resend.dev>",
+        to: [notification.hostEmail!],
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("[ADMIN-NOTIFICATION] Host commission email sent:", hostEmailResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: hostEmailResponse }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
