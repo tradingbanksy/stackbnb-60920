@@ -10,6 +10,9 @@ export interface BookingData {
   pricePerPerson: number;
   totalPrice: number;
   hostId?: string; // The host who referred the guest (for commission tracking)
+  promoCode?: string;
+  discountAmount?: number;
+  finalPrice?: number;
 }
 
 // SECURITY: Payment card data removed entirely - should use tokenized payment processor
@@ -37,6 +40,9 @@ const initialBookingData: BookingData = {
   pricePerPerson: 0,
   totalPrice: 0,
   hostId: undefined,
+  promoCode: undefined,
+  discountAmount: undefined,
+  finalPrice: undefined,
 };
 
 const initialGuestData: GuestData = {
