@@ -1,17 +1,115 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, Calendar, Clock, Users, Mail } from "lucide-react";
+import { CheckCircle, Calendar, Clock, Users, Mail, CalendarPlus, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useBooking } from "@/contexts/BookingContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import confetti from "canvas-confetti";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const BookingConfirmation = () => {
   const navigate = useNavigate();
   const { bookingData, guestData } = useBooking();
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    // Confetti or success animation could be added here
+    // Trigger confetti animation
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const colors = ['#f97316', '#ec4899', '#22c55e', '#3b82f6'];
+
+    (function frame() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    }());
+
+    // Delay content animation
+    setTimeout(() => setShowContent(true), 300);
   }, []);
+
+  const formatDateForCalendar = (dateStr: string, timeStr: string) => {
+    const date = new Date(dateStr);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    date.setHours(hours || 9, minutes || 0, 0, 0);
+    return date;
+  };
+
+  const generateGoogleCalendarUrl = () => {
+    const startDate = formatDateForCalendar(bookingData.date, bookingData.time);
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
+
+    const formatDate = (date: Date) => 
+      date.toISOString().replace(/-|:|\.\d{3}/g, '');
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: bookingData.experienceName,
+      dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
+      details: `Booking with ${bookingData.vendorName}\nGuests: ${bookingData.guests}\nTotal: $${bookingData.totalPrice}`,
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  };
+
+  const generateICSContent = () => {
+    const startDate = formatDateForCalendar(bookingData.date, bookingData.time);
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+
+    const formatDate = (date: Date) => 
+      date.toISOString().replace(/-|:|\.\d{3}/g, '').slice(0, 15) + 'Z';
+
+    return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Stackd//Booking//EN
+BEGIN:VEVENT
+UID:${Date.now()}@stackd.app
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${formatDate(startDate)}
+DTEND:${formatDate(endDate)}
+SUMMARY:${bookingData.experienceName}
+DESCRIPTION:Booking with ${bookingData.vendorName}\\nGuests: ${bookingData.guests}\\nTotal: $${bookingData.totalPrice}
+END:VEVENT
+END:VCALENDAR`;
+  };
+
+  const downloadICS = () => {
+    const icsContent = generateICSContent();
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${bookingData.experienceName.replace(/\s+/g, '-')}-booking.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const openGoogleCalendar = () => {
+    window.open(generateGoogleCalendarUrl(), '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -26,15 +124,15 @@ const BookingConfirmation = () => {
           </div>
         </div>
 
-        <div className="px-4 py-8 space-y-6">
+        <div className={`px-4 py-8 space-y-6 transition-all duration-500 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           {/* Success Icon */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 animate-scale-in">
               <CheckCircle className="h-12 w-12 text-white" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold">Booking Confirmed!</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl font-bold animate-fade-in">Booking Confirmed!</h1>
+              <p className="text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
                 Your experience has been successfully booked
               </p>
             </div>
@@ -115,6 +213,35 @@ const BookingConfirmation = () => {
               </div>
             </div>
           </Card>
+
+          {/* Add to Calendar */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full gap-2" 
+                size="lg"
+              >
+                <CalendarPlus className="h-5 w-5" />
+                Add to Calendar
+                <ChevronDown className="h-4 w-4 ml-auto" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[calc(100vw-2rem)] max-w-[343px]">
+              <DropdownMenuItem onClick={openGoogleCalendar} className="cursor-pointer">
+                <span className="mr-2">📅</span>
+                Google Calendar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadICS} className="cursor-pointer">
+                <span className="mr-2">🍎</span>
+                Apple Calendar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadICS} className="cursor-pointer">
+                <span className="mr-2">📧</span>
+                Outlook
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Action Buttons */}
           <div className="space-y-3 pt-4">
