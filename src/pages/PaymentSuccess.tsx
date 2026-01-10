@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, Calendar, Clock, Users, Mail, Loader2, XCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, Calendar, Clock, Users, Mail, Loader2, XCircle, AlertTriangle, Star } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBooking } from "@/contexts/BookingContext";
 import { useEffect, useState } from "react";
@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ReviewDialog } from "@/components/ReviewDialog";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ const PaymentSuccess = () => {
   const [showContent, setShowContent] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
@@ -358,6 +361,19 @@ const PaymentSuccess = () => {
 
           {/* Action Buttons */}
           <div className="space-y-3 pt-4">
+            {/* Leave a Review Button */}
+            {!hasReviewed && user && (
+              <Button
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={() => setShowReviewDialog(true)}
+              >
+                <Star className="h-5 w-5 mr-2" />
+                Leave a Review
+              </Button>
+            )}
+
             <Button 
               variant="gradient" 
               className="w-full" 
@@ -408,6 +424,17 @@ const PaymentSuccess = () => {
           </div>
         </div>
       </div>
+
+      {/* Review Dialog */}
+      <ReviewDialog
+        open={showReviewDialog}
+        onOpenChange={setShowReviewDialog}
+        bookingId={bookingData.bookingId}
+        vendorProfileId={bookingData.vendorProfileId}
+        experienceName={bookingData.experienceName}
+        userId={user?.id}
+        onReviewSubmitted={() => setHasReviewed(true)}
+      />
     </div>
   );
 };
