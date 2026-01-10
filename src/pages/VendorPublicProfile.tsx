@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import InteractiveSelector from '@/components/ui/interactive-selector';
 import PriceComparison from '@/components/PriceComparison';
+import { VendorReviews } from '@/components/VendorReviews';
 import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
 
 interface PriceTier {
@@ -384,12 +385,15 @@ const VendorPublicProfile = () => {
             </div>
           )}
 
-          {/* Guest Reviews */}
+          {/* Stackd Guest Reviews */}
+          <VendorReviews vendorProfileId={profile.id} />
+
+          {/* Airbnb Guest Reviews */}
           {profile.airbnb_reviews && profile.airbnb_reviews.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Guest Reviews
+                Airbnb Reviews
               </h2>
               <div className="space-y-3">
                 {profile.airbnb_reviews.map((review, index) => (
