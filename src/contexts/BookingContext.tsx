@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 export interface BookingData {
+  bookingId?: string; // Database booking ID for cancellations
   experienceId: string;
   experienceName: string;
+  vendorProfileId?: string; // Vendor profile ID for cancellation policy lookup
   vendorName: string;
   date: string;
   time: string;
@@ -13,6 +15,7 @@ export interface BookingData {
   promoCode?: string;
   discountAmount?: number;
   finalPrice?: number;
+  cancellationHours?: number; // Vendor's cancellation policy in hours
 }
 
 // SECURITY: Payment card data removed entirely - should use tokenized payment processor
@@ -31,8 +34,10 @@ interface BookingContextType {
 }
 
 const initialBookingData: BookingData = {
+  bookingId: undefined,
   experienceId: '',
   experienceName: '',
+  vendorProfileId: undefined,
   vendorName: '',
   date: '',
   time: '',
@@ -43,6 +48,7 @@ const initialBookingData: BookingData = {
   promoCode: undefined,
   discountAmount: undefined,
   finalPrice: undefined,
+  cancellationHours: undefined,
 };
 
 const initialGuestData: GuestData = {

@@ -17,8 +17,8 @@ serve(async (req) => {
   }
 
   try {
-    const { bookingId, reason } = await req.json();
-    logStep("Cancellation request received", { bookingId, reason });
+    const { bookingId, reason, guestCancellation } = await req.json();
+    logStep("Cancellation request received", { bookingId, reason, guestCancellation });
 
     if (!bookingId) {
       throw new Error("Booking ID is required");
@@ -48,6 +48,49 @@ serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // If this is a guest-initiated cancellation, check the vendor's cancellation policy
+    if (guestCancellation && booking.vendor_profile_id) {
+      const { data: vendorProfile, error: vendorError } = await supabaseAdmin
+        .from("vendor_profiles")
+        .select("cancellation_hours, name")
+        .eq("id", booking.vendor_profile_id)
+        .single();
+
+      if (vendorError) {
+        logStep("Failed to fetch vendor profile", { error: vendorError.message });
+        throw new Error("Failed to verify cancellation policy");
+      }
+
+      const cancellationHours = vendorProfile?.cancellation_hours ?? 24;
+      
+      // Parse booking date and time to create a datetime
+      const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time || '00:00'}:00`);
+      const now = new Date();
+      const hoursUntilBooking = (bookingDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      logStep("Checking cancellation window", { 
+        bookingDateTime: bookingDateTime.toISOString(), 
+        now: now.toISOString(),
+        hoursUntilBooking,
+        cancellationHours
+      });
+
+      if (hoursUntilBooking < cancellationHours) {
+        const message = `Cancellation is not allowed within ${cancellationHours} hours of the booking. Your booking is in ${Math.max(0, Math.floor(hoursUntilBooking))} hours.`;
+        logStep("Cancellation denied - within policy window", { message });
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: "CANCELLATION_WINDOW_EXPIRED",
+          message,
+          cancellationHours,
+          hoursUntilBooking: Math.floor(hoursUntilBooking)
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Update booking status

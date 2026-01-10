@@ -285,6 +285,7 @@ export type Database = {
           age_restriction: string
           airbnb_experience_url: string | null
           airbnb_reviews: Json | null
+          cancellation_hours: number
           category: string
           commission_percentage: number | null
           created_at: string
@@ -317,6 +318,7 @@ export type Database = {
           age_restriction?: string
           airbnb_experience_url?: string | null
           airbnb_reviews?: Json | null
+          cancellation_hours?: number
           category: string
           commission_percentage?: number | null
           created_at?: string
@@ -349,6 +351,7 @@ export type Database = {
           age_restriction?: string
           airbnb_experience_url?: string | null
           airbnb_reviews?: Json | null
+          cancellation_hours?: number
           category?: string
           commission_percentage?: number | null
           created_at?: string
