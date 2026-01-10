@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap, Home, Settings, LogOut } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -125,6 +126,7 @@ const AppView = () => {
   const [myBusinesses, setMyBusinesses] = useState<Vendor[]>([]);
   const [vendorRestaurants, setVendorRestaurants] = useState<VendorProfile[]>([]);
   const [vendorExperiences, setVendorExperiences] = useState<VendorProfile[]>([]);
+  const [isLoadingVendors, setIsLoadingVendors] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -160,6 +162,7 @@ const AppView = () => {
 
   const fetchPublishedVendors = async () => {
     try {
+      setIsLoadingVendors(true);
       const { data, error } = await supabase
         .from('vendor_profiles')
         .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
@@ -172,6 +175,8 @@ const AppView = () => {
       setVendorExperiences(vendors.filter(v => v.listing_type === 'experience'));
     } catch (error) {
       console.error('Error fetching published vendors:', error);
+    } finally {
+      setIsLoadingVendors(false);
     }
   };
 
@@ -435,78 +440,91 @@ const AppView = () => {
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                   <div className="flex gap-3 w-max pb-2">
-                    {/* Vendor restaurants first */}
-                    {vendorRestaurants.map((vendor) => (
-                      <Link
-                        key={vendor.id}
-                        to={`/vendor/${vendor.id}`}
-                        className="flex-shrink-0 w-36"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          {vendor.photos && vendor.photos.length > 0 ? (
-                            <img
-                              src={vendor.photos[0]}
-                              alt={vendor.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-                              <Store className="h-8 w-8 text-white/80" />
-                            </div>
-                          )}
-                          <button
-                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
-                            className="absolute top-2 right-2 z-10"
+                    {isLoadingVendors ? (
+                      // Show skeleton loading states
+                      <>
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="flex-shrink-0 w-36">
+                            <Skeleton className="aspect-square rounded-xl" />
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {/* Vendor restaurants first */}
+                        {vendorRestaurants.map((vendor) => (
+                          <Link
+                            key={vendor.id}
+                            to={`/vendor/${vendor.id}`}
+                            className="flex-shrink-0 w-36"
                           >
-                            <Heart
-                              className={`h-5 w-5 drop-shadow-md ${
-                                vendorFavorites.includes(vendor.id)
-                                  ? "fill-red-500 text-red-500"
-                                  : "fill-black/40 text-white"
-                              }`}
-                            />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {vendor.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{vendor.google_rating}</span>
-                                  <span>•</span>
-                                </>
+                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                              {vendor.photos && vendor.photos.length > 0 ? (
+                                <img
+                                  src={vendor.photos[0]}
+                                  alt={vendor.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+                                  <Store className="h-8 w-8 text-white/80" />
+                                </div>
                               )}
-                              <span>{vendor.category}</span>
+                              <button
+                                onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                                className="absolute top-2 right-2 z-10"
+                              >
+                                <Heart
+                                  className={`h-5 w-5 drop-shadow-md ${
+                                    vendorFavorites.includes(vendor.id)
+                                      ? "fill-red-500 text-red-500"
+                                      : "fill-black/40 text-white"
+                                  }`}
+                                />
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                  {vendor.google_rating && (
+                                    <>
+                                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                      <span>{vendor.google_rating}</span>
+                                      <span>•</span>
+                                    </>
+                                  )}
+                                  <span>{vendor.category}</span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                    {/* Mock restaurants */}
-                    {restaurants.map((restaurant) => (
-                      <Link
-                        key={restaurant.id}
-                        to={`/restaurant/${restaurant.id}`}
-                        className="flex-shrink-0 w-36"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          <img
-                            src={restaurant.photos[0]}
-                            alt={restaurant.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                              <span>{restaurant.rating}</span>
-                              <span>•</span>
-                              <span>{restaurant.priceRange}</span>
+                          </Link>
+                        ))}
+                        {/* Mock restaurants only as fallback when no real vendors */}
+                        {vendorRestaurants.length === 0 && restaurants.map((restaurant) => (
+                          <Link
+                            key={restaurant.id}
+                            to={`/restaurant/${restaurant.id}`}
+                            className="flex-shrink-0 w-36"
+                          >
+                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                              <img
+                                src={restaurant.photos[0]}
+                                alt={restaurant.name}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
+                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{restaurant.rating}</span>
+                                  <span>•</span>
+                                  <span>{restaurant.priceRange}</span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                          </Link>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
               </section>
@@ -521,90 +539,103 @@ const AppView = () => {
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                   <div className="flex gap-3 w-max pb-2">
-                    {/* Vendor experiences first */}
-                    {vendorExperiences.map((vendor) => (
-                      <Link
-                        key={vendor.id}
-                        to={`/vendor/${vendor.id}`}
-                        className="flex-shrink-0 w-36"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          {vendor.photos && vendor.photos.length > 0 ? (
-                            <img
-                              src={vendor.photos[0]}
-                              alt={vendor.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-                              <Store className="h-8 w-8 text-white/80" />
-                            </div>
-                          )}
-                          <button
-                            onClick={(e) => toggleVendorFavorite(vendor.id, e)}
-                            className="absolute top-2 right-2 z-10"
+                    {isLoadingVendors ? (
+                      // Show skeleton loading states
+                      <>
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="flex-shrink-0 w-36">
+                            <Skeleton className="aspect-square rounded-xl" />
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {/* Vendor experiences first */}
+                        {vendorExperiences.map((vendor) => (
+                          <Link
+                            key={vendor.id}
+                            to={`/vendor/${vendor.id}`}
+                            className="flex-shrink-0 w-36"
                           >
-                            <Heart
-                              className={`h-5 w-5 drop-shadow-md ${
-                                vendorFavorites.includes(vendor.id)
-                                  ? "fill-red-500 text-red-500"
-                                  : "fill-black/40 text-white"
-                              }`}
-                            />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {vendor.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{vendor.google_rating}</span>
-                                  <span>•</span>
-                                </>
+                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                              {vendor.photos && vendor.photos.length > 0 ? (
+                                <img
+                                  src={vendor.photos[0]}
+                                  alt={vendor.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+                                  <Store className="h-8 w-8 text-white/80" />
+                                </div>
                               )}
-                              {vendor.price_per_person && <span>${vendor.price_per_person}</span>}
+                              <button
+                                onClick={(e) => toggleVendorFavorite(vendor.id, e)}
+                                className="absolute top-2 right-2 z-10"
+                              >
+                                <Heart
+                                  className={`h-5 w-5 drop-shadow-md ${
+                                    vendorFavorites.includes(vendor.id)
+                                      ? "fill-red-500 text-red-500"
+                                      : "fill-black/40 text-white"
+                                  }`}
+                                />
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                  {vendor.google_rating && (
+                                    <>
+                                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                      <span>{vendor.google_rating}</span>
+                                      <span>•</span>
+                                    </>
+                                  )}
+                                  {vendor.price_per_person && <span>${vendor.price_per_person}</span>}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                    {/* Mock experiences */}
-                    {popularExperiences.map((experience: any) => (
-                      <Link
-                        key={experience.id}
-                        to={`/experience/${experience.id}`}
-                        className="flex-shrink-0 w-36"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          <img
-                            src={getExperienceImage(experience)}
-                            alt={experience.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            onClick={(e) => toggleFavorite(experience.id, e)}
-                            className="absolute top-2 right-2 z-10"
+                          </Link>
+                        ))}
+                        {/* Mock experiences only as fallback when no real vendors */}
+                        {vendorExperiences.length === 0 && popularExperiences.map((experience: any) => (
+                          <Link
+                            key={experience.id}
+                            to={`/experience/${experience.id}`}
+                            className="flex-shrink-0 w-36"
                           >
-                            <Heart
-                              className={`h-5 w-5 drop-shadow-md ${
-                                favorites.includes(experience.id)
-                                  ? "fill-red-500 text-red-500"
-                                  : "fill-black/40 text-white"
-                              }`}
-                            />
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                              <span>{experience.rating}</span>
-                              <span>•</span>
-                              <span>${experience.price}</span>
+                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                              <img
+                                src={getExperienceImage(experience)}
+                                alt={experience.name}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                onClick={(e) => toggleFavorite(experience.id, e)}
+                                className="absolute top-2 right-2 z-10"
+                              >
+                                <Heart
+                                  className={`h-5 w-5 drop-shadow-md ${
+                                    favorites.includes(experience.id)
+                                      ? "fill-red-500 text-red-500"
+                                      : "fill-black/40 text-white"
+                                  }`}
+                                />
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
+                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{experience.rating}</span>
+                                  <span>•</span>
+                                  <span>${experience.price}</span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                          </Link>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
               </section>
