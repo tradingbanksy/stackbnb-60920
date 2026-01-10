@@ -1,15 +1,33 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, CalendarCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, CalendarCheck, X } from "lucide-react";
 import VendorBottomNav from "@/components/VendorBottomNav";
 import { useSmartBack } from "@/hooks/use-smart-back";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const AllBookings = () => {
   const goBack = useSmartBack("/vendor/dashboard");
   const { user } = useAuthContext();
+  const queryClient = useQueryClient();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ['vendorAllBookings', user?.id],
@@ -46,6 +64,41 @@ const AllBookings = () => {
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
   });
+
+  const cancelMutation = useMutation({
+    mutationFn: async ({ bookingId, reason }: { bookingId: string; reason: string }) => {
+      const response = await supabase.functions.invoke('cancel-booking', {
+        body: { bookingId, reason },
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to cancel booking');
+      }
+      
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Booking cancelled successfully');
+      queryClient.invalidateQueries({ queryKey: ['vendorAllBookings'] });
+      setCancelDialogOpen(false);
+      setSelectedBooking(null);
+      setCancelReason("");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to cancel booking');
+    },
+  });
+
+  const handleCancelClick = (booking: any) => {
+    setSelectedBooking(booking);
+    setCancelDialogOpen(true);
+  };
+
+  const handleConfirmCancel = () => {
+    if (selectedBooking) {
+      cancelMutation.mutate({ bookingId: selectedBooking.id, reason: cancelReason });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -91,7 +144,7 @@ const AllBookings = () => {
             bookings.map((booking) => (
               <Card
                 key={booking.id}
-                className="p-4 hover:shadow-xl transition-all duration-200 hover:scale-[1.01] active:scale-95"
+                className="p-4 hover:shadow-xl transition-all duration-200 hover:scale-[1.01]"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -117,18 +170,61 @@ const AllBookings = () => {
                           ? 'bg-green-500/10 text-green-600' 
                           : booking.status === 'pending'
                           ? 'bg-yellow-500/10 text-yellow-600'
+                          : booking.status === 'cancelled'
+                          ? 'bg-red-500/10 text-red-600'
                           : 'bg-muted text-muted-foreground'
                       }`}>
                         {booking.status}
                       </span>
                     </div>
                   </div>
+                  {booking.status !== 'cancelled' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                      onClick={() => handleCancelClick(booking)}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Cancel Booking
+                    </Button>
+                  )}
                 </div>
               </Card>
             ))
           )}
         </div>
       </div>
+
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this booking for "{selectedBooking?.service}"? 
+              This action cannot be undone and notifications will be sent to the guest.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Textarea
+              placeholder="Reason for cancellation (optional)"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCancelReason("")}>Keep Booking</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? "Cancelling..." : "Cancel Booking"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <VendorBottomNav />
     </div>

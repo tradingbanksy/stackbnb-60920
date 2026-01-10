@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 interface BookingNotification {
-  type: "booking" | "promo_used" | "vendor_booking" | "guest_confirmation" | "booking_reminder" | "host_commission";
+  type: "booking" | "promo_used" | "vendor_booking" | "guest_confirmation" | "booking_reminder" | "host_commission" | "guest_cancellation" | "vendor_cancellation";
   experienceName?: string;
   vendorName?: string;
   vendorEmail?: string;
@@ -27,6 +27,7 @@ interface BookingNotification {
   promoCode?: string;
   discountAmount?: number;
   originalAmount?: number;
+  reason?: string;
 }
 
 const ADMIN_EMAIL = "admin@stackd.app"; // Change this to actual admin email
@@ -404,6 +405,136 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("[ADMIN-NOTIFICATION] Host commission email sent:", hostEmailResponse);
 
       return new Response(JSON.stringify({ success: true, emailResponse: hostEmailResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } else if (notification.type === "guest_cancellation") {
+      // Guest cancellation notification
+      subject = `❌ Booking Cancelled: ${notification.experienceName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #dc2626; margin-bottom: 10px;">❌ Booking Cancelled</h1>
+            <p style="color: #64748b; font-size: 16px; margin: 0;">We're sorry to inform you that your booking has been cancelled.</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #fecaca;">
+            <h2 style="margin: 0 0 20px 0; color: #1e293b; font-size: 22px;">${notification.experienceName}</h2>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+              ${notification.vendorName ? `
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Vendor</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.vendorName}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Date</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.date}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Time</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.time}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Guests</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.guests}</td>
+              </tr>
+              <tr style="border-top: 2px solid #fecaca;">
+                <td style="padding: 12px 0; font-weight: 600; font-size: 16px;">Amount</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: 600; font-size: 16px;">$${notification.totalAmount?.toFixed(2)} ${notification.currency?.toUpperCase()}</td>
+              </tr>
+            </table>
+          </div>
+          
+          ${notification.reason ? `
+          <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Reason:</strong> ${notification.reason}</p>
+          </div>
+          ` : ''}
+          
+          <div style="background: #fffbeb; border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid #fde68a;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+              <strong>💰 Refund:</strong> If you paid for this booking, a refund will be processed to your original payment method within 5-10 business days.
+            </p>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; text-align: center;">We hope to see you again soon!</p>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center;">This is an automated notification from Stackd.</p>
+        </div>
+      `;
+
+      const guestCancelEmailResponse = await resend.emails.send({
+        from: "Stackd <notifications@resend.dev>",
+        to: [notification.guestEmail!],
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("[ADMIN-NOTIFICATION] Guest cancellation email sent:", guestCancelEmailResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: guestCancelEmailResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } else if (notification.type === "vendor_cancellation") {
+      // Vendor cancellation notification
+      subject = `⚠️ Booking Cancelled: ${notification.experienceName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #f97316; margin-bottom: 10px;">⚠️ Booking Cancelled</h1>
+            <p style="color: #64748b; font-size: 16px; margin: 0;">A booking for your experience has been cancelled.</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #fed7aa;">
+            <h2 style="margin: 0 0 20px 0; color: #1e293b; font-size: 22px;">${notification.experienceName}</h2>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Guest</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.guestEmail || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Date</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.date}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Time</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.time}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Guests</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 600;">${notification.guests}</td>
+              </tr>
+              <tr style="border-top: 2px solid #fed7aa;">
+                <td style="padding: 12px 0; color: #dc2626; font-weight: 600; font-size: 16px;">Lost Payout</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: 600; font-size: 16px; color: #dc2626;">$${notification.vendorPayoutAmount?.toFixed(2)} ${notification.currency?.toUpperCase()}</td>
+              </tr>
+            </table>
+          </div>
+          
+          ${notification.reason ? `
+          <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Reason:</strong> ${notification.reason}</p>
+          </div>
+          ` : ''}
+          
+          <p style="color: #64748b; font-size: 14px; text-align: center;">This time slot is now available for other guests.</p>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center;">This is an automated notification from Stackd.</p>
+        </div>
+      `;
+
+      const vendorCancelEmailResponse = await resend.emails.send({
+        from: "Stackd <notifications@resend.dev>",
+        to: [notification.vendorEmail!],
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("[ADMIN-NOTIFICATION] Vendor cancellation email sent:", vendorCancelEmailResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: vendorCancelEmailResponse }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
