@@ -178,7 +178,7 @@ const PaymentPage = () => {
         <div className="px-4 py-6 space-y-6">
           {/* Header */}
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold">Confirm & Pay</h1>
+            <h1 className="text-2xl font-medium">Confirm & Pay</h1>
             <p className="text-sm text-muted-foreground">Review your booking and complete payment</p>
           </div>
 
