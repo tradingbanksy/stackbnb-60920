@@ -240,7 +240,7 @@ const VendorBookingForm = () => {
         <div className="px-4 py-6 space-y-6">
           {/* Header */}
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold">Book Your Experience</h1>
+            <h1 className="text-2xl font-medium">Book Your Experience</h1>
             <p className="text-sm text-muted-foreground">Complete your booking details</p>
           </div>
 
