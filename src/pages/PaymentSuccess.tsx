@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, Calendar, Clock, Users, Mail, Loader2, XCircle, AlertTriangle, Star } from "lucide-react";
+import { CheckCircle, Calendar, Clock, Users, Mail, Loader2, XCircle, AlertTriangle, Star, CalendarPlus, ChevronDown } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBooking } from "@/contexts/BookingContext";
 import { useEffect, useState } from "react";
@@ -18,6 +18,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewDialog } from "@/components/ReviewDialog";
 
@@ -180,6 +186,73 @@ const PaymentSuccess = () => {
     } finally {
       setIsCancelling(false);
     }
+  };
+
+  // Calendar helper functions
+  const formatDateForCalendar = (dateStr: string, timeStr: string) => {
+    const date = new Date(dateStr);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    date.setHours(hours || 9, minutes || 0, 0, 0);
+    return date;
+  };
+
+  const generateGoogleCalendarUrl = () => {
+    if (!bookingData.date || !bookingData.time) return '';
+    const startDate = formatDateForCalendar(bookingData.date, bookingData.time);
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+
+    const formatDate = (date: Date) => 
+      date.toISOString().replace(/-|:|\.\d{3}/g, '');
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: bookingData.experienceName || 'Experience Booking',
+      dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
+      details: `Guests: ${bookingData.guests}\nTotal: $${bookingData.totalPrice}`,
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  };
+
+  const generateICSContent = () => {
+    if (!bookingData.date || !bookingData.time) return '';
+    const startDate = formatDateForCalendar(bookingData.date, bookingData.time);
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+
+    const formatDate = (date: Date) => 
+      date.toISOString().replace(/-|:|\.\d{3}/g, '').slice(0, 15) + 'Z';
+
+    return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Stackd//Booking//EN
+BEGIN:VEVENT
+UID:${Date.now()}@stackd.app
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${formatDate(startDate)}
+DTEND:${formatDate(endDate)}
+SUMMARY:${bookingData.experienceName || 'Experience Booking'}
+DESCRIPTION:Guests: ${bookingData.guests}\\nTotal: $${bookingData.totalPrice}
+END:VEVENT
+END:VCALENDAR`;
+  };
+
+  const downloadICS = () => {
+    const icsContent = generateICSContent();
+    if (!icsContent) return;
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(bookingData.experienceName || 'booking').replace(/\s+/g, '-')}-booking.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const openGoogleCalendar = () => {
+    const url = generateGoogleCalendarUrl();
+    if (url) window.open(url, '_blank');
   };
 
   if (isLoading) {
@@ -361,6 +434,33 @@ const PaymentSuccess = () => {
 
           {/* Action Buttons */}
           <div className="space-y-3 pt-4">
+            {/* Add to Calendar */}
+            {bookingData.date && bookingData.time && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2" 
+                    size="lg"
+                  >
+                    <CalendarPlus className="h-5 w-5" />
+                    Add to Calendar
+                    <ChevronDown className="h-4 w-4 ml-auto" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[calc(100vw-2rem)] max-w-[343px]">
+                  <DropdownMenuItem onClick={openGoogleCalendar} className="cursor-pointer">
+                    <span className="mr-2">📅</span>
+                    Google Calendar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={downloadICS} className="cursor-pointer">
+                    <span className="mr-2">🍎</span>
+                    Apple Calendar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* Leave a Review Button */}
             {!hasReviewed && user && (
               <Button
