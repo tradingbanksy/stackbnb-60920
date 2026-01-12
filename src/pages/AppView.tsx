@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 import type { Vendor } from "@/types";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -241,7 +242,7 @@ const AppView = () => {
   ).slice(0, 10);
 
   return (
-    <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
+    <PageTransition className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
       {/* Phone Container - Centered & Constrained */}
       <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative">
         
@@ -1253,7 +1254,7 @@ const AppView = () => {
           </div>
         </nav>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 

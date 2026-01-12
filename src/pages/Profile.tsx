@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, User, LogOut } from "lucide-react";
 import { profileSchema, type ProfileFormData } from "@/lib/validations";
+import { PageTransition } from "@/components/PageTransition";
 import {
   Form,
   FormControl,
@@ -128,7 +129,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <PageTransition className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <Button
@@ -246,7 +247,7 @@ const Profile = () => {
           </Form>
         </Card>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 

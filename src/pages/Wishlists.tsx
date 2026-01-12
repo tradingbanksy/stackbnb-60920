@@ -12,6 +12,7 @@ import { experiences } from "@/data/mockData";
 import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageTransition } from "@/components/PageTransition";
 
 // Experience images
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -302,7 +303,7 @@ const Wishlists = () => {
       .filter((e) => e.id);
 
     return (
-      <div className="min-h-screen bg-background">
+      <PageTransition className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => setSelectedWishlist(null)}>
@@ -351,13 +352,13 @@ const Wishlists = () => {
             </div>
           )}
         </main>
-      </div>
+      </PageTransition>
     );
   }
 
   // Main favorites view with tabs
   return (
-    <div className="min-h-screen bg-background">
+    <PageTransition className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={handleBack}>
@@ -611,7 +612,7 @@ const Wishlists = () => {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </PageTransition>
   );
 };
 

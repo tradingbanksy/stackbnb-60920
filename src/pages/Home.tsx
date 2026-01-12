@@ -25,6 +25,7 @@ import stackdLogo from "@/assets/stackd-logo-new.png";
 import MinimalDock from "@/components/ui/minimal-dock";
 import { Footerdemo } from "@/components/ui/footer-section";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PageTransition } from "@/components/PageTransition";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -140,7 +141,7 @@ const Home = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageTransition className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background image with blur and overlay */}
@@ -522,7 +523,7 @@ const Home = () => {
 
       {/* Footer */}
       <Footerdemo />
-    </div>
+    </PageTransition>
   );
 };
 
