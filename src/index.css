@@ -113,6 +113,18 @@ All colors MUST be HSL.
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Safe area padding for mobile devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
   }
   
   h1 {
@@ -151,5 +163,25 @@ All colors MUST be HSL.
   .font-display {
     font-family: 'Orbitron', 'Roboto', sans-serif;
     letter-spacing: 0.05em;
+  }
+  
+  /* Touch targets for mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Momentum scrolling for iOS */
+  .scroll-smooth {
+    -webkit-overflow-scrolling: touch;
   }
 }

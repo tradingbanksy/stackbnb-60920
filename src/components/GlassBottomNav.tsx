@@ -1,28 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { LucideIcon } from "lucide-react";
 
-const HostBottomNav = () => {
+interface NavItem {
+  name: string;
+  path: string;
+  icon: LucideIcon;
+  badge?: number;
+  badgeContent?: React.ReactNode;
+}
+
+interface GlassBottomNavProps {
+  items: NavItem[];
+  maxWidth?: string;
+}
+
+const GlassBottomNav = ({ items, maxWidth = "max-w-[375px]" }: GlassBottomNavProps) => {
   const location = useLocation();
-  
-  const navItems = [
-    { 
-      name: "Dashboard", 
-      path: "/host/dashboard", 
-      icon: LayoutDashboard 
-    },
-    { 
-      name: "Vendors", 
-      path: "/host/vendors", 
-      icon: Users 
-    },
-    { 
-      name: "Profile", 
-      path: "/host/profile", 
-      icon: UserCircle 
-    },
-  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
@@ -35,11 +30,11 @@ const HostBottomNav = () => {
         <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         
         {/* Content */}
-        <div className="relative flex justify-around items-center h-16 max-w-[375px] mx-auto">
-          {navItems.map((item) => {
+        <div className={cn("relative flex justify-around items-center h-16 mx-auto", maxWidth)}>
+          {items.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || 
-              (item.path !== "/host/dashboard" && location.pathname.startsWith(item.path));
+              (item.path !== "/" && location.pathname.startsWith(item.path));
 
             return (
               <Link
@@ -56,7 +51,7 @@ const HostBottomNav = () => {
                 {/* Active indicator dot */}
                 {isActive && (
                   <motion.div
-                    layoutId="hostNavIndicator"
+                    layoutId="activeNavIndicator"
                     className="absolute -top-0.5 h-1 w-1 rounded-full bg-primary"
                     initial={false}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -66,8 +61,21 @@ const HostBottomNav = () => {
                 <motion.div
                   animate={isActive ? { scale: 1.1 } : { scale: 1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="relative"
                 >
                   <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+                  
+                  {/* Badge */}
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-2 h-4 min-w-4 px-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full text-[9px] text-white font-bold flex items-center justify-center"
+                    >
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </motion.div>
+                  )}
+                  {item.badgeContent}
                 </motion.div>
                 
                 <span className={cn(
@@ -85,4 +93,4 @@ const HostBottomNav = () => {
   );
 };
 
-export default HostBottomNav;
+export default GlassBottomNav;

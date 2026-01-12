@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import type { Vendor } from "@/types";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -115,6 +116,7 @@ const AppView = () => {
     return '/profile';
   }, [role]);
   const navigate = useNavigate();
+  const location = useLocation();
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
@@ -1166,57 +1168,88 @@ const AppView = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Bottom Navigation - Fixed within container */}
-        <nav className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
-          <div className="flex justify-around items-center h-14">
-            <Link
-              to="/wishlists"
-              className="relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
-            >
-              <Heart className="h-5 w-5" />
-              <span className="text-[9px]">Wishlists</span>
-              {favorites.length > 0 && (
-                <div className="absolute top-1 right-1/4 h-3.5 w-3.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center">
-                  {favorites.length}
-                </div>
-              )}
-            </Link>
-
-            <Link 
-              to="/trip-planner"
-              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
-            >
-              <Sparkles className="h-5 w-5" />
-              <span className="text-[9px]">AI</span>
-            </Link>
-
-            <Link 
-              to={profileRoute}
-              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground relative"
-            >
-              <div className="relative">
-                <User className="h-5 w-5" />
-                {role && (
-                  <span className={cn(
-                    "absolute -bottom-0.5 -right-1.5 text-[6px] font-bold px-0.5 rounded-full",
-                    role === 'host' ? "bg-orange-500 text-white" :
-                    role === 'vendor' ? "bg-purple-500 text-white" :
-                    "bg-muted text-muted-foreground"
-                  )}>
-                    {role === 'host' ? 'H' : role === 'vendor' ? 'V' : 'U'}
-                  </span>
-                )}
-              </div>
-              <span className="text-[9px]">Profile</span>
-            </Link>
-
-            <Link 
-              to="/home"
-              className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-muted-foreground"
-            >
-              <Monitor className="h-5 w-5" />
-              <span className="text-[9px]">Browser</span>
-            </Link>
+        {/* Bottom Navigation - Fixed within container with glass effect */}
+        <nav className="absolute bottom-0 left-0 right-0 z-50 pb-safe">
+          {/* Glass effect container */}
+          <div className="relative">
+            {/* Frosted glass background */}
+            <div className="absolute inset-0 bg-card/80 backdrop-blur-xl border-t border-white/10 dark:border-white/5" />
+            
+            {/* Gradient glow effect */}
+            <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            
+            {/* Content */}
+            <div className="relative flex justify-around items-center h-14">
+              {[
+                { to: "/wishlists", icon: Heart, label: "Wishlists", badge: favorites.length },
+                { to: "/trip-planner", icon: Sparkles, label: "AI" },
+                { to: profileRoute, icon: User, label: "Profile", roleBadge: role },
+                { to: "/home", icon: Monitor, label: "Browser" },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.to;
+                
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-300",
+                      "active:scale-90 touch-manipulation",
+                      isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {/* Active indicator dot */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="appNavIndicator"
+                        className="absolute -top-0.5 h-1 w-1 rounded-full bg-primary"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                    
+                    <motion.div
+                      animate={isActive ? { scale: 1.1 } : { scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      className="relative"
+                    >
+                      <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+                      
+                      {/* Favorites badge */}
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-2 h-3.5 w-3.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center"
+                        >
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </motion.div>
+                      )}
+                      
+                      {/* Role badge */}
+                      {item.roleBadge && (
+                        <span className={cn(
+                          "absolute -bottom-0.5 -right-1.5 text-[6px] font-bold px-0.5 rounded-full",
+                          item.roleBadge === 'host' ? "bg-orange-500 text-white" :
+                          item.roleBadge === 'vendor' ? "bg-purple-500 text-white" :
+                          "bg-muted text-muted-foreground"
+                        )}>
+                          {item.roleBadge === 'host' ? 'H' : item.roleBadge === 'vendor' ? 'V' : 'U'}
+                        </span>
+                      )}
+                    </motion.div>
+                    
+                    <span className={cn(
+                      "text-[9px] transition-all duration-200",
+                      isActive ? "font-semibold" : "font-medium"
+                    )}>
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </nav>
       </div>
