@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import VendorBottomNav from "@/components/VendorBottomNav";
+import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -159,7 +160,7 @@ const VendorDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
+    <PageTransition className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
       <div className="max-w-[375px] mx-auto">
         {/* Hero Header with Gradient */}
         <div className="bg-gradient-to-br from-orange-500 to-pink-500 px-4 pt-6 pb-20 rounded-b-3xl shadow-lg relative overflow-hidden">
@@ -367,7 +368,7 @@ const VendorDashboard = () => {
       </div>
 
       <VendorBottomNav />
-    </div>
+    </PageTransition>
   );
 };
 

@@ -7,6 +7,7 @@ import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUp
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import HostBottomNav from "@/components/HostBottomNav";
+import { PageTransition } from "@/components/PageTransition";
 import { dashboardStats, recentBookings } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -107,7 +108,7 @@ const HostDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
+    <PageTransition className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
       <div className="max-w-[375px] mx-auto">
         {/* Hero Header with Gradient */}
         <div className="bg-gradient-to-br from-orange-500 to-pink-500 px-4 pt-6 pb-20 rounded-b-3xl shadow-lg relative overflow-hidden">
@@ -342,7 +343,7 @@ const HostDashboard = () => {
       </div>
 
       <HostBottomNav />
-    </div>
+    </PageTransition>
   );
 };
 

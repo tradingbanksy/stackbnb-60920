@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import TripPlannerChatUI from "@/components/ui/trip-planner-chat-ui";
+import { PageTransition } from "@/components/PageTransition";
 
 interface Message {
   role: "user" | "assistant";
@@ -198,12 +199,14 @@ const TripPlannerChat = () => {
   };
 
   return (
-    <TripPlannerChatUI
-      messages={messages}
-      isLoading={isLoading}
-      onSendMessage={sendMessage}
-      hostVendors={hostVendors}
-    />
+    <PageTransition>
+      <TripPlannerChatUI
+        messages={messages}
+        isLoading={isLoading}
+        onSendMessage={sendMessage}
+        hostVendors={hostVendors}
+      />
+    </PageTransition>
   );
 };
 

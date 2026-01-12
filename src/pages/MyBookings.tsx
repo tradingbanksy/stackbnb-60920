@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSmartBack } from "@/hooks/use-smart-back";
+import { PageTransition } from "@/components/PageTransition";
 
 interface Booking {
   id: string;
@@ -157,7 +158,7 @@ END:VCALENDAR`;
   }
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <PageTransition className="min-h-screen bg-background pb-8">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
         <button 
           onClick={goBack}
@@ -262,7 +263,7 @@ END:VCALENDAR`;
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 };
 
