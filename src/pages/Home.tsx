@@ -26,6 +26,7 @@ import MinimalDock from "@/components/ui/minimal-dock";
 import { Footerdemo } from "@/components/ui/footer-section";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PageTransition } from "@/components/PageTransition";
+import { ParallaxHero, ParallaxCard } from "@/components/ParallaxContainer";
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
 import bikesImg from "@/assets/experiences/bikes.jpg";
 import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
@@ -142,18 +143,12 @@ const Home = () => {
 
   return (
     <PageTransition className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background image with blur and overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center scale-105"
-          style={{ 
-            backgroundImage: `url(${heroImage})`,
-            filter: 'blur(2px)',
-          }}
-        />
-        <div className="absolute inset-0 bg-background/60 dark:bg-background/70" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
+      {/* Hero Section with Parallax */}
+      <ParallaxHero
+        backgroundImage={heroImage}
+        className=""
+        overlayClassName="bg-background/60 dark:bg-background/70"
+      >
 
         {/* Theme Toggle - Top Left */}
         <div className="absolute top-6 left-6 z-50">
@@ -227,7 +222,7 @@ const Home = () => {
             </p>
           </div>
         </div>
-      </section>
+      </ParallaxHero>
 
       {/* Explore Experiences Section */}
       <section className="relative bg-background py-12">
@@ -280,10 +275,11 @@ const Home = () => {
             ))}
           </div>
 
-          {/* Experiences Grid */}
+          {/* Experiences Grid with Parallax Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-12">
-            {filteredExperiences.map((experience) => (
-              <Link key={experience.id} to={`/experience/${experience.id}`} className="block group">
+            {filteredExperiences.map((experience, index) => (
+              <ParallaxCard key={experience.id} index={index} hoverLift>
+                <Link to={`/experience/${experience.id}`} className="block group">
                 <div className="space-y-2">
                   {/* Image - Half size */}
                   <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
@@ -338,7 +334,8 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
-              </Link>
+                </Link>
+              </ParallaxCard>
             ))}
           </div>
         </div>

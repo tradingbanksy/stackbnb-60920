@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 // Image imports
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -62,9 +63,10 @@ interface ExperienceCardProps {
     categoryIcon?: string;
   };
   showAddButton?: boolean;
+  index?: number;
 }
 
-export const ExperienceCard = ({ experience, showAddButton = false }: ExperienceCardProps) => {
+export const ExperienceCard = ({ experience, showAddButton = false, index = 0 }: ExperienceCardProps) => {
   const { isAuthenticated, role, isLoading: authLoading } = useAuthContext();
   const { hasRecommendation, addRecommendation, removeRecommendation } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
@@ -135,18 +137,26 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
   };
 
   return (
-    <Link
-      to={`/experience/${experience.id}`}
-      className="block group"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+      whileHover={{ y: -6, transition: { duration: 0.2 } }}
     >
-      <div className="space-y-2">
-        {/* Image */}
-        <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
-          <img
-            src={getExperienceImage(experience)}
-            alt={experience.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          />
+      <Link
+        to={`/experience/${experience.id}`}
+        className="block group"
+      >
+        <div className="space-y-2">
+          {/* Image with Parallax-like hover */}
+          <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
+            <motion.img
+              src={getExperienceImage(experience)}
+              alt={experience.name}
+              className="w-full h-full object-cover"
+              whileHover={{ scale: 1.1 }}
+              transition={{ duration: 0.6 }}
+            />
           
           {/* Add Button for Hosts - Top Left (replaces emoji badge) */}
           {shouldShowButton ? (
@@ -210,7 +220,8 @@ export const ExperienceCard = ({ experience, showAddButton = false }: Experience
           </div>
         </div>
       </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 };
 
