@@ -7,7 +7,7 @@ import { useSmartBack } from "@/hooks/use-smart-back";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonCardList } from "@/components/ui/skeleton-card";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -118,20 +118,7 @@ const AllBookings = () => {
 
         <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
           {isLoading ? (
-            <>
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
-                </Card>
-              ))}
-            </>
+            <SkeletonCardList count={4} variant="booking" />
           ) : bookings.length === 0 ? (
             <Card className="p-6 text-center">
               <CalendarCheck className="h-10 w-10 text-muted-foreground mx-auto mb-3" />

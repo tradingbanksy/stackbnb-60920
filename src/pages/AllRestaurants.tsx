@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import RestaurantFilters, { type FilterState } from "@/components/RestaurantFilters";
 import RestaurantCard from "@/components/RestaurantCard";
 import LocationSearch from "@/components/LocationSearch";
+import { SkeletonCardGrid } from "@/components/ui/skeleton-card";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import { 
   mockRestaurants, 
@@ -177,10 +178,10 @@ const AllRestaurants = () => {
         />
 
         {isLoadingPlaces ? (
-          <div className="py-12 text-center">
-            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-muted-foreground">Finding restaurants...</p>
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground">Finding restaurants...</p>
+            <SkeletonCardGrid count={8} variant="restaurant" columns={4} />
+          </>
         ) : filteredRestaurants.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-muted-foreground">No restaurants found</p>

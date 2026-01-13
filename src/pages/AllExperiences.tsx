@@ -4,7 +4,7 @@ import { ArrowLeft, Heart, Star, Search, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonCardGrid } from "@/components/ui/skeleton-card";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import stackdLogo from "@/assets/stackd-logo-new.png";
@@ -155,17 +155,7 @@ const AllExperiences = () => {
         {/* Experiences Grid */}
         <div className="grid grid-cols-2 gap-4">
           {isLoading ? (
-            // Skeleton loading states
-            <>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="aspect-square rounded-xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                  <Skeleton className="h-3 w-1/4" />
-                </div>
-              ))}
-            </>
+            <SkeletonCardGrid count={6} variant="experience" columns={2} />
           ) : filteredExperiences.length === 0 ? (
             <div className="col-span-2 text-center py-12">
               <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
