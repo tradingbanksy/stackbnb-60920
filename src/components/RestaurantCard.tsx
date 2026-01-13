@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { formatDistance } from "@/services/googleMapsService";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { BlurImage } from "@/components/BlurImage";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -90,18 +91,10 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', 
         <div className="flex gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
           {/* Image */}
           <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-            <img
+            <BlurImage
               src={restaurant.photos[0]}
               alt={restaurant.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-              decoding="async"
-              style={{ 
-                imageRendering: 'crisp-edges',
-                WebkitBackfaceVisibility: 'hidden',
-                backfaceVisibility: 'hidden',
-                transform: 'translateZ(0)'
-              }}
+              className="group-hover:scale-105 transition-transform duration-500"
             />
             <button
               onClick={toggleFavorite}
@@ -173,20 +166,12 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', 
       onClick={handleClick}
     >
       <div className={isSmall ? "space-y-1" : "space-y-2"}>
-        {/* Image */}
+        {/* Image with blur-up loading */}
         <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
-          <img
+          <BlurImage
             src={restaurant.photos[0]}
             alt={restaurant.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            decoding="async"
-            style={{ 
-              imageRendering: 'crisp-edges',
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden',
-              transform: 'translateZ(0)'
-            }}
+            className="group-hover:scale-105 transition-transform duration-500"
           />
           
           {/* Add to guide button (for hosts) - Top Left */}

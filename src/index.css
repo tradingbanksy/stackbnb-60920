@@ -184,4 +184,18 @@ All colors MUST be HSL.
   .scroll-smooth {
     -webkit-overflow-scrolling: touch;
   }
+  
+  /* Shimmer animation for image loading */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
 }

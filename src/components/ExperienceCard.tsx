@@ -6,6 +6,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { BlurImage } from "@/components/BlurImage";
 
 // Image imports
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -148,14 +149,12 @@ export const ExperienceCard = ({ experience, showAddButton = false, index = 0 }:
         className="block group"
       >
         <div className="space-y-2">
-          {/* Image with Parallax-like hover */}
-          <div className="relative aspect-square overflow-hidden rounded-xl shadow-md">
-            <motion.img
+          {/* Image with blur-up loading */}
+          <div className="relative aspect-square overflow-hidden rounded-xl shadow-md group/img">
+            <BlurImage
               src={getExperienceImage(experience)}
               alt={experience.name}
-              className="w-full h-full object-cover"
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.6 }}
+              className="group-hover/img:scale-110 transition-transform duration-600"
             />
           
           {/* Add Button for Hosts - Top Left (replaces emoji badge) */}
