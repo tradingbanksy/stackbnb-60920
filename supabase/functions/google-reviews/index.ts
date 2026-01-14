@@ -15,26 +15,6 @@ interface GoogleReview {
   time: number;
 }
 
-interface PlaceReview {
-  name?: string;
-  relativePublishTimeDescription?: string;
-  rating?: number;
-  text?: {
-    text?: string;
-    languageCode?: string;
-  };
-  originalText?: {
-    text?: string;
-    languageCode?: string;
-  };
-  authorAttribution?: {
-    displayName?: string;
-    uri?: string;
-    photoUri?: string;
-  };
-  publishTime?: string;
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -55,43 +35,26 @@ serve(async (req) => {
 
     let googlePlaceId = placeId;
 
-    // If no placeId provided, search for the place first using new Text Search API
+    // If no placeId provided, search for the place first using legacy Find Place API
     if (!googlePlaceId && searchQuery) {
       console.log('Searching for place:', searchQuery);
       
-      const searchBody: Record<string, unknown> = {
-        textQuery: searchQuery,
-        maxResultCount: 1,
-      };
+      let searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id,name,formatted_address&key=${apiKey}`;
       
       // Add location bias if coordinates provided
       if (lat && lng) {
-        searchBody.locationBias = {
-          circle: {
-            center: { latitude: lat, longitude: lng },
-            radius: 5000.0
-          }
-        };
+        searchUrl += `&locationbias=circle:5000@${lat},${lng}`;
       }
 
-      const searchResponse = await fetch('https://places.googleapis.com/v1/places:searchText', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress'
-        },
-        body: JSON.stringify(searchBody)
-      });
-      
+      const searchResponse = await fetch(searchUrl);
       const searchData = await searchResponse.json();
       console.log('Place search response:', JSON.stringify(searchData));
 
-      if (searchData.places && searchData.places.length > 0) {
-        googlePlaceId = searchData.places[0].id;
+      if (searchData.status === 'OK' && searchData.candidates && searchData.candidates.length > 0) {
+        googlePlaceId = searchData.candidates[0].place_id;
         console.log('Found place_id:', googlePlaceId);
       } else {
-        console.log('No places found for query:', searchQuery);
+        console.log('No places found for query:', searchQuery, 'Status:', searchData.status);
         return new Response(
           JSON.stringify({ 
             error: 'Place not found',
@@ -110,26 +73,20 @@ serve(async (req) => {
       );
     }
 
-    // Fetch place details with reviews using new Places API
+    // Fetch place details with reviews using legacy Places API
     console.log('Fetching place details for:', googlePlaceId);
     
-    const detailsResponse = await fetch(`https://places.googleapis.com/v1/places/${googlePlaceId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews,googleMapsUri'
-      }
-    });
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlaceId}&fields=place_id,name,rating,user_ratings_total,reviews,url&key=${apiKey}`;
     
+    const detailsResponse = await fetch(detailsUrl);
     const detailsData = await detailsResponse.json();
-    console.log('Place details response status:', detailsResponse.status);
+    console.log('Place details response status:', detailsData.status);
 
-    if (!detailsResponse.ok) {
+    if (detailsData.status !== 'OK') {
       console.error('Place details error:', JSON.stringify(detailsData));
       return new Response(
         JSON.stringify({ 
-          error: detailsData.error?.message || 'Failed to fetch place details',
+          error: detailsData.error_message || `API returned status: ${detailsData.status}`,
           reviews: [],
           googleMapsUrl: null
         }),
@@ -137,27 +94,27 @@ serve(async (req) => {
       );
     }
 
-    // Transform reviews from new API format to expected format
-    const transformedReviews: GoogleReview[] = (detailsData.reviews || []).map((review: PlaceReview) => ({
-      author_name: review.authorAttribution?.displayName || 'Anonymous',
-      author_url: review.authorAttribution?.uri,
-      profile_photo_url: review.authorAttribution?.photoUri,
+    const result = detailsData.result;
+    const reviews: GoogleReview[] = (result.reviews || []).map((review: GoogleReview) => ({
+      author_name: review.author_name || 'Anonymous',
+      author_url: review.author_url,
+      profile_photo_url: review.profile_photo_url,
       rating: review.rating || 0,
-      relative_time_description: review.relativePublishTimeDescription || '',
-      text: review.text?.text || review.originalText?.text || '',
-      time: review.publishTime ? new Date(review.publishTime).getTime() / 1000 : 0
+      relative_time_description: review.relative_time_description || '',
+      text: review.text || '',
+      time: review.time || 0
     }));
 
-    console.log(`Found ${transformedReviews.length} reviews for place`);
+    console.log(`Found ${reviews.length} reviews for place`);
     
     return new Response(
       JSON.stringify({
         placeId: googlePlaceId,
-        name: detailsData.displayName?.text,
-        rating: detailsData.rating,
-        totalReviews: detailsData.userRatingCount,
-        reviews: transformedReviews,
-        googleMapsUrl: detailsData.googleMapsUri || `https://www.google.com/maps/place/?q=place_id:${googlePlaceId}`
+        name: result.name,
+        rating: result.rating,
+        totalReviews: result.user_ratings_total,
+        reviews: reviews,
+        googleMapsUrl: result.url || `https://www.google.com/maps/place/?q=place_id:${googlePlaceId}`
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
