@@ -463,7 +463,7 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
                               {vendor.photos && vendor.photos.length > 0 ? (
                                 <BlurImage
                                   src={vendor.photos[0]}
@@ -511,7 +511,7 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
                               <BlurImage
                                 src={restaurant.photos[0]}
                                 alt={restaurant.name}
@@ -564,7 +564,7 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
                               {vendor.photos && vendor.photos.length > 0 ? (
                                 <BlurImage
                                   src={vendor.photos[0]}
@@ -612,7 +612,7 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
                               <BlurImage
                                 src={getExperienceImage(experience)}
                                 alt={experience.name}
@@ -669,7 +669,7 @@ const AppView = () => {
                       .filter(vendor => vendorFavorites.includes(vendor.id))
                       .map((vendor) => (
                         <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="block group">
-                          <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                          <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
                             <BlurImage
                               src={vendor.photos?.[0] || '/placeholder.svg'}
                               alt={vendor.name}
@@ -701,7 +701,7 @@ const AppView = () => {
                     {/* Experience favorites */}
                     {experiences.filter(exp => favorites.includes(exp.id)).map((experience) => (
                       <Link key={experience.id} to={`/experience/${experience.id}`} className="block group">
-                        <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                        <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
                           <BlurImage
                             src={getExperienceImage(experience)}
                             alt={experience.name}
