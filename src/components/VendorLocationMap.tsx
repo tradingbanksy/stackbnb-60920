@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, Map } from "lucide-react";
+import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, Map, CircleDot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -229,31 +229,80 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
           </div>
         </div>
       ) : directionsData?.vendorLocation ? (
-        /* Fallback: Stylized map placeholder */
+        /* Route visualization: Tulum Centro → Destination */
         <div 
-          className="relative h-32 w-full cursor-pointer group overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/30 dark:to-slate-900/50"
+          className="relative h-40 w-full cursor-pointer group overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-teal-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-teal-950/30"
           onClick={openInGoogleMaps}
         >
-          {/* Grid pattern to simulate map */}
-          <div className="absolute inset-0 opacity-20">
+          {/* Subtle map grid pattern */}
+          <div className="absolute inset-0 opacity-10">
             <div className="w-full h-full" style={{
               backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-              backgroundSize: '20px 20px'
+              backgroundSize: '30px 30px'
             }} />
           </div>
-          {/* Center pin */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          
+          {/* Curved route path */}
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
+            {/* Animated dashed route line */}
+            <path 
+              d="M 80 80 Q 200 40 320 80" 
+              fill="none" 
+              stroke="url(#routeGradient)" 
+              strokeWidth="3" 
+              strokeDasharray="8 6"
+              strokeLinecap="round"
+              className="animate-pulse"
+            />
+            {/* Gradient definition */}
+            <defs>
+              <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Origin: Tulum Centro */}
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+            <div className="relative">
+              <div className="h-10 w-10 rounded-full bg-muted border-2 border-primary/40 flex items-center justify-center shadow-md">
+                <CircleDot className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+            <span className="text-[10px] font-medium text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded">
+              Tulum Centro
+            </span>
+          </div>
+
+          {/* Destination: Vendor */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute inset-0" />
-              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shadow-lg relative">
+              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shadow-lg relative border-2 border-primary">
                 <MapPin className="h-5 w-5 text-primary-foreground" />
               </div>
             </div>
+            <span className="text-[10px] font-medium text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm max-w-[80px] truncate">
+              {vendorName.split(' ').slice(0, 2).join(' ')}
+            </span>
           </div>
+
+          {/* Distance badge in center */}
+          {directionsData && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm shadow-sm border border-border/50">
+              <Car className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-foreground">{directionsData.distance}</span>
+              <span className="text-muted-foreground">•</span>
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">{directionsData.duration}</span>
+            </div>
+          )}
+
           {/* Tap to open indicator */}
-          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1">
-            <Map className="h-3 w-3" />
-            Tap to view map
+          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <ExternalLink className="h-3 w-3" />
+            Open in Maps
           </div>
         </div>
       ) : null}
