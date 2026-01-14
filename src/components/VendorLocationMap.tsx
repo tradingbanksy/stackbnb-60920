@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, Map, CircleDot } from "lucide-react";
+import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, CircleDot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface VendorLocationMapProps {
   vendorName: string;
@@ -27,11 +29,27 @@ interface DirectionsData {
   error?: string;
 }
 
+interface MapboxRouteData {
+  route: {
+    type: string;
+    coordinates: [number, number][];
+  };
+  duration: number;
+  durationText: string;
+  distance: number;
+  distanceText: string;
+  origin: { lat: number; lng: number };
+  destination: { lat: number; lng: number };
+  mapboxToken: string;
+  steps?: { instruction: string; distance: number; duration: number }[];
+}
+
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
 
 export function VendorLocationMap({ vendorName, vendorAddress, placeId }: VendorLocationMapProps) {
   const { toast } = useToast();
   const [directionsData, setDirectionsData] = useState<DirectionsData | null>(null);
+  const [mapRouteData, setMapRouteData] = useState<MapboxRouteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
@@ -39,6 +57,10 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
   const [userId, setUserId] = useState<string | null>(null);
   const [itineraryItemId, setItineraryItemId] = useState<string | null>(null);
   const [mapError, setMapError] = useState(false);
+  
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Check auth state and if already saved
   useEffect(() => {
@@ -64,6 +86,7 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     checkAuthAndSaved();
   }, [vendorName]);
 
+  // Fetch initial directions data
   useEffect(() => {
     const fetchDirections = async () => {
       setIsLoading(true);
@@ -95,6 +118,172 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
       fetchDirections();
     }
   }, [vendorName, vendorAddress, placeId]);
+
+  // Fetch Mapbox route when we have vendor location
+  useEffect(() => {
+    const fetchMapboxRoute = async () => {
+      if (!directionsData?.vendorLocation) return;
+
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('mapbox-directions', {
+          body: { 
+            destinationLat: directionsData.vendorLocation.lat,
+            destinationLng: directionsData.vendorLocation.lng
+          }
+        });
+
+        if (fnError) {
+          console.error('Mapbox directions error:', fnError);
+          return;
+        }
+
+        if (data && !data.error) {
+          setMapRouteData(data);
+        }
+      } catch (err) {
+        console.error('Error fetching Mapbox route:', err);
+      }
+    };
+
+    fetchMapboxRoute();
+  }, [directionsData?.vendorLocation]);
+
+  // Initialize Mapbox map when route data is available
+  useEffect(() => {
+    if (!mapContainer.current || !mapRouteData?.mapboxToken || !mapRouteData?.route) return;
+    if (map.current) return; // Already initialized
+
+    try {
+      mapboxgl.accessToken = mapRouteData.mapboxToken;
+
+      // Calculate bounds to fit the route
+      const coordinates = mapRouteData.route.coordinates;
+      const bounds = coordinates.reduce((bounds, coord) => {
+        return bounds.extend(coord as [number, number]);
+      }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        bounds: bounds,
+        fitBoundsOptions: { padding: 40 },
+      });
+
+      map.current.on('load', () => {
+        if (!map.current) return;
+
+        // Add route line
+        map.current.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString' as const,
+              coordinates: mapRouteData.route.coordinates
+            }
+          }
+        });
+
+        // Route outline (darker)
+        map.current.addLayer({
+          id: 'route-outline',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#1e40af',
+            'line-width': 8,
+            'line-opacity': 0.4
+          }
+        });
+
+        // Route line (primary color)
+        map.current.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#3b82f6',
+            'line-width': 5,
+            'line-opacity': 0.9
+          }
+        });
+
+        // Add origin marker (Tulum Centro)
+        const originEl = document.createElement('div');
+        originEl.className = 'origin-marker';
+        originEl.innerHTML = `
+          <div style="
+            width: 32px; 
+            height: 32px; 
+            background: white; 
+            border: 3px solid #3b82f6; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          ">
+            <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%;"></div>
+          </div>
+        `;
+        new mapboxgl.Marker(originEl)
+          .setLngLat([mapRouteData.origin.lng, mapRouteData.origin.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML('<strong>Tulum Centro</strong><p>Starting point</p>'))
+          .addTo(map.current);
+
+        // Add destination marker (Vendor)
+        const destEl = document.createElement('div');
+        destEl.className = 'destination-marker';
+        destEl.innerHTML = `
+          <div style="
+            width: 36px; 
+            height: 36px; 
+            background: #ef4444; 
+            border: 3px solid white; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 2px 12px rgba(239,68,68,0.4);
+          ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+        `;
+        new mapboxgl.Marker(destEl)
+          .setLngLat([mapRouteData.destination.lng, mapRouteData.destination.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${vendorName}</strong><p>${mapRouteData.distanceText} • ${mapRouteData.durationText}</p>`))
+          .addTo(map.current);
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+        setMapLoaded(true);
+      });
+
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setMapError(true);
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [mapRouteData, vendorName]);
 
   const openInGoogleMaps = () => {
     if (directionsData?.vendorLocation) {
@@ -142,9 +331,9 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
             vendor_name: vendorName,
             vendor_address: directionsData?.destination || vendorAddress,
             place_id: placeId,
-            travel_distance: directionsData?.distance,
-            travel_duration: directionsData?.duration,
-            travel_duration_seconds: directionsData?.durationValue,
+            travel_distance: mapRouteData?.distanceText || directionsData?.distance,
+            travel_duration: mapRouteData?.durationText || directionsData?.duration,
+            travel_duration_seconds: mapRouteData?.duration || directionsData?.durationValue,
             arrival_tips: directionsData?.arrivalTips,
           })
           .select('id')
@@ -174,6 +363,7 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
   if (isLoading) {
     return (
       <Card className="overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
+        <Skeleton className="h-48 w-full" />
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-3">
             <Skeleton className="h-12 w-12 rounded-xl" />
@@ -196,114 +386,102 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     );
   }
 
-  // Generate static map URL using OpenStreetMap tiles (no API key needed)
-  const getStaticMapUrl = () => {
-    if (!directionsData?.vendorLocation) return null;
-    const { lat, lng } = directionsData.vendorLocation;
-    // Use a free static map service
-    return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=14&size=600x200&maptype=osmarenderer&markers=${lat},${lng},red-pushpin`;
-  };
-
-  const staticMapUrl = getStaticMapUrl();
+  const displayDistance = mapRouteData?.distanceText || directionsData?.distance;
+  const displayDuration = mapRouteData?.durationText || directionsData?.duration;
 
   return (
     <Card className="overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm">
-      {/* Mini Map Preview */}
-      {staticMapUrl && !mapError ? (
-        <div 
-          className="relative h-32 w-full cursor-pointer group overflow-hidden bg-muted"
-          onClick={openInGoogleMaps}
-        >
-          <img
-            src={staticMapUrl}
-            alt={`Map showing ${vendorName} location`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={() => setMapError(true)}
+      {/* Interactive Mapbox Map */}
+      {directionsData?.vendorLocation && !mapError ? (
+        <div className="relative h-48 w-full cursor-pointer group">
+          <div 
+            ref={mapContainer} 
+            className="absolute inset-0"
+            onClick={(e) => {
+              // Only open if not interacting with map controls
+              if ((e.target as HTMLElement).closest('.mapboxgl-ctrl')) return;
+            }}
           />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60" />
-          {/* Tap to open indicator */}
-          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <ExternalLink className="h-3 w-3" />
-            Open in Maps
-          </div>
-        </div>
-      ) : directionsData?.vendorLocation ? (
-        /* Route visualization: Tulum Centro → Destination */
-        <div 
-          className="relative h-40 w-full cursor-pointer group overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-teal-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-teal-950/30"
-          onClick={openInGoogleMaps}
-        >
-          {/* Subtle map grid pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="w-full h-full" style={{
-              backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-              backgroundSize: '30px 30px'
-            }} />
-          </div>
           
-          {/* Curved route path */}
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
-            {/* Animated dashed route line */}
-            <path 
-              d="M 80 80 Q 200 40 320 80" 
-              fill="none" 
-              stroke="url(#routeGradient)" 
-              strokeWidth="3" 
-              strokeDasharray="8 6"
-              strokeLinecap="round"
-              className="animate-pulse"
-            />
-            {/* Gradient definition */}
-            <defs>
-              <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-              </linearGradient>
-            </defs>
-          </svg>
-
-          {/* Origin: Tulum Centro */}
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full bg-muted border-2 border-primary/40 flex items-center justify-center shadow-md">
-                <CircleDot className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <span className="text-[10px] font-medium text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded">
-              Tulum Centro
-            </span>
-          </div>
-
-          {/* Destination: Vendor */}
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute inset-0" />
-              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shadow-lg relative border-2 border-primary">
-                <MapPin className="h-5 w-5 text-primary-foreground" />
-              </div>
-            </div>
-            <span className="text-[10px] font-medium text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm max-w-[80px] truncate">
-              {vendorName.split(' ').slice(0, 2).join(' ')}
-            </span>
-          </div>
-
-          {/* Distance badge in center */}
-          {directionsData && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm shadow-sm border border-border/50">
-              <Car className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold text-foreground">{directionsData.distance}</span>
-              <span className="text-muted-foreground">•</span>
-              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">{directionsData.duration}</span>
+          {/* Loading overlay */}
+          {!mapLoaded && mapRouteData && (
+            <div className="absolute inset-0 bg-muted flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
 
-          {/* Tap to open indicator */}
-          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Fallback stylized map while loading Mapbox data */}
+          {!mapRouteData && (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-teal-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-teal-950/30">
+              {/* Subtle map grid pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="w-full h-full" style={{
+                  backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+                  backgroundSize: '30px 30px'
+                }} />
+              </div>
+              
+              {/* Curved route path */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 192" preserveAspectRatio="xMidYMid slice">
+                <path 
+                  d="M 80 96 Q 200 50 320 96" 
+                  fill="none" 
+                  stroke="url(#routeGradient)" 
+                  strokeWidth="3" 
+                  strokeDasharray="8 6"
+                  strokeLinecap="round"
+                  className="animate-pulse"
+                />
+                <defs>
+                  <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Origin */}
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+                <div className="h-10 w-10 rounded-full bg-muted border-2 border-primary/40 flex items-center justify-center shadow-md">
+                  <CircleDot className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded">
+                  Tulum Centro
+                </span>
+              </div>
+
+              {/* Destination */}
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+                <div className="relative">
+                  <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute inset-0" />
+                  <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shadow-lg relative border-2 border-primary">
+                    <MapPin className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                </div>
+                <span className="text-[10px] font-medium text-foreground bg-background/90 px-1.5 py-0.5 rounded shadow-sm max-w-[80px] truncate">
+                  {vendorName.split(' ').slice(0, 2).join(' ')}
+                </span>
+              </div>
+
+              {/* Loading indicator */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm shadow-sm border border-border/50">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">Loading route...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Gradient overlay at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+
+          {/* Open in Maps button */}
+          <button
+            onClick={openInGoogleMaps}
+            className="absolute bottom-2 right-2 px-2.5 py-1.5 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1.5 shadow-sm border border-border/50 hover:bg-background transition-colors"
+          >
             <ExternalLink className="h-3 w-3" />
             Open in Maps
-          </div>
+          </button>
         </div>
       ) : null}
       
@@ -316,8 +494,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
               <MapPin className="h-6 w-6 text-primary" />
             </div>
-            {/* Animated pulse ring */}
-            <div className="absolute inset-0 rounded-xl bg-primary/20 animate-ping opacity-20" />
           </div>
           
           {/* Location Details */}
@@ -332,22 +508,26 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
             )}
             
             {/* Distance & Duration Pills */}
-            {directionsData && (
+            {(displayDistance || displayDuration) && (
               <div className="flex items-center gap-2 mt-2">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                  <Car className="h-3 w-3" />
-                  <span>{directionsData.distance}</span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                  <Clock className="h-3 w-3" />
-                  <span>{directionsData.duration}</span>
-                </div>
+                {displayDistance && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    <Car className="h-3 w-3" />
+                    <span>{displayDistance}</span>
+                  </div>
+                )}
+                {displayDuration && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                    <Clock className="h-3 w-3" />
+                    <span>{displayDuration}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Arrival Tips - Collapsible style */}
+        {/* Arrival Tips */}
         {directionsData?.arrivalTips && directionsData.arrivalTips.length > 0 && (
           <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3">
             <div className="flex items-start gap-2">
