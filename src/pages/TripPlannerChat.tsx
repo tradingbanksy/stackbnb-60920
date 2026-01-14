@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import TripPlannerChatUI from "@/components/ui/trip-planner-chat-ui";
 import { PageTransition } from "@/components/PageTransition";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -10,7 +11,7 @@ interface Message {
 }
 
 interface HostVendor {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   vendor: string;
@@ -28,7 +29,37 @@ const CHAT_HISTORY_KEY = "tripPlannerChatHistory";
 const TripPlannerChat = () => {
   const { toast } = useToast();
   const location = useLocation();
-  const hostVendors = (location.state as { hostVendors?: HostVendor[] })?.hostVendors || [];
+  const passedVendors = (location.state as { hostVendors?: HostVendor[] })?.hostVendors || [];
+  const [hostVendors, setHostVendors] = useState<HostVendor[]>(passedVendors);
+  
+  // Fetch vendors from database if none passed via location state
+  useEffect(() => {
+    if (passedVendors.length === 0) {
+      const fetchVendors = async () => {
+        const { data, error } = await supabase
+          .from('vendor_profiles')
+          .select('id, name, category, description, price_per_person, google_rating, duration, max_guests, included_items')
+          .eq('is_published', true);
+        
+        if (!error && data) {
+          const mapped: HostVendor[] = data.map((v) => ({
+            id: v.id,
+            name: v.name,
+            category: v.category,
+            vendor: v.name,
+            price: v.price_per_person || 0,
+            rating: v.google_rating || 4.5,
+            description: v.description || '',
+            duration: v.duration || undefined,
+            maxGuests: v.max_guests || undefined,
+            included: v.included_items || [],
+          }));
+          setHostVendors(mapped);
+        }
+      };
+      fetchVendors();
+    }
+  }, [passedVendors.length]);
   
   const initialMessage = hostVendors.length > 0
     ? `🌴 Hi! I'm JC, your Tulum travel assistant. Your host has curated ${hostVendors.length} amazing local experiences for you. Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`

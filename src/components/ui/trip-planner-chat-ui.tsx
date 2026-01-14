@@ -88,7 +88,7 @@ interface Message {
 }
 
 interface HostVendor {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   vendor: string;
