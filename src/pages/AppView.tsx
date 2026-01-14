@@ -460,10 +460,10 @@ const AppView = () => {
                           <Link
                             key={vendor.id}
                             to={`/vendor/${vendor.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl"
+                            className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                               {vendor.photos && vendor.photos.length > 0 ? (
                                 <BlurImage
                                   src={vendor.photos[0]}
@@ -508,10 +508,10 @@ const AppView = () => {
                           <Link
                             key={restaurant.id}
                             to={`/restaurant/${restaurant.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl"
+                            className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                               <BlurImage
                                 src={restaurant.photos[0]}
                                 alt={restaurant.name}
@@ -561,10 +561,10 @@ const AppView = () => {
                           <Link
                             key={vendor.id}
                             to={`/vendor/${vendor.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl"
+                            className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                               {vendor.photos && vendor.photos.length > 0 ? (
                                 <BlurImage
                                   src={vendor.photos[0]}
@@ -609,10 +609,10 @@ const AppView = () => {
                           <Link
                             key={experience.id}
                             to={`/experience/${experience.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl"
+                            className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                               <BlurImage
                                 src={getExperienceImage(experience)}
                                 alt={experience.name}
@@ -668,8 +668,8 @@ const AppView = () => {
                     {[...vendorExperiences, ...vendorRestaurants]
                       .filter(vendor => vendorFavorites.includes(vendor.id))
                       .map((vendor) => (
-                        <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="block group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl">
-                          <div className="aspect-square rounded-xl overflow-hidden relative">
+                        <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="block group">
+                          <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                             <BlurImage
                               src={vendor.photos?.[0] || '/placeholder.svg'}
                               alt={vendor.name}
@@ -700,8 +700,8 @@ const AppView = () => {
                       ))}
                     {/* Experience favorites */}
                     {experiences.filter(exp => favorites.includes(exp.id)).map((experience) => (
-                      <Link key={experience.id} to={`/experience/${experience.id}`} className="block group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl">
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                      <Link key={experience.id} to={`/experience/${experience.id}`} className="block group">
+                        <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                           <BlurImage
                             src={getExperienceImage(experience)}
                             alt={experience.name}
