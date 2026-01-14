@@ -221,6 +221,40 @@ const RestaurantDetail = () => {
     }
   };
 
+  const openExternalLink = async (url: string) => {
+    // In the preview iframe, Google Maps often cannot open (popups blocked / iframe restrictions).
+    // Strategy:
+    // 1) Try a new tab
+    // 2) If blocked, try to break out of the iframe (top navigation)
+    // 3) If that fails, copy the link
+    const newWindow = window.open(url, "_blank", "noopener,noreferrer");
+    if (newWindow) return;
+
+    try {
+      if (window.top && window.top !== window.self) {
+        window.top.location.href = url;
+        return;
+      }
+    } catch {
+      // ignore cross-origin iframe access errors
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "The preview blocks opening Google Maps. Paste the link into a new tab.",
+        duration: 3500,
+      });
+    } catch {
+      toast({
+        title: "Can’t open link in preview",
+        description: url,
+        duration: 6000,
+      });
+    }
+  };
+
   const getDayName = (index: number): string => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[index];
@@ -499,17 +533,8 @@ const RestaurantDetail = () => {
               {/* View All Reviews Link */}
               {googleReviews.googleMapsUrl && (
                 <button
-                  onClick={() => {
-                    const url = googleReviews.googleMapsUrl;
-                    if (url) {
-                      // Try to open in new tab, fallback to same window if blocked
-                      const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-                      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                        // Popup was blocked, open in same window
-                        window.location.href = url;
-                      }
-                    }
-                  }}
+                  type="button"
+                  onClick={() => void openExternalLink(googleReviews.googleMapsUrl!)}
                   className="flex items-center justify-center gap-2 w-full py-2 text-sm text-primary hover:underline"
                 >
                   <ExternalLink className="h-4 w-4" />
