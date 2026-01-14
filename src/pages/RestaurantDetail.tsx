@@ -498,15 +498,23 @@ const RestaurantDetail = () => {
 
               {/* View All Reviews Link */}
               {googleReviews.googleMapsUrl && (
-                <a
-                  href={googleReviews.googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    const url = googleReviews.googleMapsUrl;
+                    if (url) {
+                      // Try to open in new tab, fallback to same window if blocked
+                      const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                        // Popup was blocked, open in same window
+                        window.location.href = url;
+                      }
+                    }
+                  }}
                   className="flex items-center justify-center gap-2 w-full py-2 text-sm text-primary hover:underline"
                 >
                   <ExternalLink className="h-4 w-4" />
                   View all reviews on Google Maps
-                </a>
+                </button>
               )}
             </div>
           ) : (
