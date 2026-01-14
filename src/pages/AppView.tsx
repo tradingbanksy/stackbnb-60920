@@ -463,12 +463,12 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative group">
                               {vendor.photos && vendor.photos.length > 0 ? (
                                 <BlurImage
                                   src={vendor.photos[0]}
                                   alt={vendor.name}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 />
                               ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
@@ -511,11 +511,11 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative group">
                               <BlurImage
                                 src={restaurant.photos[0]}
                                 alt={restaurant.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               />
                               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                                 <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
@@ -564,12 +564,12 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative group">
                               {vendor.photos && vendor.photos.length > 0 ? (
                                 <BlurImage
                                   src={vendor.photos[0]}
                                   alt={vendor.name}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 />
                               ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
@@ -612,11 +612,11 @@ const AppView = () => {
                             className="flex-shrink-0 w-36 animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <div className="aspect-square rounded-xl overflow-hidden relative">
+                            <div className="aspect-square rounded-xl overflow-hidden relative group">
                               <BlurImage
                                 src={getExperienceImage(experience)}
                                 alt={experience.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               />
                               <button
                                 onClick={(e) => toggleFavorite(experience.id, e)}
@@ -669,11 +669,11 @@ const AppView = () => {
                       .filter(vendor => vendorFavorites.includes(vendor.id))
                       .map((vendor) => (
                         <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="block">
-                          <div className="aspect-square rounded-xl overflow-hidden relative">
+                          <div className="aspect-square rounded-xl overflow-hidden relative group">
                             <BlurImage
                               src={vendor.photos?.[0] || '/placeholder.svg'}
                               alt={vendor.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                             <button
                               onClick={(e) => toggleVendorFavorite(vendor.id, e)}
@@ -701,11 +701,11 @@ const AppView = () => {
                     {/* Experience favorites */}
                     {experiences.filter(exp => favorites.includes(exp.id)).map((experience) => (
                       <Link key={experience.id} to={`/experience/${experience.id}`} className="block">
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                        <div className="aspect-square rounded-xl overflow-hidden relative group">
                           <BlurImage
                             src={getExperienceImage(experience)}
                             alt={experience.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                           <button
                             onClick={(e) => toggleFavorite(experience.id, e)}
