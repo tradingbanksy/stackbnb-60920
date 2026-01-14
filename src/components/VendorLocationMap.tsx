@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Navigation, Lightbulb, ExternalLink } from "lucide-react";
+import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface VendorLocationMapProps {
   vendorName: string;
@@ -28,9 +29,39 @@ interface DirectionsData {
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
 
 export function VendorLocationMap({ vendorName, vendorAddress, placeId }: VendorLocationMapProps) {
+  const { toast } = useToast();
   const [directionsData, setDirectionsData] = useState<DirectionsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [itineraryItemId, setItineraryItemId] = useState<string | null>(null);
+
+  // Check auth state and if already saved
+  useEffect(() => {
+    const checkAuthAndSaved = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+
+      if (user && vendorName) {
+        // Check if already saved
+        const { data } = await supabase
+          .from('itinerary_items')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('vendor_name', vendorName)
+          .maybeSingle();
+
+        if (data) {
+          setIsSaved(true);
+          setItineraryItemId(data.id);
+        }
+      }
+    };
+
+    checkAuthAndSaved();
+  }, [vendorName]);
 
   useEffect(() => {
     const fetchDirections = async () => {
@@ -72,6 +103,72 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     } else {
       const query = encodeURIComponent(`${vendorName} Tulum Mexico`);
       window.open(`https://www.google.com/maps/search/${query}`, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleSaveToItinerary = async () => {
+    if (!userId) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save items to your itinerary.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      if (isSaved && itineraryItemId) {
+        // Remove from itinerary
+        const { error: deleteError } = await supabase
+          .from('itinerary_items')
+          .delete()
+          .eq('id', itineraryItemId);
+
+        if (deleteError) throw deleteError;
+
+        setIsSaved(false);
+        setItineraryItemId(null);
+        toast({
+          title: "Removed from itinerary",
+          description: `${vendorName} has been removed from your trip plan.`,
+        });
+      } else {
+        // Add to itinerary
+        const { data, error: insertError } = await supabase
+          .from('itinerary_items')
+          .insert({
+            user_id: userId,
+            vendor_name: vendorName,
+            vendor_address: directionsData?.destination || vendorAddress,
+            place_id: placeId,
+            travel_distance: directionsData?.distance,
+            travel_duration: directionsData?.duration,
+            travel_duration_seconds: directionsData?.durationValue,
+            arrival_tips: directionsData?.arrivalTips,
+          })
+          .select('id')
+          .single();
+
+        if (insertError) throw insertError;
+
+        setIsSaved(true);
+        setItineraryItemId(data.id);
+        toast({
+          title: "Saved to itinerary!",
+          description: `${vendorName} has been added to your trip plan.`,
+        });
+      }
+    } catch (err) {
+      console.error('Error saving to itinerary:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update your itinerary. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -163,16 +260,34 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
           </div>
         )}
 
-        {/* Open in Google Maps */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={openInGoogleMaps}
-          className="w-full mt-2"
-        >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          Open in Google Maps
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openInGoogleMaps}
+            className="flex-1"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Open in Maps
+          </Button>
+          <Button
+            variant={isSaved ? "default" : "outline"}
+            size="sm"
+            onClick={handleSaveToItinerary}
+            disabled={isSaving}
+            className="flex-1"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : isSaved ? (
+              <BookmarkCheck className="h-4 w-4 mr-2" />
+            ) : (
+              <Bookmark className="h-4 w-4 mr-2" />
+            )}
+            {isSaved ? "Saved" : "Save to Itinerary"}
+          </Button>
+        </div>
       </div>
     </Card>
   );

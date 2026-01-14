@@ -123,6 +123,57 @@ export type Database = {
           },
         ]
       }
+      itinerary_items: {
+        Row: {
+          arrival_tips: string[] | null
+          created_at: string
+          id: string
+          notes: string | null
+          place_id: string | null
+          planned_date: string | null
+          planned_time: string | null
+          travel_distance: string | null
+          travel_duration: string | null
+          travel_duration_seconds: number | null
+          updated_at: string
+          user_id: string
+          vendor_address: string | null
+          vendor_name: string
+        }
+        Insert: {
+          arrival_tips?: string[] | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          place_id?: string | null
+          planned_date?: string | null
+          planned_time?: string | null
+          travel_distance?: string | null
+          travel_duration?: string | null
+          travel_duration_seconds?: number | null
+          updated_at?: string
+          user_id: string
+          vendor_address?: string | null
+          vendor_name: string
+        }
+        Update: {
+          arrival_tips?: string[] | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          place_id?: string | null
+          planned_date?: string | null
+          planned_time?: string | null
+          travel_distance?: string | null
+          travel_duration?: string | null
+          travel_duration_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+          vendor_address?: string | null
+          vendor_name?: string
+        }
+        Relationships: []
+      }
       password_reset_otps: {
         Row: {
           created_at: string | null
