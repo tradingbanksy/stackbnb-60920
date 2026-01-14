@@ -1,55 +1,12 @@
-// Restaurant images imports
-import seafood1 from '@/assets/restaurants/seafood-1.jpg';
-import seafood2 from '@/assets/restaurants/seafood-2.jpg';
-import seafood3 from '@/assets/restaurants/seafood-3.jpg';
-import seafood4 from '@/assets/restaurants/seafood-4.jpg';
-import seafood5 from '@/assets/restaurants/seafood-5.jpg';
-import seafood6 from '@/assets/restaurants/seafood-6.jpg';
-import seafood7 from '@/assets/restaurants/seafood-7.jpg';
-import seafood8 from '@/assets/restaurants/seafood-8.jpg';
-import american1 from '@/assets/restaurants/american-1.jpg';
-import american2 from '@/assets/restaurants/american-2.jpg';
-import american3 from '@/assets/restaurants/american-3.jpg';
-import italian1 from '@/assets/restaurants/italian-1.jpg';
-import italian2 from '@/assets/restaurants/italian-2.jpg';
-import italian3 from '@/assets/restaurants/italian-3.jpg';
-import japanese1 from '@/assets/restaurants/japanese-1.jpg';
-import japanese2 from '@/assets/restaurants/japanese-2.jpg';
-import japanese3 from '@/assets/restaurants/japanese-3.jpg';
-import japanese4 from '@/assets/restaurants/japanese-4.jpg';
-import japanese5 from '@/assets/restaurants/japanese-5.jpg';
-import japanese6 from '@/assets/restaurants/japanese-6.jpg';
-import mexican1 from '@/assets/restaurants/mexican-1.jpg';
-import mexican2 from '@/assets/restaurants/mexican-2.jpg';
-import mexican4 from '@/assets/restaurants/mexican-4.jpg';
-import mexican5 from '@/assets/restaurants/mexican-5.jpg';
-import steakhouse1 from '@/assets/restaurants/steakhouse-1.jpg';
-import steakhouse2 from '@/assets/restaurants/steakhouse-2.jpg';
-import steakhouse3 from '@/assets/restaurants/steakhouse-3.jpg';
-import mediterranean1 from '@/assets/restaurants/mediterranean-1.jpg';
-import mediterranean2 from '@/assets/restaurants/mediterranean-2.jpg';
-import mediterranean3 from '@/assets/restaurants/mediterranean-3.jpg';
-import french1 from '@/assets/restaurants/french-1.jpg';
-import french2 from '@/assets/restaurants/french-2.jpg';
-import french3 from '@/assets/restaurants/french-3.jpg';
-import pizza1 from '@/assets/restaurants/pizza-1.jpg';
-import pizza2 from '@/assets/restaurants/pizza-2.jpg';
-import pizza3 from '@/assets/restaurants/pizza-3.jpg';
-import california1 from '@/assets/restaurants/california-1.jpg';
-import california2 from '@/assets/restaurants/california-2.jpg';
-import california3 from '@/assets/restaurants/california-3.jpg';
-import bbq1 from '@/assets/restaurants/bbq-1.jpg';
-import bbq3 from '@/assets/restaurants/bbq-3.jpg';
-import vegan1 from '@/assets/restaurants/vegan-1.jpg';
-import vegan2 from '@/assets/restaurants/vegan-2.jpg';
-import vegan3 from '@/assets/restaurants/vegan-3.jpg';
-import bakery1 from '@/assets/restaurants/bakery-1.jpg';
-import bakery2 from '@/assets/restaurants/bakery-2.jpg';
-import bakery3 from '@/assets/restaurants/bakery-3.jpg';
-import sushi1 from '@/assets/restaurants/sushi-1.jpg';
-import sushi2 from '@/assets/restaurants/sushi-2.jpg';
-import interior1 from '@/assets/restaurants/interior-1.jpg';
-import interior2 from '@/assets/restaurants/interior-2.jpg';
+// Restaurant images imports - Tulum restaurants
+import arcaTulum from '@/assets/restaurants/arca-tulum.jpg';
+import hartwoodTulum from '@/assets/restaurants/hartwood-tulum.jpg';
+import burritoAmorTulum from '@/assets/restaurants/burrito-amor-tulum.jpg';
+import taqueriaHonorioTulum from '@/assets/restaurants/taqueria-honorio-tulum.jpg';
+import posadaMargheritaTulum from '@/assets/restaurants/posada-margherita-tulum.jpg';
+import chamicosTulum from '@/assets/restaurants/chamicos-tulum.jpg';
+import kitchenTableTulum from '@/assets/restaurants/kitchen-table-tulum.jpg';
+import rawLoveTulum from '@/assets/restaurants/raw-love-tulum.jpg';
 
 // Mock restaurant data with realistic information
 export interface Restaurant {
@@ -79,16 +36,16 @@ export interface Restaurant {
   isFromApi?: boolean; // Flag to identify API-fetched restaurants
 }
 
-// Unique high-quality food images - each restaurant gets unique local images (NO DUPLICATES)
+// Unique restaurant photos for each Tulum restaurant
 const uniqueRestaurantPhotos: Record<string, string[]> = {
-  r1: [seafood1, seafood2, seafood3], // ARCA - Seafood/Mexican
-  r2: [mexican1, mexican2, mexican4], // Hartwood - Mexican
-  r3: [mexican5, mexican1, mexican2], // Burrito Amor - Mexican
-  r4: [mexican4, mexican5, mexican1], // Taquería Honorio - Mexican
-  r5: [italian1, italian2, italian3], // Posada Margherita - Italian
-  r6: [seafood4, seafood5, seafood6], // Chamicos Tulum - Seafood
-  r7: [mediterranean1, mediterranean2, mediterranean3], // Kitchen Table - Mediterranean
-  r8: [vegan1, vegan2, vegan3], // Raw Love - Vegan
+  r1: [arcaTulum], // ARCA
+  r2: [hartwoodTulum], // Hartwood
+  r3: [burritoAmorTulum], // Burrito Amor
+  r4: [taqueriaHonorioTulum], // Taquería Honorio
+  r5: [posadaMargheritaTulum], // Posada Margherita
+  r6: [chamicosTulum], // Chamicos Tulum
+  r7: [kitchenTableTulum], // Kitchen Table
+  r8: [rawLoveTulum], // Raw Love
 };
 
 export const mockRestaurants: Restaurant[] = [
