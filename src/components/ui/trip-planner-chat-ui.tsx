@@ -102,21 +102,32 @@ interface HostVendor {
 
 // Helper to extract vendor name from a message with a booking link
 function extractVendorFromMessage(content: string): string | null {
-  // Look for patterns like "**Vendor Name**" or vendor names before booking links
-  const boldMatch = content.match(/\*\*([^*]+)\*\*/);
-  if (boldMatch) {
-    return boldMatch[1];
+  // Look for booking link format: [Book VendorName Now →](/experience/ID)
+  const bookingMatch = content.match(/\[Book\s+([^\]]+?)\s+Now\s*→?\]/i);
+  if (bookingMatch) {
+    return bookingMatch[1].trim();
   }
   
-  // Look for experience names in booking links
-  const linkMatch = content.match(/\[Book[^\]]*\]\(\/experience\/[^)]+\)/i);
-  if (linkMatch) {
-    // Try to find the experience name mentioned nearby
-    const lines = content.split('\n');
-    for (const line of lines) {
-      if (line.includes('**') && !line.includes('Book')) {
-        const nameMatch = line.match(/\*\*([^*]+)\*\*/);
-        if (nameMatch) return nameMatch[1];
+  // Look for "Great choice" confirmation with vendor name
+  const greatChoiceMatch = content.match(/Great choice[^*]*\*\*([^*]+)\*\*/i);
+  if (greatChoiceMatch) {
+    return greatChoiceMatch[1].trim();
+  }
+  
+  // Look for HOST'S PICK pattern
+  const hostsPickMatch = content.match(/HOST'S PICK:\s*\*?\*?([^*\n]+)/i);
+  if (hostsPickMatch) {
+    return hostsPickMatch[1].trim();
+  }
+  
+  // Look for first bold text that looks like a venue name (not "Great choice" etc)
+  const boldMatches = content.match(/\*\*([^*]+)\*\*/g);
+  if (boldMatches) {
+    for (const match of boldMatches) {
+      const name = match.replace(/\*\*/g, '').trim();
+      // Skip common non-venue phrases
+      if (!name.match(/^(Great choice|What's Included|Pro Tips|Duration|Price)/i) && name.length > 2) {
+        return name;
       }
     }
   }
@@ -128,7 +139,14 @@ function extractVendorFromMessage(content: string): string | null {
 function hasQuoteInMessage(content: string): boolean {
   const hasBookingLink = /\[Book[^\]]*\]\(\/experience\//.test(content);
   const hasPriceMention = /\$\d+/.test(content) && /per person|total|price/i.test(content);
-  return hasBookingLink || hasPriceMention;
+  // Also detect the styled booking summary format from the AI
+  const hasBookingSummary = /✅\s*\*\*Great choice/.test(content) || /⏱️.*💰/.test(content);
+  return hasBookingLink || hasPriceMention || hasBookingSummary;
+}
+
+// Check if any message in conversation has a booking confirmation
+function hasBookingInConversation(messages: Message[]): boolean {
+  return messages.some(m => m.role === "assistant" && hasQuoteInMessage(m.content));
 }
 
 interface TripPlannerChatUIProps {
@@ -491,10 +509,12 @@ export default function TripPlannerChatUI({
           {/* Input at Bottom */}
           <div className="p-4 border-t border-border">
             <div className="max-w-2xl mx-auto">
-              {/* Quick response button above input */}
+              {/* Quick response button above input - hide once a booking has been shown */}
               {!isLoading && 
                messages.length > 1 && 
-               messages[messages.length - 1]?.role === "assistant" && (
+               messages[messages.length - 1]?.role === "assistant" &&
+               !hasBookingInConversation(messages) &&
+               hostVendors.length > 0 && (
                 <div className="flex justify-center mb-3">
                   <button
                     onClick={() => onSendMessage("I'll go with the host's recommendation")}
