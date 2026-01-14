@@ -60,6 +60,7 @@ import wineImg from "@/assets/experiences/wine.jpg";
 // Restaurant components
 import RestaurantCard from "@/components/RestaurantCard";
 import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
+import { BlurImage } from "@/components/BlurImage";
 
 const categories = [
   { id: "all", name: "All", icon: "✨" },
@@ -464,7 +465,7 @@ const AppView = () => {
                           >
                             <div className="aspect-square rounded-xl overflow-hidden relative">
                               {vendor.photos && vendor.photos.length > 0 ? (
-                                <img
+                                <BlurImage
                                   src={vendor.photos[0]}
                                   alt={vendor.name}
                                   className="w-full h-full object-cover"
@@ -511,7 +512,7 @@ const AppView = () => {
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <div className="aspect-square rounded-xl overflow-hidden relative">
-                              <img
+                              <BlurImage
                                 src={restaurant.photos[0]}
                                 alt={restaurant.name}
                                 className="w-full h-full object-cover"
@@ -565,7 +566,7 @@ const AppView = () => {
                           >
                             <div className="aspect-square rounded-xl overflow-hidden relative">
                               {vendor.photos && vendor.photos.length > 0 ? (
-                                <img
+                                <BlurImage
                                   src={vendor.photos[0]}
                                   alt={vendor.name}
                                   className="w-full h-full object-cover"
@@ -612,7 +613,7 @@ const AppView = () => {
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <div className="aspect-square rounded-xl overflow-hidden relative">
-                              <img
+                              <BlurImage
                                 src={getExperienceImage(experience)}
                                 alt={experience.name}
                                 className="w-full h-full object-cover"
@@ -669,7 +670,7 @@ const AppView = () => {
                       .map((vendor) => (
                         <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="block">
                           <div className="aspect-square rounded-xl overflow-hidden relative">
-                            <img
+                            <BlurImage
                               src={vendor.photos?.[0] || '/placeholder.svg'}
                               alt={vendor.name}
                               className="w-full h-full object-cover"
@@ -701,7 +702,7 @@ const AppView = () => {
                     {experiences.filter(exp => favorites.includes(exp.id)).map((experience) => (
                       <Link key={experience.id} to={`/experience/${experience.id}`} className="block">
                         <div className="aspect-square rounded-xl overflow-hidden relative">
-                          <img
+                          <BlurImage
                             src={getExperienceImage(experience)}
                             alt={experience.name}
                             className="w-full h-full object-cover"
