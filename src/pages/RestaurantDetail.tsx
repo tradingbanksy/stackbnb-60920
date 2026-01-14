@@ -85,7 +85,8 @@ const RestaurantDetail = () => {
       
       setIsLoadingReviews(true);
       try {
-        const searchQuery = `${restaurant.name} ${restaurant.city}`;
+        // Build a more specific search query with restaurant keyword and address
+        const searchQuery = `${restaurant.name} restaurant ${restaurant.address} ${restaurant.city}`;
         const { data, error } = await supabase.functions.invoke('google-reviews', {
           body: { 
             searchQuery,
