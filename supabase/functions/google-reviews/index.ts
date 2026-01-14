@@ -1,17 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:8080',
-  'https://stackbnb-60920.lovable.app',
-];
-
-const getCorsHeaders = (origin: string | null) => {
-  const isAllowed = origin && (allowedOrigins.includes(origin) || origin.endsWith('.lovable.app'));
-  return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface GoogleReview {
@@ -24,23 +15,27 @@ interface GoogleReview {
   time: number;
 }
 
-interface PlaceDetailsResponse {
-  result?: {
-    name: string;
-    place_id: string;
-    rating?: number;
-    user_ratings_total?: number;
-    reviews?: GoogleReview[];
-    url?: string;
+interface PlaceReview {
+  name?: string;
+  relativePublishTimeDescription?: string;
+  rating?: number;
+  text?: {
+    text?: string;
+    languageCode?: string;
   };
-  status: string;
-  error_message?: string;
+  originalText?: {
+    text?: string;
+    languageCode?: string;
+  };
+  authorAttribution?: {
+    displayName?: string;
+    uri?: string;
+    photoUri?: string;
+  };
+  publishTime?: string;
 }
 
 serve(async (req) => {
-  const origin = req.headers.get('origin');
-  const corsHeaders = getCorsHeaders(origin);
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -60,26 +55,43 @@ serve(async (req) => {
 
     let googlePlaceId = placeId;
 
-    // If no placeId provided, search for the place first
+    // If no placeId provided, search for the place first using new Text Search API
     if (!googlePlaceId && searchQuery) {
       console.log('Searching for place:', searchQuery);
       
-      let searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id,name,formatted_address&key=${apiKey}`;
+      const searchBody: Record<string, unknown> = {
+        textQuery: searchQuery,
+        maxResultCount: 1,
+      };
       
       // Add location bias if coordinates provided
       if (lat && lng) {
-        searchUrl += `&locationbias=circle:5000@${lat},${lng}`;
+        searchBody.locationBias = {
+          circle: {
+            center: { latitude: lat, longitude: lng },
+            radius: 5000.0
+          }
+        };
       }
 
-      const searchResponse = await fetch(searchUrl);
-      const searchData = await searchResponse.json();
+      const searchResponse = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress'
+        },
+        body: JSON.stringify(searchBody)
+      });
       
+      const searchData = await searchResponse.json();
       console.log('Place search response:', JSON.stringify(searchData));
 
-      if (searchData.candidates && searchData.candidates.length > 0) {
-        googlePlaceId = searchData.candidates[0].place_id;
+      if (searchData.places && searchData.places.length > 0) {
+        googlePlaceId = searchData.places[0].id;
         console.log('Found place_id:', googlePlaceId);
       } else {
+        console.log('No places found for query:', searchQuery);
         return new Response(
           JSON.stringify({ 
             error: 'Place not found',
@@ -98,20 +110,26 @@ serve(async (req) => {
       );
     }
 
-    // Fetch place details with reviews
+    // Fetch place details with reviews using new Places API
     console.log('Fetching place details for:', googlePlaceId);
-    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlaceId}&fields=name,rating,user_ratings_total,reviews,url&key=${apiKey}`;
     
-    const detailsResponse = await fetch(detailsUrl);
-    const detailsData: PlaceDetailsResponse = await detailsResponse.json();
+    const detailsResponse = await fetch(`https://places.googleapis.com/v1/places/${googlePlaceId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews,googleMapsUri'
+      }
+    });
     
-    console.log('Place details status:', detailsData.status);
+    const detailsData = await detailsResponse.json();
+    console.log('Place details response status:', detailsResponse.status);
 
-    if (detailsData.status !== 'OK') {
-      console.error('Place details error:', detailsData.error_message || detailsData.status);
+    if (!detailsResponse.ok) {
+      console.error('Place details error:', JSON.stringify(detailsData));
       return new Response(
         JSON.stringify({ 
-          error: detailsData.error_message || 'Failed to fetch place details',
+          error: detailsData.error?.message || 'Failed to fetch place details',
           reviews: [],
           googleMapsUrl: null
         }),
@@ -119,16 +137,27 @@ serve(async (req) => {
       );
     }
 
-    const result = detailsData.result;
+    // Transform reviews from new API format to expected format
+    const transformedReviews: GoogleReview[] = (detailsData.reviews || []).map((review: PlaceReview) => ({
+      author_name: review.authorAttribution?.displayName || 'Anonymous',
+      author_url: review.authorAttribution?.uri,
+      profile_photo_url: review.authorAttribution?.photoUri,
+      rating: review.rating || 0,
+      relative_time_description: review.relativePublishTimeDescription || '',
+      text: review.text?.text || review.originalText?.text || '',
+      time: review.publishTime ? new Date(review.publishTime).getTime() / 1000 : 0
+    }));
+
+    console.log(`Found ${transformedReviews.length} reviews for place`);
     
     return new Response(
       JSON.stringify({
         placeId: googlePlaceId,
-        name: result?.name,
-        rating: result?.rating,
-        totalReviews: result?.user_ratings_total,
-        reviews: result?.reviews || [],
-        googleMapsUrl: result?.url || `https://www.google.com/maps/place/?q=place_id:${googlePlaceId}`
+        name: detailsData.displayName?.text,
+        rating: detailsData.rating,
+        totalReviews: detailsData.userRatingCount,
+        reviews: transformedReviews,
+        googleMapsUrl: detailsData.googleMapsUri || `https://www.google.com/maps/place/?q=place_id:${googlePlaceId}`
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
