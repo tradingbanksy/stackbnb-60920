@@ -261,8 +261,12 @@ const RestaurantDetail = () => {
           <div className="flex items-center gap-3 text-sm">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold">{restaurant.rating}</span>
-              <span className="text-muted-foreground">({restaurant.reviewCount.toLocaleString()} reviews)</span>
+              <span className="font-semibold">
+                {googleReviews?.rating ? googleReviews.rating.toFixed(1) : restaurant.rating}
+              </span>
+              <span className="text-muted-foreground">
+                ({(googleReviews?.totalReviews ?? restaurant.reviewCount).toLocaleString()} reviews)
+              </span>
             </div>
             <span className="text-muted-foreground">•</span>
             <span>{restaurant.cuisine}</span>
