@@ -59,6 +59,7 @@ import wineImg from "@/assets/experiences/wine.jpg";
 
 // Restaurant components
 import RestaurantCard from "@/components/RestaurantCard";
+import { RestaurantCardWithGoogleRating } from "@/components/RestaurantCardWithGoogleRating";
 import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
 import { BlurImage } from "@/components/BlurImage";
 
@@ -505,29 +506,11 @@ const AppView = () => {
                         ))}
                         {/* Mock restaurants only as fallback when no real vendors */}
                         {vendorRestaurants.length === 0 && restaurants.map((restaurant, index) => (
-                          <Link
+                          <RestaurantCardWithGoogleRating
                             key={restaurant.id}
-                            to={`/restaurant/${restaurant.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                          >
-                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
-                              <BlurImage
-                                src={restaurant.photos[0]}
-                                alt={restaurant.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                                <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
-                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{restaurant.rating}</span>
-                                  <span>•</span>
-                                  <span>{restaurant.priceRange}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
+                            restaurant={restaurant}
+                            index={index}
+                          />
                         ))}
                       </>
                     )}
