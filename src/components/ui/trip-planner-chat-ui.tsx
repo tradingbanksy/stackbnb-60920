@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
+import { VendorLocationMap } from "@/components/VendorLocationMap";
 
 // Bionic reading: bold first part of each word
 function applyBionicReading(text: string): string {
@@ -95,6 +96,37 @@ interface HostVendor {
   duration?: string;
   maxGuests?: number;
   included?: string[];
+}
+
+// Helper to extract vendor name from a message with a booking link
+function extractVendorFromMessage(content: string): string | null {
+  // Look for patterns like "**Vendor Name**" or vendor names before booking links
+  const boldMatch = content.match(/\*\*([^*]+)\*\*/);
+  if (boldMatch) {
+    return boldMatch[1];
+  }
+  
+  // Look for experience names in booking links
+  const linkMatch = content.match(/\[Book[^\]]*\]\(\/experience\/[^)]+\)/i);
+  if (linkMatch) {
+    // Try to find the experience name mentioned nearby
+    const lines = content.split('\n');
+    for (const line of lines) {
+      if (line.includes('**') && !line.includes('Book')) {
+        const nameMatch = line.match(/\*\*([^*]+)\*\*/);
+        if (nameMatch) return nameMatch[1];
+      }
+    }
+  }
+  
+  return null;
+}
+
+// Check if message contains a quote (booking link or price mention)
+function hasQuoteInMessage(content: string): boolean {
+  const hasBookingLink = /\[Book[^\]]*\]\(\/experience\//.test(content);
+  const hasPriceMention = /\$\d+/.test(content) && /per person|total|price/i.test(content);
+  return hasBookingLink || hasPriceMention;
 }
 
 interface TripPlannerChatUIProps {
@@ -328,73 +360,85 @@ export default function TripPlannerChatUI({
         <>
           <ScrollArea ref={scrollRef} className="flex-1 p-4">
             <div className="space-y-4 max-w-2xl mx-auto">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <Card
-                    className={`max-w-[85%] p-4 text-sm ${
-                      m.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+              {messages.map((m, i) => {
+                const isQuoteMessage = m.role === "assistant" && hasQuoteInMessage(m.content);
+                const vendorName = isQuoteMessage ? extractVendorFromMessage(m.content) : null;
+                
+                return (
+                  <div
+                    key={i}
+                    className={`flex flex-col ${
+                      m.role === "user" ? "items-end" : "items-start"
                     }`}
                   >
-                    <div
-                      className={
-                        m.role === "assistant"
-                          ? "prose prose-sm dark:prose-invert max-w-none prose-p:my-3 prose-p:leading-relaxed prose-ul:my-4 prose-ul:space-y-2 prose-li:my-1 prose-headings:mt-6 prose-headings:mb-3 prose-h2:text-base prose-h2:font-bold prose-strong:text-foreground [&>*+*]:mt-4 [&_ul]:pl-1 [&_li]:pl-0 prose-li:marker:text-primary whitespace-pre-line"
-                          : ""
-                      }
+                    <Card
+                      className={`max-w-[85%] p-4 text-sm ${
+                        m.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
                     >
-                      <ReactMarkdown
-                        components={{
-                          a: ({ href, children }) => {
-                            const text = String(children);
-                            const isBookingLink = href?.startsWith('/experience/') && text.includes('Book');
-                            
-                            if (isBookingLink) {
-                              return (
-                                <Link
-                                  to={href || '#'}
-                                  className="inline-flex items-center gap-2 px-5 py-2.5 mt-3 mb-1 rounded-full font-medium text-sm no-underline
-                                    bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400
-                                    text-white
-                                    shadow-[0_4px_20px_rgba(168,85,247,0.4)]
-                                    transition-all duration-300
-                                    hover:shadow-[0_6px_30px_rgba(168,85,247,0.6)]
-                                    hover:scale-105
-                                    active:scale-95"
-                                >
-                                  {text}
-                                </Link>
-                              );
-                            }
-                            
-                            // Regular links (like Google Maps ratings)
-                            return (
-                              <a
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                {children}
-                              </a>
-                            );
-                          },
-                        }}
+                      <div
+                        className={
+                          m.role === "assistant"
+                            ? "prose prose-sm dark:prose-invert max-w-none prose-p:my-3 prose-p:leading-relaxed prose-ul:my-4 prose-ul:space-y-2 prose-li:my-1 prose-headings:mt-6 prose-headings:mb-3 prose-h2:text-base prose-h2:font-bold prose-strong:text-foreground [&>*+*]:mt-4 [&_ul]:pl-1 [&_li]:pl-0 prose-li:marker:text-primary whitespace-pre-line"
+                            : ""
+                        }
                       >
-                        {m.role === "assistant" && bionicEnabled 
-                          ? applyBionicReading(m.content) 
-                          : m.content}
-                      </ReactMarkdown>
-                    </div>
-                  </Card>
-                </div>
-              ))}
+                        <ReactMarkdown
+                          components={{
+                            a: ({ href, children }) => {
+                              const text = String(children);
+                              const isBookingLink = href?.startsWith('/experience/') && text.includes('Book');
+                              
+                              if (isBookingLink) {
+                                return (
+                                  <Link
+                                    to={href || '#'}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 mt-3 mb-1 rounded-full font-medium text-sm no-underline
+                                      bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400
+                                      text-white
+                                      shadow-[0_4px_20px_rgba(168,85,247,0.4)]
+                                      transition-all duration-300
+                                      hover:shadow-[0_6px_30px_rgba(168,85,247,0.6)]
+                                      hover:scale-105
+                                      active:scale-95"
+                                  >
+                                    {text}
+                                  </Link>
+                                );
+                              }
+                              
+                              // Regular links (like Google Maps ratings)
+                              return (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline"
+                                >
+                                  {children}
+                                </a>
+                              );
+                            },
+                          }}
+                        >
+                          {m.role === "assistant" && bionicEnabled 
+                            ? applyBionicReading(m.content) 
+                            : m.content}
+                        </ReactMarkdown>
+                      </div>
+                    </Card>
+                    
+                    {/* Show map for quote messages */}
+                    {isQuoteMessage && vendorName && (
+                      <div className="w-full max-w-[85%] mt-3">
+                        <VendorLocationMap vendorName={vendorName} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               
               
               {isLoading && (

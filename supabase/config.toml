@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.price-comparison]
 verify_jwt = false
+
+[functions.vendor-directions]
+verify_jwt = false
