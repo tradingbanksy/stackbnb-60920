@@ -82,7 +82,7 @@ export interface Restaurant {
 // Unique high-quality food images - each restaurant gets unique local images (NO DUPLICATES)
 const uniqueRestaurantPhotos: Record<string, string[]> = {
   r1: [seafood1, seafood2, seafood3], // Ocean View Grill - Seafood
-  r2: [american1, american2, american3], // Sunset Grill & Bar - American
+  r2: [mexican1, mexican2, mexican4], // Hartwood - Mexican
   r3: [italian1, italian2, italian3], // La Bella Italia - Italian
   r4: [japanese1, japanese2, japanese3], // Sakura Garden - Japanese
   r5: [mexican1, mexican2, mexican4], // Casa del Sol - Mexican
@@ -132,31 +132,31 @@ export const mockRestaurants: Restaurant[] = [
   },
   {
     id: 'r2',
-    name: "Sunset Grill & Bar",
-    cuisine: "American",
-    rating: 4.6,
-    reviewCount: 892,
-    priceRange: '$$',
-    address: "567 Collins Ave",
-    neighborhood: "Mid Beach",
-    city: "Miami Beach",
-    zipCode: "33140",
-    phone: "(305) 555-0102",
+    name: "Hartwood",
+    cuisine: "Mexican",
+    rating: 4.8,
+    reviewCount: 3247,
+    priceRange: '$$$$',
+    address: "Carr. Tulum-Boca Paila km 7.6",
+    neighborhood: "Tulum Beach",
+    city: "Tulum",
+    zipCode: "77780",
+    phone: "+52 984 115 4270",
     hours: {
-      monday: { open: "7:00 AM", close: "11:00 PM" },
-      tuesday: { open: "7:00 AM", close: "11:00 PM" },
-      wednesday: { open: "7:00 AM", close: "11:00 PM" },
-      thursday: { open: "7:00 AM", close: "11:00 PM" },
-      friday: { open: "7:00 AM", close: "12:00 AM" },
-      saturday: { open: "7:00 AM", close: "12:00 AM" },
-      sunday: { open: "7:00 AM", close: "10:00 PM" },
+      monday: { open: "Closed", close: "Closed" },
+      tuesday: { open: "6:00 PM", close: "10:30 PM" },
+      wednesday: { open: "6:00 PM", close: "10:30 PM" },
+      thursday: { open: "6:00 PM", close: "10:30 PM" },
+      friday: { open: "6:00 PM", close: "10:30 PM" },
+      saturday: { open: "6:00 PM", close: "10:30 PM" },
+      sunday: { open: "6:00 PM", close: "10:30 PM" },
     },
-    description: "A local favorite since 1985, Sunset Grill offers classic American comfort food with a modern twist. Famous for our all-day breakfast and craft cocktails. Dog-friendly patio available!",
+    description: "Michelin-recommended wood-fired restaurant serving sustainable Yucatecan cuisine. Daily changing menu based on local harvests, cooked over open flames. Solar-powered and off-grid. Reservations essential.",
     photos: uniqueRestaurantPhotos.r2,
-    features: ["Outdoor Seating", "Pet Friendly", "All-Day Breakfast", "Craft Cocktails"],
+    features: ["Outdoor Seating", "Wood-Fired Cooking", "Farm-to-Table", "Reservations Required"],
     hasOutdoorSeating: true,
-    reservationPlatform: null,
-    coordinates: { lat: 25.8004, lng: -80.1287 },
+    reservationPlatform: 'opentable',
+    coordinates: { lat: 20.2047, lng: -87.4313 },
   },
   {
     id: 'r3',
