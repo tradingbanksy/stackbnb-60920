@@ -132,6 +132,8 @@ export type Database = {
           place_id: string | null
           planned_date: string | null
           planned_time: string | null
+          share_token: string | null
+          sort_order: number | null
           travel_distance: string | null
           travel_duration: string | null
           travel_duration_seconds: number | null
@@ -148,6 +150,8 @@ export type Database = {
           place_id?: string | null
           planned_date?: string | null
           planned_time?: string | null
+          share_token?: string | null
+          sort_order?: number | null
           travel_distance?: string | null
           travel_duration?: string | null
           travel_duration_seconds?: number | null
@@ -164,6 +168,8 @@ export type Database = {
           place_id?: string | null
           planned_date?: string | null
           planned_time?: string | null
+          share_token?: string | null
+          sort_order?: number | null
           travel_distance?: string | null
           travel_duration?: string | null
           travel_duration_seconds?: number | null
@@ -353,6 +359,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shared_itineraries: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean | null
+          share_token: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          share_token?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          share_token?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

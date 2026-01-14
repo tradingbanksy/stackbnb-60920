@@ -84,6 +84,7 @@ import HostVendorManagement from "./pages/HostVendorManagement";
 import AdminPromoCodes from "./pages/AdminPromoCodes";
 import MyBookings from "./pages/MyBookings";
 import Itinerary from "./pages/Itinerary";
+import SharedItinerary from "./pages/SharedItinerary";
 
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, role } = useAuthContext();
@@ -161,6 +162,7 @@ const AppRoutes = () => (
     <Route path="/for-vendors" element={<ForVendors />} />
     <Route path="/trip-planner" element={<TripPlannerChat />} />
     <Route path="/itinerary" element={<ProtectedRoute><Itinerary /></ProtectedRoute>} />
+    <Route path="/itinerary/shared/:token" element={<SharedItinerary />} />
     <Route path="/restaurant/:id" element={<RestaurantDetail />} />
     <Route path="/restaurants" element={<AllRestaurants />} />
     <Route path="/experiences" element={<AllExperiences />} />
