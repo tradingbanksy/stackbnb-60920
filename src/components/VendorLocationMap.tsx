@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car } from "lucide-react";
+import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -195,39 +195,30 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     );
   }
 
-  // Generate static map URL
+  // Generate static map URL using OpenStreetMap tiles (no API key needed)
   const getStaticMapUrl = () => {
     if (!directionsData?.vendorLocation) return null;
     const { lat, lng } = directionsData.vendorLocation;
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8';
-    // Modern styled map with custom colors
-    const style = [
-      'feature:all|element:geometry|color:0xf5f5f5',
-      'feature:water|element:geometry|color:0xc9e9ff',
-      'feature:road|element:geometry|color:0xffffff',
-      'feature:road.arterial|element:geometry|color:0xfefefe',
-      'feature:road.highway|element:geometry|color:0xdadada',
-      'feature:poi|element:labels|visibility:off',
-      'feature:transit|visibility:off',
-    ].map(s => `style=${encodeURIComponent(s)}`).join('&');
-    
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=14&size=400x200&scale=2&maptype=roadmap&markers=color:0xEF4444%7C${lat},${lng}&${style}&key=${apiKey}`;
+    // Use a free static map service
+    return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=14&size=600x200&maptype=osmarenderer&markers=${lat},${lng},red-pushpin`;
   };
 
+  const [mapError, setMapError] = useState(false);
   const staticMapUrl = getStaticMapUrl();
 
   return (
     <Card className="overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm">
       {/* Mini Map Preview */}
-      {staticMapUrl && (
+      {staticMapUrl && !mapError ? (
         <div 
-          className="relative h-32 w-full cursor-pointer group overflow-hidden"
+          className="relative h-32 w-full cursor-pointer group overflow-hidden bg-muted"
           onClick={openInGoogleMaps}
         >
           <img
             src={staticMapUrl}
             alt={`Map showing ${vendorName} location`}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={() => setMapError(true)}
           />
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60" />
@@ -237,7 +228,35 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
             Open in Maps
           </div>
         </div>
-      )}
+      ) : directionsData?.vendorLocation ? (
+        /* Fallback: Stylized map placeholder */
+        <div 
+          className="relative h-32 w-full cursor-pointer group overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/30 dark:to-slate-900/50"
+          onClick={openInGoogleMaps}
+        >
+          {/* Grid pattern to simulate map */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="w-full h-full" style={{
+              backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+              backgroundSize: '20px 20px'
+            }} />
+          </div>
+          {/* Center pin */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative">
+              <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute inset-0" />
+              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shadow-lg relative">
+                <MapPin className="h-5 w-5 text-primary-foreground" />
+              </div>
+            </div>
+          </div>
+          {/* Tap to open indicator */}
+          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1">
+            <Map className="h-3 w-3" />
+            Tap to view map
+          </div>
+        </div>
+      ) : null}
       
       {/* Compact Location Header */}
       <div className="p-4 space-y-4">
