@@ -7,16 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableItineraryItem } from "@/components/SortableItineraryItem";
+import {
   ArrowLeft,
-  MapPin,
-  Clock,
-  Navigation,
-  Trash2,
   Calendar,
   Sparkles,
-  ExternalLink,
+  Share2,
+  Link as LinkIcon,
+  Check,
 } from "lucide-react";
-import { format } from "date-fns";
 
 interface ItineraryItem {
   id: string;
@@ -30,10 +43,16 @@ interface ItineraryItem {
   notes: string | null;
   planned_date: string | null;
   planned_time: string | null;
+  sort_order: number;
   created_at: string;
 }
 
-const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
+interface SharedItinerary {
+  id: string;
+  share_token: string;
+  title: string;
+  is_public: boolean;
+}
 
 export default function Itinerary() {
   const navigate = useNavigate();
@@ -41,6 +60,21 @@ export default function Itinerary() {
   const [items, setItems] = useState<ItineraryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [sharedItinerary, setSharedItinerary] = useState<SharedItinerary | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     const fetchItinerary = async () => {
@@ -51,11 +85,14 @@ export default function Itinerary() {
         return;
       }
 
+      setUserId(user.id);
+
+      // Fetch itinerary items
       const { data, error } = await supabase
         .from('itinerary_items')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('sort_order', { ascending: true });
 
       if (error) {
         console.error('Error fetching itinerary:', error);
@@ -67,11 +104,48 @@ export default function Itinerary() {
       } else {
         setItems(data || []);
       }
+
+      // Fetch or create shared itinerary record
+      const { data: sharedData } = await supabase
+        .from('shared_itineraries')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (sharedData) {
+        setSharedItinerary(sharedData);
+      }
+
       setIsLoading(false);
     };
 
     fetchItinerary();
   }, [navigate, toast]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setItems(newItems);
+
+      // Update sort_order in database
+      const updates = newItems.map((item, index) => ({
+        id: item.id,
+        sort_order: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from('itinerary_items')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id);
+      }
+    }
+  };
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -97,9 +171,60 @@ export default function Itinerary() {
     setDeletingId(null);
   };
 
-  const openInGoogleMaps = (item: ItineraryItem) => {
-    const query = encodeURIComponent(`${item.vendor_name} Tulum Mexico`);
-    window.open(`https://www.google.com/maps/search/${query}`, '_blank', 'noopener,noreferrer');
+  const handleShare = async () => {
+    if (!userId) return;
+
+    setIsSharing(true);
+
+    try {
+      let shareToken = sharedItinerary?.share_token;
+
+      if (!sharedItinerary) {
+        // Create shared itinerary record
+        const { data, error } = await supabase
+          .from('shared_itineraries')
+          .insert({
+            user_id: userId,
+            is_public: true,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setSharedItinerary(data);
+        shareToken = data.share_token;
+      } else if (!sharedItinerary.is_public) {
+        // Make it public
+        const { error } = await supabase
+          .from('shared_itineraries')
+          .update({ is_public: true })
+          .eq('id', sharedItinerary.id);
+
+        if (error) throw error;
+        setSharedItinerary({ ...sharedItinerary, is_public: true });
+      }
+
+      // Copy link to clipboard
+      const shareUrl = `${window.location.origin}/itinerary/shared/${shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+
+      toast({
+        title: "Link copied!",
+        description: "Share this link with friends to show them your trip plan.",
+      });
+    } catch (err) {
+      console.error('Error sharing itinerary:', err);
+      toast({
+        title: "Error",
+        description: "Failed to create share link.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleBack = () => {
@@ -122,7 +247,22 @@ export default function Itinerary() {
             <Calendar className="h-5 w-5 text-primary" />
             <h1 className="text-lg font-bold">My Itinerary</h1>
           </div>
-          <div className="w-10" /> {/* Spacer for centering */}
+          {items.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShare}
+              disabled={isSharing}
+              className="relative"
+            >
+              {linkCopied ? (
+                <Check className="h-5 w-5 text-green-500" />
+              ) : (
+                <Share2 className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+          {items.length === 0 && <div className="w-10" />}
         </div>
 
         <div className="p-4 max-w-2xl mx-auto">
@@ -150,76 +290,52 @@ export default function Itinerary() {
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {items.length} {items.length === 1 ? 'item' : 'items'} saved
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {items.length} {items.length === 1 ? 'item' : 'items'} saved
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Drag to reorder
+                </p>
+              </div>
+
+              {sharedItinerary?.is_public && (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm">
+                  <LinkIcon className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground">Sharing enabled</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="ml-auto p-0 h-auto"
+                    onClick={handleShare}
+                  >
+                    Copy link
+                  </Button>
+                </div>
+              )}
               
-              {items.map(item => (
-                <Card key={item.id} className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-2">
-                      <h3 className="font-semibold">{item.vendor_name}</h3>
-                      
-                      {/* Travel info */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                        {item.travel_distance && (
-                          <div className="flex items-center gap-1.5">
-                            <Navigation className="h-3.5 w-3.5" />
-                            <span>{item.travel_distance}</span>
-                          </div>
-                        )}
-                        {item.travel_duration && (
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>{item.travel_duration}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Address */}
-                      {item.vendor_address && (
-                        <div className="flex items-start gap-1.5 text-sm text-muted-foreground">
-                          <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                          <span className="line-clamp-2">{item.vendor_address}</span>
-                        </div>
-                      )}
-
-                      {/* Arrival tips preview */}
-                      {item.arrival_tips && item.arrival_tips.length > 0 && (
-                        <p className="text-xs text-muted-foreground/80 italic">
-                          {item.arrival_tips[0]}
-                        </p>
-                      )}
-
-                      {/* Saved date */}
-                      <p className="text-xs text-muted-foreground/60">
-                        Saved {format(new Date(item.created_at), 'MMM d, yyyy')}
-                      </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openInGoogleMaps(item)}
-                        className="h-8 w-8"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(item.id)}
-                        disabled={deletingId === item.id}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={items.map(item => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {items.map((item, index) => (
+                      <SortableItineraryItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        onDelete={handleDelete}
+                        isDeleting={deletingId === item.id}
+                      />
+                    ))}
                   </div>
-                </Card>
-              ))}
+                </SortableContext>
+              </DndContext>
             </div>
           )}
         </div>
