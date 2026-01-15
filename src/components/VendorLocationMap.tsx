@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, CircleDot } from "lucide-react";
+import { MapPin, Clock, Navigation, Lightbulb, ExternalLink, Bookmark, BookmarkCheck, Loader2, Car, CircleDot, ChevronDown, ChevronUp, ArrowUp, CornerDownRight, CornerDownLeft, RotateCcw, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,12 @@ interface DirectionsData {
   error?: string;
 }
 
+interface RouteStep {
+  instruction: string;
+  distance: number;
+  duration: number;
+}
+
 interface MapboxRouteData {
   route: {
     type: string;
@@ -41,7 +47,7 @@ interface MapboxRouteData {
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
   mapboxToken: string;
-  steps?: { instruction: string; distance: number; duration: number }[];
+  steps?: RouteStep[];
 }
 
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
@@ -57,9 +63,13 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
   const [userId, setUserId] = useState<string | null>(null);
   const [itineraryItemId, setItineraryItemId] = useState<string | null>(null);
   const [mapError, setMapError] = useState(false);
+  const [showDirections, setShowDirections] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const carMarker = useRef<mapboxgl.Marker | null>(null);
+  const animationRef = useRef<number | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   // Check auth state and if already saved
@@ -266,6 +276,33 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
           .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${vendorName}</strong><p>${mapRouteData.distanceText} • ${mapRouteData.durationText}</p>`))
           .addTo(map.current);
 
+        // Add car marker for animation
+        const carEl = document.createElement('div');
+        carEl.className = 'car-marker';
+        carEl.innerHTML = `
+          <div style="
+            width: 28px; 
+            height: 28px; 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+            border: 2px solid white; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 3px 12px rgba(16,185,129,0.5);
+            transition: transform 0.1s ease-out;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+              <circle cx="7" cy="17" r="2"/>
+              <circle cx="17" cy="17" r="2"/>
+            </svg>
+          </div>
+        `;
+        carMarker.current = new mapboxgl.Marker(carEl)
+          .setLngLat([mapRouteData.origin.lng, mapRouteData.origin.lat])
+          .addTo(map.current);
+
         // Add navigation controls
         map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
@@ -278,12 +315,105 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     }
 
     return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      if (carMarker.current) {
+        carMarker.current.remove();
+        carMarker.current = null;
+      }
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
   }, [mapRouteData, vendorName]);
+
+  // Animate car along route
+  const animateCar = useCallback(() => {
+    if (!mapRouteData?.route?.coordinates || !carMarker.current) return;
+    
+    const coordinates = mapRouteData.route.coordinates;
+    const totalPoints = coordinates.length;
+    let currentIndex = 0;
+    const animationDuration = 8000; // 8 seconds for full route
+    const startTime = performance.now();
+
+    setIsAnimating(true);
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / animationDuration, 1);
+      
+      // Easing function for smooth animation
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      
+      currentIndex = Math.floor(easedProgress * (totalPoints - 1));
+      const nextIndex = Math.min(currentIndex + 1, totalPoints - 1);
+      
+      // Interpolate between current and next point
+      const segmentProgress = (easedProgress * (totalPoints - 1)) % 1;
+      const currentCoord = coordinates[currentIndex];
+      const nextCoord = coordinates[nextIndex];
+      
+      const interpolatedLng = currentCoord[0] + (nextCoord[0] - currentCoord[0]) * segmentProgress;
+      const interpolatedLat = currentCoord[1] + (nextCoord[1] - currentCoord[1]) * segmentProgress;
+      
+      carMarker.current?.setLngLat([interpolatedLng, interpolatedLat]);
+
+      // Calculate rotation based on direction
+      if (currentIndex < totalPoints - 1) {
+        const dx = nextCoord[0] - currentCoord[0];
+        const dy = nextCoord[1] - currentCoord[1];
+        const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
+        const el = carMarker.current?.getElement();
+        if (el) {
+          el.style.transform = `rotate(${rotation}deg)`;
+        }
+      }
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setIsAnimating(false);
+        // Reset car to start after a delay
+        setTimeout(() => {
+          carMarker.current?.setLngLat([coordinates[0][0], coordinates[0][1]]);
+          const el = carMarker.current?.getElement();
+          if (el) el.style.transform = '';
+        }, 1000);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+  }, [mapRouteData]);
+
+  // Helper to get direction icon based on instruction text
+  const getDirectionIcon = (instruction: string) => {
+    const lowerInstruction = instruction.toLowerCase();
+    if (lowerInstruction.includes('right')) return <CornerDownRight className="h-4 w-4" />;
+    if (lowerInstruction.includes('left')) return <CornerDownLeft className="h-4 w-4" />;
+    if (lowerInstruction.includes('u-turn') || lowerInstruction.includes('uturn')) return <RotateCcw className="h-4 w-4" />;
+    if (lowerInstruction.includes('straight') || lowerInstruction.includes('continue')) return <ArrowUp className="h-4 w-4" />;
+    if (lowerInstruction.includes('merge') || lowerInstruction.includes('enter')) return <MoveRight className="h-4 w-4" />;
+    return <ArrowUp className="h-4 w-4" />;
+  };
+
+  // Format distance for display
+  const formatStepDistance = (meters: number) => {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)} km`;
+    }
+    return `${Math.round(meters)} m`;
+  };
+
+  // Format duration for display
+  const formatStepDuration = (seconds: number) => {
+    if (seconds >= 60) {
+      return `${Math.round(seconds / 60)} min`;
+    }
+    return `${Math.round(seconds)} sec`;
+  };
 
   const openInGoogleMaps = () => {
     if (directionsData?.vendorLocation) {
@@ -474,14 +604,35 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
           {/* Gradient overlay at bottom */}
           <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
 
-          {/* Open in Maps button */}
-          <button
-            onClick={openInGoogleMaps}
-            className="absolute bottom-2 right-2 px-2.5 py-1.5 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1.5 shadow-sm border border-border/50 hover:bg-background transition-colors"
-          >
-            <ExternalLink className="h-3 w-3" />
-            Open in Maps
-          </button>
+          {/* Map controls row */}
+          <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
+            {/* Animate journey button */}
+            {mapLoaded && mapRouteData?.route && (
+              <button
+                onClick={animateCar}
+                disabled={isAnimating}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-full backdrop-blur-sm text-xs font-medium flex items-center gap-1.5 shadow-sm border transition-all",
+                  isAnimating 
+                    ? "bg-green-500/90 text-white border-green-500/50" 
+                    : "bg-background/90 text-foreground border-border/50 hover:bg-background"
+                )}
+              >
+                <Car className={cn("h-3 w-3", isAnimating && "animate-pulse")} />
+                {isAnimating ? "Driving..." : "Animate Route"}
+              </button>
+            )}
+            {!mapLoaded && <div />}
+            
+            {/* Open in Maps button */}
+            <button
+              onClick={openInGoogleMaps}
+              className="px-2.5 py-1.5 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1.5 shadow-sm border border-border/50 hover:bg-background transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Open in Maps
+            </button>
+          </div>
         </div>
       ) : null}
       
@@ -526,6 +677,79 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
             )}
           </div>
         </div>
+
+        {/* Turn-by-Turn Directions */}
+        {mapRouteData?.steps && mapRouteData.steps.length > 0 && (
+          <div className="rounded-lg border border-border/50 overflow-hidden">
+            <button
+              onClick={() => setShowDirections(!showDirections)}
+              className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Navigation className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Turn-by-Turn Directions</span>
+                <span className="text-xs text-muted-foreground">({mapRouteData.steps.length} steps)</span>
+              </div>
+              {showDirections ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+            
+            {showDirections && (
+              <div className="divide-y divide-border/50 max-h-64 overflow-y-auto">
+                {mapRouteData.steps.map((step, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-start gap-3 p-3 hover:bg-muted/20 transition-colors"
+                  >
+                    {/* Step number with icon */}
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        {getDirectionIcon(step.instruction)}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{index + 1}</span>
+                    </div>
+                    
+                    {/* Step details */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {step.instruction}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {formatStepDistance(step.distance)}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatStepDuration(step.duration)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Arrival step */}
+                <div className="flex items-start gap-3 p-3 bg-green-500/5">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-600 shrink-0">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">End</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-600">Arrive at {vendorName}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Total: {mapRouteData.distanceText} • {mapRouteData.durationText}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Arrival Tips */}
         {directionsData?.arrivalTips && directionsData.arrivalTips.length > 0 && (
