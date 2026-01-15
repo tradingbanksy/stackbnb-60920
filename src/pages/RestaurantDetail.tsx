@@ -221,38 +221,16 @@ const RestaurantDetail = () => {
     }
   };
 
-  const openExternalLink = async (url: string) => {
-    // In the preview iframe, Google Maps often cannot open (popups blocked / iframe restrictions).
-    // Strategy:
-    // 1) Try a new tab
-    // 2) If blocked, try to break out of the iframe (top navigation)
-    // 3) If that fails, copy the link
-    const newWindow = window.open(url, "_blank", "noopener,noreferrer");
-    if (newWindow) return;
-
-    try {
-      if (window.top && window.top !== window.self) {
-        window.top.location.href = url;
-        return;
-      }
-    } catch {
-      // ignore cross-origin iframe access errors
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Link copied",
-        description: "The preview blocks opening Google Maps. Paste the link into a new tab.",
-        duration: 3500,
-      });
-    } catch {
-      toast({
-        title: "Can’t open link in preview",
-        description: url,
-        duration: 6000,
-      });
-    }
+  const openExternalLink = (url: string) => {
+    // Use an anchor tag approach which browsers trust more for user-initiated navigation
+    // This avoids popup blockers that can mark window.open tabs as "blocked"
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getDayName = (index: number): string => {
