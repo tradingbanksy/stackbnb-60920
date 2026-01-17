@@ -23,6 +23,7 @@ import {
   RotateCcw,
   CalendarDays,
   Check,
+  Cloud,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -157,6 +158,7 @@ interface TripPlannerChatUIProps {
   onClearChat?: () => void;
   hostVendors?: HostVendor[];
   isAuthenticated?: boolean | null;
+  isSaving?: boolean;
 }
 
 export default function TripPlannerChatUI({
@@ -166,6 +168,7 @@ export default function TripPlannerChatUI({
   onClearChat,
   hostVendors = [],
   isAuthenticated,
+  isSaving,
 }: TripPlannerChatUIProps) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
@@ -240,13 +243,29 @@ export default function TripPlannerChatUI({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium">
-                    <Check className="h-3 w-3" />
-                    Saved
+                  <span 
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300",
+                      isSaving 
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" 
+                        : "bg-green-500/10 text-green-600 dark:text-green-400"
+                    )}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Cloud className="h-3 w-3 animate-pulse" />
+                        <span className="animate-pulse">Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-3 w-3" />
+                        Saved
+                      </>
+                    )}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Chat history is being saved to your account</p>
+                  <p>{isSaving ? "Saving chat history..." : "Chat history is saved to your account"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

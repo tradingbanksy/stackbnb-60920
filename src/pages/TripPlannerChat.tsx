@@ -69,6 +69,7 @@ const TripPlannerChat = () => {
 
   const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: initialMessage }]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Check auth status and load history only for authenticated users
   useEffect(() => {
@@ -125,8 +126,12 @@ const TripPlannerChat = () => {
 
   // Persist messages to localStorage only for authenticated users
   useEffect(() => {
-    if (isAuthenticated && hasInitialized.current) {
+    if (isAuthenticated && hasInitialized.current && messages.length > 1) {
+      setIsSaving(true);
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+      // Show saving animation briefly
+      const timer = setTimeout(() => setIsSaving(false), 800);
+      return () => clearTimeout(timer);
     }
   }, [messages, isAuthenticated]);
 
@@ -281,6 +286,7 @@ const TripPlannerChat = () => {
         onClearChat={clearChat}
         hostVendors={hostVendors}
         isAuthenticated={isAuthenticated}
+        isSaving={isSaving}
       />
     </PageTransition>
   );
