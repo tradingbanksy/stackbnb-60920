@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import TripPlannerChatUI from "@/components/ui/trip-planner-chat-ui";
@@ -31,6 +31,8 @@ const TripPlannerChat = () => {
   const location = useLocation();
   const passedVendors = (location.state as { hostVendors?: HostVendor[] })?.hostVendors || [];
   const [hostVendors, setHostVendors] = useState<HostVendor[]>(passedVendors);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const hasInitialized = useRef(false);
   
   // Fetch vendors from database if none passed via location state
   useEffect(() => {
@@ -65,32 +67,68 @@ const TripPlannerChat = () => {
     ? `🌴 Hi! I'm JC, your Tulum travel assistant. Your host has curated ${hostVendors.length} amazing local experiences for you. Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`
     : "🌴 Hi! I'm JC, your Tulum travel assistant. I know the best cenotes, beach clubs, tacos, and hidden gems in the area. What are you looking to experience during your stay?";
 
-  // Load messages from sessionStorage or use initial message
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const stored = sessionStorage.getItem(CHAT_HISTORY_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch {
-        // Invalid JSON, use default
-      }
-    }
-    return [{ role: "assistant", content: initialMessage }];
-  });
+  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: initialMessage }]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check auth status and load history only for authenticated users
+  useEffect(() => {
+    const checkAuthAndLoadHistory = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const isLoggedIn = !!session?.user;
+      setIsAuthenticated(isLoggedIn);
+      
+      // Only load stored history if user is authenticated AND we haven't initialized yet
+      if (isLoggedIn && !hasInitialized.current) {
+        const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setMessages(parsed);
+            }
+          } catch {
+            // Invalid JSON, use default
+          }
+        }
+      } else if (!isLoggedIn) {
+        // Clear any stored history for anonymous users and start fresh
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+        sessionStorage.removeItem(CHAT_HISTORY_KEY);
+      }
+      
+      hasInitialized.current = true;
+    };
+    
+    checkAuthAndLoadHistory();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const isLoggedIn = !!session?.user;
+      setIsAuthenticated(isLoggedIn);
+      
+      if (!isLoggedIn) {
+        // User logged out - clear history and reset chat
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+        sessionStorage.removeItem(CHAT_HISTORY_KEY);
+        setMessages([{ role: "assistant", content: initialMessage }]);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [initialMessage]);
+
   const clearChat = () => {
+    localStorage.removeItem(CHAT_HISTORY_KEY);
     sessionStorage.removeItem(CHAT_HISTORY_KEY);
     setMessages([{ role: "assistant", content: initialMessage }]);
   };
 
-  // Persist messages to sessionStorage whenever they change
+  // Persist messages to localStorage only for authenticated users
   useEffect(() => {
-    sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
-  }, [messages]);
+    if (isAuthenticated && hasInitialized.current) {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+    }
+  }, [messages, isAuthenticated]);
 
   const sendMessage = async (trimmedInput: string) => {
     if (!trimmedInput || isLoading) return;
