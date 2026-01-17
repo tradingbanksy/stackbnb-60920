@@ -20,8 +20,8 @@ const getCorsHeaders = (origin: string | null) => {
 
 // Input validation constants
 const MAX_MESSAGES = 50;
-const MAX_MESSAGE_LENGTH = 4000;
-const MAX_TOTAL_CONTENT_LENGTH = 50000;
+const MAX_MESSAGE_LENGTH = 16000; // Increased to handle longer AI responses
+const MAX_TOTAL_CONTENT_LENGTH = 100000;
 
 interface ChatMessage {
   role: string;
@@ -59,19 +59,24 @@ function validateMessages(messages: unknown): { valid: boolean; error?: string; 
       return { valid: false, error: `Content at message ${i} must be a string` };
     }
 
-    if (msg.content.length > MAX_MESSAGE_LENGTH) {
-      return { valid: false, error: `Message at index ${i} exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters` };
+    // Truncate long messages instead of rejecting them (keeps recent context)
+    let content = msg.content;
+    if (content.length > MAX_MESSAGE_LENGTH) {
+      content = content.substring(0, MAX_MESSAGE_LENGTH) + "... [truncated]";
     }
 
-    totalLength += msg.content.length;
+    totalLength += content.length;
     
-    if (totalLength > MAX_TOTAL_CONTENT_LENGTH) {
-      return { valid: false, error: `Total content length exceeds maximum of ${MAX_TOTAL_CONTENT_LENGTH} characters` };
+    // If total content is too long, truncate earlier messages (keep recent ones)
+    if (totalLength > MAX_TOTAL_CONTENT_LENGTH && validatedMessages.length > 2) {
+      // Remove oldest messages (but keep at least the first user message for context)
+      validatedMessages.splice(1, 1);
+      totalLength = validatedMessages.reduce((sum, m) => sum + m.content.length, 0) + content.length;
     }
 
     validatedMessages.push({
       role: msg.role,
-      content: msg.content.trim(),
+      content: content.trim(),
     });
   }
 
