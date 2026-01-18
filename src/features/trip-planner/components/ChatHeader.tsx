@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Sparkles,
   RotateCcw,
-  CalendarDays,
   Eye,
   EyeOff,
   Moon,
@@ -30,18 +29,20 @@ export function ChatHeader() {
   const hasMessages = messages.length > 1;
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-border">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => navigate('/appview')}
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-primary" />
-        <h1 className="text-lg font-bold">Trip Planner</h1>
-        <TooltipProvider>
+    <TooltipProvider>
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate('/appview')}
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-bold">Trip Planner</h1>
           <Tooltip>
             <TooltipTrigger asChild>
               <span 
@@ -55,7 +56,7 @@ export function ChatHeader() {
                 {isSaving ? (
                   <>
                     <Cloud className="h-3 w-3 animate-pulse" />
-                    <span className="animate-pulse">Saving...</span>
+                    <span className="animate-pulse">Saving…</span>
                   </>
                 ) : (
                   <>
@@ -66,21 +67,20 @@ export function ChatHeader() {
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{isSaving ? "Saving chat history..." : "Chat history is saved to your account"}</p>
+              <p>{isSaving ? "Saving chat history…" : "Chat history is saved to your account"}</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-      </div>
-      <div className="flex items-center gap-1">
-        {hasMessages && (
-          <TooltipProvider>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          {hasMessages && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={clearChat}
-                  className="transition-colors"
+                  aria-label="Clear chat and start new conversation"
                 >
                   <RotateCcw className="h-5 w-5" />
                 </Button>
@@ -89,36 +89,16 @@ export function ChatHeader() {
                 <p>New Chat</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        )}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/itinerary')}
-                className="transition-colors"
-              >
-                <CalendarDays className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>View Itinerary</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
+          )}
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setBionicEnabled(!bionicEnabled)}
-                className={cn(
-                  "transition-colors",
-                  bionicEnabled && "text-primary"
-                )}
+                className={cn(bionicEnabled && "text-primary")}
+                aria-label={bionicEnabled ? "Disable Bionic Reading" : "Enable Bionic Reading"}
               >
                 {bionicEnabled ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
               </Button>
@@ -127,16 +107,14 @@ export function ChatHeader() {
               <p>{bionicEnabled ? "Disable" : "Enable"} Bionic Reading</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="transition-colors"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               >
                 {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
@@ -145,8 +123,8 @@ export function ChatHeader() {
               <p>Toggle {theme === "dark" ? "Light" : "Dark"} Mode</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
