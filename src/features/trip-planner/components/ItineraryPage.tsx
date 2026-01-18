@@ -11,6 +11,9 @@ import {
   Pencil,
   Check,
   X,
+  Lock,
+  Share2,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -93,6 +96,9 @@ export function ItineraryPage() {
     generateItineraryFromChat,
     hasUserEdits,
     isGenerating,
+    isConfirmed,
+    confirmItinerary,
+    unconfirmItinerary,
   } = useItineraryContext();
   
   // Try to get messages from chat context (may not be available)
@@ -122,10 +128,14 @@ export function ItineraryPage() {
   };
 
   const handleToggleEdit = () => {
+    // Don't allow edit mode when confirmed
+    if (isConfirmed) return;
     setIsEditMode(!isEditMode);
   };
 
   const handleRegenerateClick = () => {
+    // Don't allow regeneration when confirmed
+    if (isConfirmed) return;
     setShowRegenerateDialog(true);
   };
 
@@ -146,7 +156,11 @@ export function ItineraryPage() {
   };
 
   const handleConfirm = () => {
-    navigate("/itinerary");
+    confirmItinerary();
+  };
+
+  const handleUnlock = () => {
+    unconfirmItinerary();
   };
 
   // Empty state
@@ -186,12 +200,18 @@ export function ItineraryPage() {
                 {formatDateRange(itinerary.startDate, itinerary.endDate)}
               </p>
             </div>
-            {isEditMode && (
+            {isConfirmed && (
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-full flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Confirmed
+              </span>
+            )}
+            {isEditMode && !isConfirmed && (
               <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
                 Editing
               </span>
             )}
-            {hasUserEdits && !isEditMode && (
+            {hasUserEdits && !isEditMode && !isConfirmed && (
               <span className="text-xs font-medium text-green-600 bg-green-500/10 px-2 py-1 rounded-full">
                 Customized
               </span>
@@ -238,7 +258,27 @@ export function ItineraryPage() {
         {/* Sticky Footer */}
         <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 safe-area-bottom">
           <div className="flex gap-2 max-w-lg mx-auto">
-            {isEditMode ? (
+            {isConfirmed ? (
+              // Confirmed state - show unlock option and share/export placeholders
+              <>
+                <Button variant="outline" className="flex-1" onClick={handleUnlock}>
+                  <Lock className="h-4 w-4 mr-2" />
+                  Unlock
+                </Button>
+                <Button variant="outline" className="flex-1" disabled>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="flex-1"
+                  onClick={() => navigate("/itinerary")}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  View Trip
+                </Button>
+              </>
+            ) : isEditMode ? (
               <>
                 <Button variant="outline" className="flex-1" onClick={handleToggleEdit}>
                   <X className="h-4 w-4 mr-2" />

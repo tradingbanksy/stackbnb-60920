@@ -72,4 +72,8 @@ export interface Itinerary {
   startDate: string;
   endDate: string;
   days: ItineraryDay[];
+  /** Whether the itinerary has been confirmed by the user */
+  isConfirmed?: boolean;
+  /** Timestamp when the itinerary was confirmed */
+  confirmedAt?: string;
 }

@@ -10,11 +10,14 @@ interface ItineraryContextValue {
   isGenerating: boolean;
   isSaving: boolean;
   hasUserEdits: boolean;
+  isConfirmed: boolean;
   generateItineraryFromChat: (messages: Message[], mode?: RegenerateMode) => void;
   updateItinerary: (partialUpdate: Partial<Itinerary>) => void;
   updateDayItems: (dayIndex: number, items: ItineraryItem[]) => void;
   updateItem: (dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => void;
   removeItem: (dayIndex: number, itemIndex: number) => void;
+  confirmItinerary: () => void;
+  unconfirmItinerary: () => void;
   clearItinerary: () => void;
 }
 
@@ -307,21 +310,49 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     setItinerary(null);
   }, []);
 
+  const confirmItinerary = useCallback(() => {
+    setItinerary(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        isConfirmed: true,
+        confirmedAt: new Date().toISOString(),
+      };
+    });
+  }, []);
+
+  const unconfirmItinerary = useCallback(() => {
+    setItinerary(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        isConfirmed: false,
+        confirmedAt: undefined,
+      };
+    });
+  }, []);
+
   // Check if any items have been user-edited
   const hasUserEdits = itinerary?.days.some(day => 
     day.items.some(item => item.isUserEdited)
   ) ?? false;
+
+  // Check if itinerary is confirmed
+  const isConfirmed = itinerary?.isConfirmed ?? false;
 
   const value: ItineraryContextValue = {
     itinerary,
     isGenerating,
     isSaving,
     hasUserEdits,
+    isConfirmed,
     generateItineraryFromChat,
     updateItinerary,
     updateDayItems,
     updateItem,
     removeItem,
+    confirmItinerary,
+    unconfirmItinerary,
     clearItinerary,
   };
 
