@@ -5,3 +5,4 @@ export { ChatMessageList } from "./ChatMessageList";
 export { ChatInputArea } from "./ChatInputArea";
 export { QuickActionsBar } from "./QuickActionsBar";
 export { CreateItineraryButton } from "./CreateItineraryButton";
+export { ItineraryPage } from "./ItineraryPage";

@@ -39,7 +39,7 @@ export function CreateItineraryButton() {
   // Navigate when generation completes
   useEffect(() => {
     if (wasGenerating.current && !isGenerating && itinerary) {
-      navigate("/itinerary");
+      navigate("/trip-planner/itinerary");
     }
     wasGenerating.current = isGenerating;
   }, [isGenerating, itinerary, navigate]);
