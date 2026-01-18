@@ -227,15 +227,20 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || crypto.randomUUID();
       
-      // Create shared itinerary record in database
-      const { error } = await supabase
+      // Create shared itinerary record in database with full itinerary data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase
         .from('shared_itineraries')
         .insert({
           share_token: shareToken,
           user_id: userId,
           title: `Trip to ${itinerary.destination}`,
           is_public: true,
-        });
+          destination: itinerary.destination,
+          start_date: itinerary.startDate,
+          end_date: itinerary.endDate,
+          itinerary_data: itinerary,
+        } as any));
 
       if (error) {
         console.error('Error creating shared itinerary:', error);
