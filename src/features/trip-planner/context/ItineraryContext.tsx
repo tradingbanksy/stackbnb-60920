@@ -3,11 +3,14 @@ import type { Message, Itinerary, ItineraryDay, ItineraryItem, ItineraryItemCate
 
 const ITINERARY_STORAGE_KEY = "tripPlannerItinerary";
 
+export type RegenerateMode = "full" | "improve";
+
 interface ItineraryContextValue {
   itinerary: Itinerary | null;
   isGenerating: boolean;
   isSaving: boolean;
-  generateItineraryFromChat: (messages: Message[]) => void;
+  hasUserEdits: boolean;
+  generateItineraryFromChat: (messages: Message[], mode?: RegenerateMode) => void;
   updateItinerary: (partialUpdate: Partial<Itinerary>) => void;
   updateDayItems: (dayIndex: number, items: ItineraryItem[]) => void;
   updateItem: (dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => void;
@@ -134,6 +137,8 @@ function generateDays(
       title: activity.title,
       description: activity.description,
       category: activity.category,
+      isUserEdited: false,
+      confidence: 0.7, // Default confidence for generated items
     }));
     
     days.push({
@@ -182,7 +187,7 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     }
   }, [itinerary]);
 
-  const generateItineraryFromChat = useCallback((messages: Message[]) => {
+  const generateItineraryFromChat = useCallback((messages: Message[], mode: RegenerateMode = "full") => {
     setIsGenerating(true);
     
     // Process in next tick to allow UI to update
@@ -196,22 +201,57 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
         const destination = extractDestination(combinedText);
         const { startDate, endDate } = extractDates(combinedText);
         const activities = extractActivities(combinedText);
-        const days = generateDays(startDate, endDate, activities);
-        
-        const newItinerary: Itinerary = {
-          id: crypto.randomUUID(),
-          destination,
-          startDate,
-          endDate,
-          days,
-        };
-        
-        setItinerary(newItinerary);
+        const newGeneratedDays = generateDays(startDate, endDate, activities);
+
+        if (mode === "improve" && itinerary) {
+          // Preserve user-edited items, only regenerate non-edited/low-confidence items
+          const improvedDays = itinerary.days.map((existingDay, dayIndex) => {
+            const newDayData = newGeneratedDays[dayIndex];
+            
+            // Keep all user-edited items
+            const userEditedItems = existingDay.items.filter(item => item.isUserEdited);
+            
+            // Get non-edited items with low confidence that should be replaced
+            const keepItems = existingDay.items.filter(
+              item => item.isUserEdited || (item.confidence && item.confidence >= 0.8)
+            );
+            
+            // Calculate how many new items we can add
+            const usedTimes = new Set(keepItems.map(item => item.time));
+            const availableNewItems = newDayData?.items.filter(
+              item => !usedTimes.has(item.time)
+            ) || [];
+            
+            // Merge: keep user items + high-confidence items + add new items for empty slots
+            const mergedItems = [
+              ...keepItems,
+              ...availableNewItems.slice(0, Math.max(0, 4 - keepItems.length)),
+            ].sort((a, b) => a.time.localeCompare(b.time));
+
+            return {
+              ...existingDay,
+              items: mergedItems,
+            };
+          });
+
+          setItinerary(prev => prev ? { ...prev, days: improvedDays } : prev);
+        } else {
+          // Full regenerate - create fresh itinerary
+          const newItinerary: Itinerary = {
+            id: crypto.randomUUID(),
+            destination,
+            startDate,
+            endDate,
+            days: newGeneratedDays,
+          };
+          
+          setItinerary(newItinerary);
+        }
       } finally {
         setIsGenerating(false);
       }
     }, 100);
-  }, []);
+  }, [itinerary]);
 
   const updateItinerary = useCallback((partialUpdate: Partial<Itinerary>) => {
     setItinerary(prev => {
@@ -237,7 +277,13 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
       const newDays = [...prev.days];
       if (newDays[dayIndex] && newDays[dayIndex].items[itemIndex]) {
         const newItems = [...newDays[dayIndex].items];
-        newItems[itemIndex] = { ...newItems[itemIndex], ...updates };
+        // Mark as user-edited when updated
+        newItems[itemIndex] = { 
+          ...newItems[itemIndex], 
+          ...updates, 
+          isUserEdited: true,
+          confidence: 1.0, // User edits have full confidence
+        };
         newDays[dayIndex] = { ...newDays[dayIndex], items: newItems };
       }
       return { ...prev, days: newDays };
@@ -261,10 +307,16 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     setItinerary(null);
   }, []);
 
+  // Check if any items have been user-edited
+  const hasUserEdits = itinerary?.days.some(day => 
+    day.items.some(item => item.isUserEdited)
+  ) ?? false;
+
   const value: ItineraryContextValue = {
     itinerary,
     isGenerating,
     isSaving,
+    hasUserEdits,
     generateItineraryFromChat,
     updateItinerary,
     updateDayItems,

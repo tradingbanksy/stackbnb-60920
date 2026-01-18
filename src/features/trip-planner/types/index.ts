@@ -54,6 +54,10 @@ export interface ItineraryItem {
   location?: string;
   bookingLink?: string;
   category: ItineraryItemCategory;
+  /** Tracks if this item was manually edited by the user */
+  isUserEdited?: boolean;
+  /** Confidence score from generation (0-1), lower = candidate for regeneration */
+  confidence?: number;
 }
 
 export interface ItineraryDay {

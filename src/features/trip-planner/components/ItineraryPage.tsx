@@ -15,9 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PageTransition } from "@/components/PageTransition";
-import { useItineraryContext } from "../context/ItineraryContext";
+import { useItineraryContext, type RegenerateMode } from "../context/ItineraryContext";
+import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import { ItineraryDaySchedule } from "./ItineraryDaySchedule";
 import { EditableItineraryDaySchedule } from "./EditableItineraryDaySchedule";
+import { RegenerateDialog, type RegenerateOption } from "./RegenerateDialog";
 import type { ItineraryDay } from "../types";
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -82,9 +84,29 @@ function DaySelector({ days, selectedIndex, onSelect }: DaySelectorProps) {
 
 export function ItineraryPage() {
   const navigate = useNavigate();
-  const { itinerary, clearItinerary, updateDayItems, updateItem, removeItem } = useItineraryContext();
+  const { 
+    itinerary, 
+    clearItinerary, 
+    updateDayItems, 
+    updateItem, 
+    removeItem,
+    generateItineraryFromChat,
+    hasUserEdits,
+    isGenerating,
+  } = useItineraryContext();
+  
+  // Try to get messages from chat context (may not be available)
+  let messages: { role: "user" | "assistant"; content: string }[] = [];
+  try {
+    const chatContext = useTripPlannerChatContext();
+    messages = chatContext.messages;
+  } catch {
+    // Chat context not available, regeneration will use stored data
+  }
+
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
 
   const selectedDay = useMemo(() => {
     if (!itinerary || !itinerary.days.length) return null;
@@ -103,9 +125,24 @@ export function ItineraryPage() {
     setIsEditMode(!isEditMode);
   };
 
-  const handleRegenerate = () => {
-    clearItinerary();
-    navigate("/trip-planner");
+  const handleRegenerateClick = () => {
+    setShowRegenerateDialog(true);
+  };
+
+  const handleRegenerateSelect = (option: RegenerateOption) => {
+    setShowRegenerateDialog(false);
+    
+    if (!option) return;
+
+    if (messages.length > 0) {
+      // Regenerate using chat messages
+      generateItineraryFromChat(messages, option as RegenerateMode);
+    } else if (option === "full") {
+      // No messages available, clear and go back to trip planner
+      clearItinerary();
+      navigate("/trip-planner");
+    }
+    // For "improve" without messages, we just close the dialog (nothing to improve from)
   };
 
   const handleConfirm = () => {
@@ -152,6 +189,11 @@ export function ItineraryPage() {
             {isEditMode && (
               <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
                 Editing
+              </span>
+            )}
+            {hasUserEdits && !isEditMode && (
+              <span className="text-xs font-medium text-green-600 bg-green-500/10 px-2 py-1 rounded-full">
+                Customized
               </span>
             )}
           </div>
@@ -213,9 +255,14 @@ export function ItineraryPage() {
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={handleRegenerate}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
+                <Button 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={handleRegenerateClick}
+                  disabled={isGenerating}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
+                  {isGenerating ? "..." : "Regenerate"}
                 </Button>
                 <Button variant="default" className="flex-1" onClick={handleConfirm}>
                   <Check className="h-4 w-4 mr-2" />
@@ -225,6 +272,14 @@ export function ItineraryPage() {
             )}
           </div>
         </footer>
+
+        {/* Regenerate Confirmation Dialog */}
+        <RegenerateDialog
+          open={showRegenerateDialog}
+          onOpenChange={setShowRegenerateDialog}
+          onSelect={handleRegenerateSelect}
+          hasUserEdits={hasUserEdits}
+        />
       </div>
     </PageTransition>
   );
