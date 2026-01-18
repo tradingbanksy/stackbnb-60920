@@ -5,7 +5,7 @@ import {
   Compass,
   Waves,
 } from "lucide-react";
-import { QuickAction } from "./QuickAction";
+import { ChatQuickAction } from "./QuickAction";
 import { useTripPlannerChatContext } from "../context";
 
 export interface QuickActionItem {
@@ -46,11 +46,11 @@ export function QuickActionsBar({ actions = DEFAULT_ACTIONS, className }: QuickA
   return (
     <div className={`flex items-center justify-center flex-wrap gap-2 ${className ?? ""}`}>
       {actions.map((action) => (
-        <QuickAction
+        <ChatQuickAction
           key={action.label}
           icon={action.icon}
           label={action.label}
-          onClick={() => handleQuickAction(action.prompt)}
+          onAction={() => handleQuickAction(action.prompt)}
           disabled={isLoading}
         />
       ))}
