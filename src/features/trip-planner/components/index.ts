@@ -1,5 +1,6 @@
 export { ChatQuickAction, QuickAction } from "./QuickAction";
 export { ChatHeader } from "./ChatHeader";
+export { GenerateItineraryButton } from "./GenerateItineraryButton";
 export { ChatMessage } from "./ChatMessage";
 export { ChatMessageList } from "./ChatMessageList";
 export { ChatInputArea } from "./ChatInputArea";

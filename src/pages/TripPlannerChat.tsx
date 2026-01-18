@@ -11,6 +11,7 @@ import {
   ChatInputArea,
   QuickActionsBar,
   CreateItineraryButton,
+  GenerateItineraryButton,
   AuthPromptDialog,
 } from "@/features/trip-planner/components";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -82,7 +83,8 @@ function TripPlannerChatContent() {
           <ChatMessageList />
           <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border">
             <div className="max-w-2xl mx-auto px-3 py-2">
-              <div className="flex justify-center mb-2">
+              <div className="flex justify-center gap-2 mb-2">
+                <GenerateItineraryButton />
                 <CreateItineraryButton />
               </div>
             </div>
