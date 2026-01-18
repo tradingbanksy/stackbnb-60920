@@ -9,6 +9,9 @@ interface ItineraryContextValue {
   isSaving: boolean;
   generateItineraryFromChat: (messages: Message[]) => void;
   updateItinerary: (partialUpdate: Partial<Itinerary>) => void;
+  updateDayItems: (dayIndex: number, items: ItineraryItem[]) => void;
+  updateItem: (dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => void;
+  removeItem: (dayIndex: number, itemIndex: number) => void;
   clearItinerary: () => void;
 }
 
@@ -217,6 +220,42 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     });
   }, []);
 
+  const updateDayItems = useCallback((dayIndex: number, items: ItineraryItem[]) => {
+    setItinerary(prev => {
+      if (!prev) return prev;
+      const newDays = [...prev.days];
+      if (newDays[dayIndex]) {
+        newDays[dayIndex] = { ...newDays[dayIndex], items };
+      }
+      return { ...prev, days: newDays };
+    });
+  }, []);
+
+  const updateItem = useCallback((dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => {
+    setItinerary(prev => {
+      if (!prev) return prev;
+      const newDays = [...prev.days];
+      if (newDays[dayIndex] && newDays[dayIndex].items[itemIndex]) {
+        const newItems = [...newDays[dayIndex].items];
+        newItems[itemIndex] = { ...newItems[itemIndex], ...updates };
+        newDays[dayIndex] = { ...newDays[dayIndex], items: newItems };
+      }
+      return { ...prev, days: newDays };
+    });
+  }, []);
+
+  const removeItem = useCallback((dayIndex: number, itemIndex: number) => {
+    setItinerary(prev => {
+      if (!prev) return prev;
+      const newDays = [...prev.days];
+      if (newDays[dayIndex]) {
+        const newItems = newDays[dayIndex].items.filter((_, idx) => idx !== itemIndex);
+        newDays[dayIndex] = { ...newDays[dayIndex], items: newItems };
+      }
+      return { ...prev, days: newDays };
+    });
+  }, []);
+
   const clearItinerary = useCallback(() => {
     localStorage.removeItem(ITINERARY_STORAGE_KEY);
     setItinerary(null);
@@ -228,6 +267,9 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     isSaving,
     generateItineraryFromChat,
     updateItinerary,
+    updateDayItems,
+    updateItem,
+    removeItem,
     clearItinerary,
   };
 

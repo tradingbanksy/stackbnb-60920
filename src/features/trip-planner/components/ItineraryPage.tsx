@@ -10,12 +10,14 @@ import {
   RefreshCw,
   Pencil,
   Check,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PageTransition } from "@/components/PageTransition";
 import { useItineraryContext } from "../context/ItineraryContext";
 import { ItineraryDaySchedule } from "./ItineraryDaySchedule";
+import { EditableItineraryDaySchedule } from "./EditableItineraryDaySchedule";
 import type { ItineraryDay } from "../types";
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -80,8 +82,9 @@ function DaySelector({ days, selectedIndex, onSelect }: DaySelectorProps) {
 
 export function ItineraryPage() {
   const navigate = useNavigate();
-  const { itinerary, clearItinerary } = useItineraryContext();
+  const { itinerary, clearItinerary, updateDayItems, updateItem, removeItem } = useItineraryContext();
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const selectedDay = useMemo(() => {
     if (!itinerary || !itinerary.days.length) return null;
@@ -96,8 +99,8 @@ export function ItineraryPage() {
     }
   };
 
-  const handleEdit = () => {
-    navigate("/trip-planner");
+  const handleToggleEdit = () => {
+    setIsEditMode(!isEditMode);
   };
 
   const handleRegenerate = () => {
@@ -146,6 +149,11 @@ export function ItineraryPage() {
                 {formatDateRange(itinerary.startDate, itinerary.endDate)}
               </p>
             </div>
+            {isEditMode && (
+              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                Editing
+              </span>
+            )}
           </div>
 
           {/* Day Selector */}
@@ -163,13 +171,23 @@ export function ItineraryPage() {
           <AnimatePresence mode="wait">
             {selectedDay && (
               <motion.div
-                key={selectedDay.date}
+                key={`${selectedDay.date}-${isEditMode}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
               >
-                <ItineraryDaySchedule day={selectedDay} />
+                {isEditMode ? (
+                  <EditableItineraryDaySchedule
+                    day={selectedDay}
+                    dayIndex={selectedDayIndex}
+                    onUpdateItems={(items) => updateDayItems(selectedDayIndex, items)}
+                    onUpdateItem={(itemIndex, updates) => updateItem(selectedDayIndex, itemIndex, updates)}
+                    onRemoveItem={(itemIndex) => removeItem(selectedDayIndex, itemIndex)}
+                  />
+                ) : (
+                  <ItineraryDaySchedule day={selectedDay} />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -178,18 +196,33 @@ export function ItineraryPage() {
         {/* Sticky Footer */}
         <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 safe-area-bottom">
           <div className="flex gap-2 max-w-lg mx-auto">
-            <Button variant="outline" className="flex-1" onClick={handleEdit}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button variant="outline" className="flex-1" onClick={handleRegenerate}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Regenerate
-            </Button>
-            <Button variant="default" className="flex-1" onClick={handleConfirm}>
-              <Check className="h-4 w-4 mr-2" />
-              Confirm
-            </Button>
+            {isEditMode ? (
+              <>
+                <Button variant="outline" className="flex-1" onClick={handleToggleEdit}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button variant="default" className="flex-1" onClick={handleToggleEdit}>
+                  <Check className="h-4 w-4 mr-2" />
+                  Done Editing
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" className="flex-1" onClick={handleToggleEdit}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={handleRegenerate}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Regenerate
+                </Button>
+                <Button variant="default" className="flex-1" onClick={handleConfirm}>
+                  <Check className="h-4 w-4 mr-2" />
+                  Confirm
+                </Button>
+              </>
+            )}
           </div>
         </footer>
       </div>

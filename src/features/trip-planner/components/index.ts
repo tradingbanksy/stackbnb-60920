@@ -7,3 +7,4 @@ export { QuickActionsBar } from "./QuickActionsBar";
 export { CreateItineraryButton } from "./CreateItineraryButton";
 export { ItineraryPage } from "./ItineraryPage";
 export { ItineraryDaySchedule } from "./ItineraryDaySchedule";
+export { EditableItineraryDaySchedule } from "./EditableItineraryDaySchedule";
