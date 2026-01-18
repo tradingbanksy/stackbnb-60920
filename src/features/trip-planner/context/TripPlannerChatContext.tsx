@@ -4,14 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Message, HostVendor } from "../types";
 import { CHAT_HISTORY_KEY, MAX_MESSAGE_LENGTH, getInitialMessage } from "../utils";
 
+export type StreamingStatus = "idle" | "streaming" | "slow" | "timeout";
+
 interface TripPlannerChatContextValue {
   messages: Message[];
   hostVendors: HostVendor[];
   isLoading: boolean;
   isSaving: boolean;
   bionicEnabled: boolean;
+  streamingStatus: StreamingStatus;
   setBionicEnabled: (enabled: boolean) => void;
   sendMessage: (content: string) => Promise<void>;
+  retryLastMessage: () => void;
   clearChat: () => void;
 }
 
@@ -22,6 +26,10 @@ interface TripPlannerChatProviderProps {
   initialVendors?: HostVendor[];
 }
 
+// Timeout thresholds in ms
+const SLOW_THRESHOLD = 8000;
+const TIMEOUT_THRESHOLD = 30000;
+
 export function TripPlannerChatProvider({ children, initialVendors = [] }: TripPlannerChatProviderProps) {
   const { toast } = useToast();
   
@@ -30,7 +38,10 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [bionicEnabled, setBionicEnabled] = useState(false);
+  const [streamingStatus, setStreamingStatus] = useState<StreamingStatus>("idle");
   const hasInitialized = useRef(false);
+  const lastUserMessageRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   const [messages, setMessages] = useState<Message[]>(() => [
     { role: "assistant", content: getInitialMessage(initialVendors.length) }
@@ -62,7 +73,6 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           
           // Update the initial greeting message with the vendor count
           setMessages(prev => {
-            // Only update if this is still the initial greeting (1 message, no user interaction)
             if (prev.length === 1 && prev[0].role === "assistant") {
               return [{ role: "assistant", content: getInitialMessage(mapped.length) }];
             }
@@ -131,6 +141,8 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     localStorage.removeItem(CHAT_HISTORY_KEY);
     sessionStorage.removeItem(CHAT_HISTORY_KEY);
     setMessages([{ role: "assistant", content: getInitialMessage(hostVendors.length) }]);
+    setStreamingStatus("idle");
+    lastUserMessageRef.current = null;
   }, [hostVendors.length]);
 
   const sendMessage = useCallback(async (content: string) => {
@@ -146,20 +158,55 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       return;
     }
 
+    // Store for retry
+    lastUserMessageRef.current = trimmedInput;
+
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     const userMessage: Message = { role: "user", content: trimmedInput };
     let outgoingMessages: Message[] = [];
 
-    // 1) Add the user's message (and capture the exact outgoing history)
     setMessages((prev) => {
       outgoingMessages = [...prev, userMessage];
       return outgoingMessages;
     });
 
-    // 2) Add an assistant placeholder immediately so the UI never looks "stuck"
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
     setIsLoading(true);
+    setStreamingStatus("streaming");
+
+    // Timeout timers
+    let slowTimer: ReturnType<typeof setTimeout> | null = null;
+    let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+    let receivedContent = false;
+
+    const clearTimers = () => {
+      if (slowTimer) clearTimeout(slowTimer);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+    };
+
+    slowTimer = setTimeout(() => {
+      if (!receivedContent) {
+        setStreamingStatus("slow");
+      }
+    }, SLOW_THRESHOLD);
+
+    timeoutTimer = setTimeout(() => {
+      if (!receivedContent) {
+        setStreamingStatus("timeout");
+        abortControllerRef.current?.abort();
+      }
+    }, TIMEOUT_THRESHOLD);
 
     const updateAssistant = (nextContent: string) => {
+      if (nextContent.trim()) {
+        receivedContent = true;
+        setStreamingStatus("streaming");
+      }
       setMessages((prev) => {
         if (prev.length === 0) return prev;
         const updated = [...prev];
@@ -203,6 +250,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           messages: outgoingMessages,
           hostVendors: hostVendors.length > 0 ? hostVendors : undefined,
         }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok || !response.body) {
@@ -217,9 +265,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
         throw new Error(message);
       }
 
-      // If streaming parsing fails for any reason, we can fall back to full-text parsing.
       const responseClone = response.clone();
-
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
@@ -240,7 +286,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
             updateAssistant(assistantText);
           }
         } catch {
-          // Ignore any malformed partial line; we'll either recover on next chunks or fall back.
+          // Ignore any malformed partial line
         }
 
         return false;
@@ -299,7 +345,21 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       if (!assistantText.trim()) {
         updateAssistant("Sorry — I didn't get a response. Please try again.");
       }
+
+      clearTimers();
+      setStreamingStatus("idle");
     } catch (error: unknown) {
+      clearTimers();
+      
+      // Don't show error toast for aborted requests (user-initiated or timeout)
+      if (error instanceof Error && error.name === "AbortError") {
+        // Keep timeout status if that's what triggered the abort
+        if (streamingStatus !== "timeout") {
+          setStreamingStatus("idle");
+        }
+        return;
+      }
+
       const errorMessage = error instanceof Error ? error.message : "Failed to get AI response";
       toast({
         title: "Error",
@@ -307,7 +367,6 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
         variant: "destructive",
       });
 
-      // Remove placeholder assistant message if it never received content
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && last.content === "") {
@@ -315,10 +374,37 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
         }
         return prev;
       });
+      setStreamingStatus("idle");
     } finally {
       setIsLoading(false);
     }
-  }, [hostVendors, isLoading, toast]);
+  }, [hostVendors, isLoading, streamingStatus, toast]);
+
+  const retryLastMessage = useCallback(() => {
+    if (!lastUserMessageRef.current) return;
+    
+    // Remove the last user message and empty assistant response for clean retry
+    setMessages((prev) => {
+      const newMessages = [...prev];
+      // Remove last assistant (empty or error)
+      if (newMessages.length > 0 && newMessages[newMessages.length - 1].role === "assistant") {
+        newMessages.pop();
+      }
+      // Remove last user message
+      if (newMessages.length > 0 && newMessages[newMessages.length - 1].role === "user") {
+        newMessages.pop();
+      }
+      return newMessages;
+    });
+    
+    setStreamingStatus("idle");
+    
+    // Retry with stored message
+    const messageToRetry = lastUserMessageRef.current;
+    setTimeout(() => {
+      sendMessage(messageToRetry);
+    }, 100);
+  }, [sendMessage]);
 
   const value: TripPlannerChatContextValue = {
     messages,
@@ -326,8 +412,10 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     isLoading,
     isSaving,
     bionicEnabled,
+    streamingStatus,
     setBionicEnabled,
     sendMessage,
+    retryLastMessage,
     clearChat,
   };
 

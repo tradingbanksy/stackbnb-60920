@@ -1,8 +1,11 @@
 import { useRef, useEffect, memo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Clock, AlertCircle } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { useTripPlannerChatContext } from "../context";
+import type { StreamingStatus } from "../context/TripPlannerChatContext";
 
 const TypingIndicator = memo(function TypingIndicator() {
   return (
@@ -18,18 +21,78 @@ const TypingIndicator = memo(function TypingIndicator() {
   );
 });
 
+interface StreamingBannerProps {
+  status: StreamingStatus;
+  onRetry: () => void;
+}
+
+const StreamingBanner = memo(function StreamingBanner({ status, onRetry }: StreamingBannerProps) {
+  if (status === "idle") return null;
+
+  if (status === "streaming") {
+    return (
+      <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-primary/10 text-primary text-sm animate-pulse">
+        <Clock className="w-4 h-4" />
+        <span>Streaming response...</span>
+      </div>
+    );
+  }
+
+  if (status === "slow") {
+    return (
+      <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm">
+        <Clock className="w-4 h-4 animate-spin" />
+        <span>Still working... This is taking longer than usual.</span>
+      </div>
+    );
+  }
+
+  if (status === "timeout") {
+    return (
+      <div className="flex flex-col items-center gap-3 py-4 px-4 rounded-lg bg-destructive/10 text-destructive">
+        <div className="flex items-center gap-2 text-sm">
+          <AlertCircle className="w-4 h-4" />
+          <span>Response timed out. The AI might be busy.</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          className="gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
+});
+
 export function ChatMessageList() {
-  const { messages, isLoading, bionicEnabled } = useTripPlannerChatContext();
+  const { messages, isLoading, bionicEnabled, streamingStatus, retryLastMessage } = useTripPlannerChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages.length, streamingStatus]);
+
+  // Filter out empty assistant messages when showing the timeout banner
+  const displayMessages = messages.filter((msg, idx) => {
+    // Keep all non-empty messages
+    if (msg.content.trim()) return true;
+    // Hide empty assistant placeholder when timeout
+    if (msg.role === "assistant" && idx === messages.length - 1 && streamingStatus === "timeout") {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <ScrollArea className="flex-1 p-4">
       <div className="space-y-4 max-w-2xl mx-auto" role="log" aria-live="polite">
-        {messages.map((message, index) => (
+        {displayMessages.map((message, index) => (
           <ChatMessage
             key={`${message.role}-${index}`}
             message={message}
@@ -37,7 +100,16 @@ export function ChatMessageList() {
           />
         ))}
         
-        {isLoading && <TypingIndicator />}
+        {isLoading && streamingStatus !== "timeout" && (
+          <>
+            <TypingIndicator />
+            <StreamingBanner status={streamingStatus} onRetry={retryLastMessage} />
+          </>
+        )}
+        
+        {streamingStatus === "timeout" && (
+          <StreamingBanner status={streamingStatus} onRetry={retryLastMessage} />
+        )}
         
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
