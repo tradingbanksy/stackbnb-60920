@@ -54,7 +54,9 @@ export function ChatInputArea({
       )}
     >
       <div className="max-w-2xl mx-auto">
-        <div className="relative flex items-end gap-2 rounded-xl border border-border bg-card/80 backdrop-blur-sm p-2">
+        {/* Gradient border wrapper */}
+        <div className="relative rounded-xl p-[2px] bg-gradient-to-r from-primary/50 via-purple-500/50 to-pink-500/50">
+          <div className="relative flex items-end gap-2 rounded-[10px] border-0 bg-card p-2">
           <Textarea
             ref={textareaRef}
             value={value}
@@ -91,6 +93,7 @@ export function ChatInputArea({
               <ArrowUp className="h-4 w-4" />
             )}
           </Button>
+          </div>
         </div>
       </div>
     </div>
