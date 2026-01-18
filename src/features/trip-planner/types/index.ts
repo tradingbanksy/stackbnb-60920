@@ -54,6 +54,20 @@ export interface ItineraryItem {
   location?: string;
   bookingLink?: string;
   category: ItineraryItemCategory;
+  /** What's included in the activity */
+  includes?: string[];
+  /** What to bring for the activity */
+  whatToBring?: string[];
+  /** Duration of the activity */
+  duration?: string;
+  /** Distance from previous activity */
+  distanceFromPrevious?: string;
+  /** Travel time from previous activity */
+  travelTimeFromPrevious?: string;
+  /** Distance to next activity */
+  distanceToNext?: string;
+  /** Travel time to next activity */
+  travelTimeToNext?: string;
   /** Tracks if this item was manually edited by the user */
   isUserEdited?: boolean;
   /** Confidence score from generation (0-1), lower = candidate for regeneration */
