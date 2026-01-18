@@ -1,109 +1,96 @@
-import { useState } from "react";
-import { Loader2, ArrowUpIcon, Star } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Loader2, ArrowUp } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTripPlannerChatContext } from "../context";
 import { useAutoResizeTextarea } from "../hooks";
-import { hasBookingInConversation } from "../utils";
 
 interface ChatInputAreaProps {
-  variant?: "initial" | "chat";
+  placeholder?: string;
+  className?: string;
 }
 
-export function ChatInputArea({ variant = "chat" }: ChatInputAreaProps) {
-  const { messages, hostVendors, isLoading, sendMessage } = useTripPlannerChatContext();
-  const [message, setMessage] = useState("");
+export function ChatInputArea({ 
+  placeholder = "Type a message...", 
+  className 
+}: ChatInputAreaProps) {
+  const { isLoading, sendMessage } = useTripPlannerChatContext();
+  const [value, setValue] = useState("");
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
-    minHeight: 48,
-    maxHeight: 150,
+    minHeight: 44,
+    maxHeight: 120,
   });
 
-  const handleSend = () => {
-    if (message.trim() && !isLoading) {
-      sendMessage(message.trim());
-      setMessage("");
+  const handleSend = useCallback(() => {
+    const trimmed = value.trim();
+    if (trimmed && !isLoading) {
+      sendMessage(trimmed);
+      setValue("");
       adjustHeight(true);
     }
-  };
+  }, [value, isLoading, sendMessage, adjustHeight]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  };
+  }, [handleSend]);
 
-  const showHostRecommendation =
-    variant === "chat" &&
-    !isLoading &&
-    messages.length > 1 &&
-    messages[messages.length - 1]?.role === "assistant" &&
-    !hasBookingInConversation(messages) &&
-    hostVendors.length > 0;
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.target.value);
+    adjustHeight();
+  }, [adjustHeight]);
 
-  const isInitial = variant === "initial";
+  const canSend = value.trim().length > 0 && !isLoading;
 
   return (
-    <div className={cn(isInitial ? "" : "p-4 border-t border-border")}>
-      <div className={cn(isInitial ? "w-full" : "max-w-2xl mx-auto")}>
-        {showHostRecommendation && (
-          <div className="flex justify-center mb-3">
-            <button
-              onClick={() => sendMessage("I'll go with the host's recommendation")}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-foreground bg-muted/80 hover:bg-muted rounded-full border border-border/50 transition-colors"
-            >
-              <Star className="w-4 h-4 text-primary" />
-              Go with Host's recommendation
-            </button>
-          </div>
-        )}
-        
-        <div className="relative">
-          {isInitial && (
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-orange-500 rounded-xl blur-md opacity-70" />
-          )}
-          <div className={cn(
-            "relative rounded-xl border border-border",
-            isInitial ? "bg-card/90 backdrop-blur-md" : "bg-card/60 backdrop-blur-md"
-          )}>
-            <Textarea
-              ref={textareaRef}
-              value={message}
-              onChange={(e) => {
-                setMessage(e.target.value);
-                adjustHeight();
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={isInitial ? "Where are you planning to visit?" : "Ask about restaurants or activities..."}
-              className={cn(
-                "w-full px-4 py-3 resize-none border-none",
-                "bg-transparent text-foreground text-sm",
-                "focus-visible:ring-0 focus-visible:ring-offset-0",
-                "placeholder:text-muted-foreground min-h-[48px]"
-              )}
-              style={{ overflow: "hidden" }}
-            />
-
-            <div className="flex items-center justify-end p-3">
-              <Button
-                onClick={handleSend}
-                disabled={!message.trim() || isLoading}
-                className={cn(
-                  "flex items-center gap-1 px-3 py-2 rounded-lg transition-colors",
-                  message.trim() && !isLoading
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                )}
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ArrowUpIcon className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-          </div>
+    <div 
+      className={cn(
+        "sticky bottom-0 p-3 border-t border-border bg-background/95 backdrop-blur-sm",
+        "pb-[env(safe-area-inset-bottom,12px)]",
+        className
+      )}
+    >
+      <div className="max-w-2xl mx-auto">
+        <div className="relative flex items-end gap-2 rounded-xl border border-border bg-card/80 backdrop-blur-sm p-2">
+          <Textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={isLoading}
+            aria-label="Message input"
+            className={cn(
+              "flex-1 resize-none border-none bg-transparent",
+              "text-sm text-foreground",
+              "focus-visible:ring-0 focus-visible:ring-offset-0",
+              "placeholder:text-muted-foreground",
+              "min-h-[44px] py-2.5 px-3"
+            )}
+            style={{ overflow: "hidden" }}
+          />
+          
+          <Button
+            onClick={handleSend}
+            disabled={!canSend}
+            size="icon"
+            aria-label="Send message"
+            className={cn(
+              "h-9 w-9 shrink-0 rounded-lg transition-colors",
+              canSend 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowUp className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </div>
     </div>

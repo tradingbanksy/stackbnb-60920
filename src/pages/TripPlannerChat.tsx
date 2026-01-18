@@ -27,7 +27,7 @@ function TripPlannerChatContent() {
           </div>
 
           <div className="w-full max-w-2xl">
-            <ChatInputArea variant="initial" />
+            <ChatInputArea placeholder="Where are you planning to visit?" />
             <div className="mt-6">
               <QuickActionsBar />
             </div>
@@ -36,7 +36,7 @@ function TripPlannerChatContent() {
       ) : (
         <>
           <ChatMessageList />
-          <ChatInputArea variant="chat" />
+          <ChatInputArea placeholder="Ask about restaurants or activities..." />
         </>
       )}
     </div>
