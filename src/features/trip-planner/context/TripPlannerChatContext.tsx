@@ -32,8 +32,9 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
   const [bionicEnabled, setBionicEnabled] = useState(false);
   const hasInitialized = useRef(false);
   
-  const initialMessage = getInitialMessage(hostVendors.length);
-  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: initialMessage }]);
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { role: "assistant", content: getInitialMessage(initialVendors.length) }
+  ]);
 
   // Fetch vendors from database if none passed
   useEffect(() => {
@@ -100,12 +101,12 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       if (!isLoggedIn) {
         localStorage.removeItem(CHAT_HISTORY_KEY);
         sessionStorage.removeItem(CHAT_HISTORY_KEY);
-        setMessages([{ role: "assistant", content: initialMessage }]);
+        setMessages([{ role: "assistant", content: getInitialMessage(hostVendors.length) }]);
       }
     });
     
     return () => subscription.unsubscribe();
-  }, [initialMessage]);
+  }, [hostVendors.length]);
 
   // Persist messages when they change (for authenticated users)
   useEffect(() => {
@@ -120,8 +121,8 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
   const clearChat = useCallback(() => {
     localStorage.removeItem(CHAT_HISTORY_KEY);
     sessionStorage.removeItem(CHAT_HISTORY_KEY);
-    setMessages([{ role: "assistant", content: initialMessage }]);
-  }, [initialMessage]);
+    setMessages([{ role: "assistant", content: getInitialMessage(hostVendors.length) }]);
+  }, [hostVendors.length]);
 
   const sendMessage = useCallback(async (content: string) => {
     const trimmedInput = content.trim();

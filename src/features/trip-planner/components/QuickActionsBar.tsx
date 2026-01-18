@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useCallback } from "react";
 import {
   Utensils,
   MapPin,
@@ -31,20 +31,23 @@ interface QuickActionsBarProps {
 export function QuickActionsBar({ actions = DEFAULT_ACTIONS, className }: QuickActionsBarProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
 
-  // Hide once user sends their first message (messages > 1 means user has sent at least one)
+  const handleQuickAction = useCallback((prompt: string) => {
+    if (!isLoading) {
+      sendMessage(prompt);
+    }
+  }, [isLoading, sendMessage]);
+
+  // Hide once user sends their first message
   const hasUserMessage = messages.some(m => m.role === "user");
   if (hasUserMessage) {
     return null;
   }
 
-  const handleQuickAction = (prompt: string) => {
-    if (!isLoading) {
-      sendMessage(prompt);
-    }
-  };
-
   return (
-    <div className={`flex items-center justify-center flex-wrap gap-2 ${className ?? ""}`}>
+    <nav 
+      className={`flex items-center justify-center flex-wrap gap-2 ${className ?? ""}`}
+      aria-label="Quick action suggestions"
+    >
       {actions.map((action) => (
         <ChatQuickAction
           key={action.label}
@@ -54,6 +57,6 @@ export function QuickActionsBar({ actions = DEFAULT_ACTIONS, className }: QuickA
           disabled={isLoading}
         />
       ))}
-    </div>
+    </nav>
   );
 }

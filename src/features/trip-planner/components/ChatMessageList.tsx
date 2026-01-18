@@ -1,8 +1,22 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, memo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { ChatMessage } from "./ChatMessage";
 import { useTripPlannerChatContext } from "../context";
+
+const TypingIndicator = memo(function TypingIndicator() {
+  return (
+    <div className="flex justify-start" role="status" aria-label="Assistant is typing">
+      <Card className="max-w-[85%] p-3 bg-muted">
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
+          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
+          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" />
+        </div>
+      </Card>
+    </div>
+  );
+});
 
 export function ChatMessageList() {
   const { messages, isLoading, bionicEnabled } = useTripPlannerChatContext();
@@ -10,32 +24,22 @@ export function ChatMessageList() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   return (
     <ScrollArea className="flex-1 p-4">
-      <div className="space-y-4 max-w-2xl mx-auto">
+      <div className="space-y-4 max-w-2xl mx-auto" role="log" aria-live="polite">
         {messages.map((message, index) => (
           <ChatMessage
-            key={index}
+            key={`${message.role}-${index}`}
             message={message}
             bionicEnabled={bionicEnabled}
           />
         ))}
         
-        {isLoading && (
-          <div className="flex justify-start">
-            <Card className="max-w-[85%] p-3 bg-muted">
-              <div className="flex items-center gap-1" aria-label="Assistant is typing">
-                <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" />
-              </div>
-            </Card>
-          </div>
-        )}
+        {isLoading && <TypingIndicator />}
         
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} aria-hidden="true" />
       </div>
     </ScrollArea>
   );

@@ -1,4 +1,4 @@
-import { memo, useMemo, lazy, Suspense } from "react";
+import { memo, useMemo, lazy, Suspense, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Card } from "@/components/ui/card";
@@ -27,13 +27,14 @@ const BookingLink = memo(function BookingLink({ href, text }: { href: string; te
         hover:shadow-[0_6px_30px_rgba(168,85,247,0.6)]
         hover:scale-105
         active:scale-95"
+      aria-label={`Book ${text}`}
     >
       {text}
     </Link>
   );
 });
 
-const ExternalLink = memo(function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+const ExternalLink = memo(function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <a
       href={href}
@@ -45,19 +46,6 @@ const ExternalLink = memo(function ExternalLink({ href, children }: { href: stri
     </a>
   );
 });
-
-const MarkdownComponents = {
-  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => {
-    const text = String(children);
-    const isBookingLink = href?.startsWith('/experience/') && text.includes('Book');
-    
-    if (isBookingLink && href) {
-      return <BookingLink href={href} text={text} />;
-    }
-    
-    return <ExternalLink href={href || '#'}>{children}</ExternalLink>;
-  },
-};
 
 export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }: ChatMessageProps) {
   const isUser = message.role === "user";
@@ -78,8 +66,24 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
     [isAssistant, bionicEnabled, message.content]
   );
 
+  const markdownComponents = useMemo(() => ({
+    a: ({ href, children }: { href?: string; children?: ReactNode }) => {
+      const text = String(children);
+      const isBookingLink = href?.startsWith('/experience/') && text.includes('Book');
+      
+      if (isBookingLink && href) {
+        return <BookingLink href={href} text={text} />;
+      }
+      
+      return <ExternalLink href={href || '#'}>{children}</ExternalLink>;
+    },
+  }), []);
+
   return (
-    <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
+    <article 
+      className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
+      aria-label={`${isUser ? "Your" : "Assistant"} message`}
+    >
       <Card
         className={`max-w-[85%] p-4 text-sm ${
           isUser ? "bg-primary text-primary-foreground" : "bg-muted"
@@ -92,7 +96,7 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
               : ""
           }
         >
-          <ReactMarkdown components={MarkdownComponents}>
+          <ReactMarkdown components={markdownComponents}>
             {formattedContent}
           </ReactMarkdown>
         </div>
@@ -100,11 +104,11 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
       
       {isQuoteMessage && vendorName && (
         <div className="w-full max-w-[85%] mt-3">
-          <Suspense fallback={<Skeleton className="h-48 w-full rounded-lg" />}>
+          <Suspense fallback={<Skeleton className="h-48 w-full rounded-lg" aria-label="Loading map" />}>
             <VendorLocationMap vendorName={vendorName} />
           </Suspense>
         </div>
       )}
-    </div>
+    </article>
   );
 });
