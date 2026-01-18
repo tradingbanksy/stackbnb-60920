@@ -10,3 +10,4 @@ export { ItineraryDaySchedule } from "./ItineraryDaySchedule";
 export { EditableItineraryDaySchedule } from "./EditableItineraryDaySchedule";
 export { RegenerateDialog } from "./RegenerateDialog";
 export { ShareItineraryDialog } from "./ShareItineraryDialog";
+export { AuthPromptDialog } from "./AuthPromptDialog";

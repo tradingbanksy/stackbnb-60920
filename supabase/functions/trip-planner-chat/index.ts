@@ -264,6 +264,20 @@ ${vendorContext}
 - Coba Ruins - Climb the pyramid, rent bikes
 - Akumal Bay (30 min) - Swim with sea turtles
 
+**ITINERARY GENERATION:**
+When users ask to create an itinerary or plan their trip, structure each activity with these details:
+- **Duration**: How long the activity takes (e.g., "2 hours", "Half day", "3 hours")
+- **What's Included**: List what's provided (e.g., "Equipment rental, Guide, Snacks, Transportation")
+- **What to Bring**: Essential items to pack (e.g., "Sunscreen, Towel, Cash for tips, Comfortable shoes")
+- **Travel Info**: Approximate distance and time from central Tulum or previous activity
+
+Example format for itinerary items:
+**9:00 AM - Gran Cenote Visit** 🫧
+Duration: 2 hours
+What's Included: Entrance fee, Locker, Life jacket
+What to Bring: Swimsuit, Biodegradable sunscreen, Towel, Underwater camera, Cash (50 MXN tips)
+Travel: 10 min drive from Tulum Centro (4 km)
+
 **RESPONSE FORMAT - Always structure like this:**
 
 Start with an enthusiastic intro with emojis, then organize by category:
@@ -300,7 +314,8 @@ End with: "Want me to help you plan a specific day or book any of these? Just le
   ⭐ **HOST'S PICK: [Name]** by [Provider] [★rating](https://www.google.com/maps/search/Name+Tulum+Mexico) – Description. *Your host recommends this!*
 - Do NOT show all host vendors - only the ones matching the guest's query category
 - Be enthusiastic and warm, like a friend who lives in Tulum
-- End responses with an offer to help further`
+- End responses with an offer to help further
+- When creating itineraries, ALWAYS include Duration, What's Included, What to Bring, and Travel info for each activity`
           },
           ...validation.messages!,
         ],

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   closestCenter,
@@ -29,11 +29,18 @@ import {
   Trash2,
   Check,
   X,
+  ChevronDown,
+  Plus,
+  Backpack,
+  CheckCircle2,
+  Navigation,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +52,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { ItineraryDay, ItineraryItem, ItineraryItemCategory } from "../types";
 
 const categoryIcons: Record<ItineraryItemCategory, typeof Utensils> = {
@@ -70,8 +82,16 @@ interface EditableItemProps {
 
 function EditableItem({ item, index, onUpdate, onRemove }: EditableItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title);
   const [editDescription, setEditDescription] = useState(item.description);
+  const [editDuration, setEditDuration] = useState(item.duration || "");
+  const [editIncludes, setEditIncludes] = useState(item.includes?.join(", ") || "");
+  const [editWhatToBring, setEditWhatToBring] = useState(item.whatToBring?.join(", ") || "");
+  const [editDistanceFromPrevious, setEditDistanceFromPrevious] = useState(item.distanceFromPrevious || "");
+  const [editTravelTimeFromPrevious, setEditTravelTimeFromPrevious] = useState(item.travelTimeFromPrevious || "");
+  const [editDistanceToNext, setEditDistanceToNext] = useState(item.distanceToNext || "");
+  const [editTravelTimeToNext, setEditTravelTimeToNext] = useState(item.travelTimeToNext || "");
 
   const {
     attributes,
@@ -91,16 +111,46 @@ function EditableItem({ item, index, onUpdate, onRemove }: EditableItemProps) {
   const Icon = categoryIcons[item.category];
   const colorClass = categoryColors[item.category];
 
+  const parseListString = (str: string): string[] => {
+    return str
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  };
+
   const handleSave = () => {
-    onUpdate({ title: editTitle, description: editDescription });
+    onUpdate({
+      title: editTitle,
+      description: editDescription,
+      duration: editDuration || undefined,
+      includes: parseListString(editIncludes),
+      whatToBring: parseListString(editWhatToBring),
+      distanceFromPrevious: editDistanceFromPrevious || undefined,
+      travelTimeFromPrevious: editTravelTimeFromPrevious || undefined,
+      distanceToNext: editDistanceToNext || undefined,
+      travelTimeToNext: editTravelTimeToNext || undefined,
+    });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditTitle(item.title);
     setEditDescription(item.description);
+    setEditDuration(item.duration || "");
+    setEditIncludes(item.includes?.join(", ") || "");
+    setEditWhatToBring(item.whatToBring?.join(", ") || "");
+    setEditDistanceFromPrevious(item.distanceFromPrevious || "");
+    setEditTravelTimeFromPrevious(item.travelTimeFromPrevious || "");
+    setEditDistanceToNext(item.distanceToNext || "");
+    setEditTravelTimeToNext(item.travelTimeToNext || "");
     setIsEditing(false);
   };
+
+  const hasDetails =
+    (item.includes && item.includes.length > 0) ||
+    (item.whatToBring && item.whatToBring.length > 0) ||
+    item.distanceFromPrevious ||
+    item.distanceToNext;
 
   return (
     <motion.div
@@ -135,20 +185,113 @@ function EditableItem({ item, index, onUpdate, onRemove }: EditableItemProps) {
           {/* Content */}
           <div className="flex-1 min-w-0">
             {isEditing ? (
-              <div className="space-y-2">
-                <Input
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="Title"
-                  className="h-8 text-sm"
-                  autoFocus
-                />
-                <Textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Description"
-                  className="text-sm min-h-[60px] resize-none"
-                />
+              <div className="space-y-3">
+                {/* Basic Info */}
+                <div className="space-y-2">
+                  <Input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Title"
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                  <Textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Description"
+                    className="text-sm min-h-[60px] resize-none"
+                  />
+                  <Input
+                    value={editDuration}
+                    onChange={(e) => setEditDuration(e.target.value)}
+                    placeholder="Duration (e.g., 2 hours)"
+                    className="h-8 text-sm"
+                  />
+                </div>
+
+                {/* Details Section */}
+                <Collapsible open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between h-7 text-xs">
+                      <span>Edit Details (includes, what to bring, travel)</span>
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isDetailsOpen ? "rotate-180" : ""}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3 pt-3"
+                      >
+                        {/* What's Included */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs font-medium">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                            <span>What's Included (comma-separated)</span>
+                          </div>
+                          <Textarea
+                            value={editIncludes}
+                            onChange={(e) => setEditIncludes(e.target.value)}
+                            placeholder="e.g., Equipment rental, Guide, Snacks"
+                            className="text-xs min-h-[50px] resize-none"
+                          />
+                        </div>
+
+                        {/* What to Bring */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs font-medium">
+                            <Backpack className="h-3.5 w-3.5 text-blue-500" />
+                            <span>What to Bring (comma-separated)</span>
+                          </div>
+                          <Textarea
+                            value={editWhatToBring}
+                            onChange={(e) => setEditWhatToBring(e.target.value)}
+                            placeholder="e.g., Sunscreen, Comfortable shoes, Water"
+                            className="text-xs min-h-[50px] resize-none"
+                          />
+                        </div>
+
+                        {/* Travel Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-medium">
+                            <Navigation className="h-3.5 w-3.5 text-primary" />
+                            <span>Travel Info</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              value={editDistanceFromPrevious}
+                              onChange={(e) => setEditDistanceFromPrevious(e.target.value)}
+                              placeholder="Distance from prev (e.g., 5 km)"
+                              className="h-7 text-xs"
+                            />
+                            <Input
+                              value={editTravelTimeFromPrevious}
+                              onChange={(e) => setEditTravelTimeFromPrevious(e.target.value)}
+                              placeholder="Time from prev (e.g., 15 min)"
+                              className="h-7 text-xs"
+                            />
+                            <Input
+                              value={editDistanceToNext}
+                              onChange={(e) => setEditDistanceToNext(e.target.value)}
+                              placeholder="Distance to next (e.g., 3 km)"
+                              className="h-7 text-xs"
+                            />
+                            <Input
+                              value={editTravelTimeToNext}
+                              onChange={(e) => setEditTravelTimeToNext(e.target.value)}
+                              placeholder="Time to next (e.g., 10 min)"
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Actions */}
                 <div className="flex gap-2">
                   <Button size="sm" variant="default" onClick={handleSave} className="h-7 text-xs">
                     <Check className="h-3 w-3 mr-1" />
@@ -168,6 +311,12 @@ function EditableItem({ item, index, onUpdate, onRemove }: EditableItemProps) {
                 <h4 className="font-semibold text-foreground text-sm leading-tight truncate">
                   {item.title}
                 </h4>
+                {item.duration && (
+                  <Badge variant="secondary" className="mt-1 text-[10px] h-5">
+                    <Timer className="h-2.5 w-2.5 mr-1" />
+                    {item.duration}
+                  </Badge>
+                )}
                 {item.description && (
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                     {item.description}
@@ -177,6 +326,29 @@ function EditableItem({ item, index, onUpdate, onRemove }: EditableItemProps) {
                   <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">{item.location}</span>
+                  </div>
+                )}
+                {/* Quick details preview */}
+                {hasDetails && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {item.includes && item.includes.length > 0 && (
+                      <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                        <CheckCircle2 className="h-2.5 w-2.5 text-green-500" />
+                        {item.includes.length} included
+                      </Badge>
+                    )}
+                    {item.whatToBring && item.whatToBring.length > 0 && (
+                      <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                        <Backpack className="h-2.5 w-2.5 text-blue-500" />
+                        {item.whatToBring.length} to bring
+                      </Badge>
+                    )}
+                    {item.distanceFromPrevious && (
+                      <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                        <Navigation className="h-2.5 w-2.5" />
+                        {item.distanceFromPrevious}
+                      </Badge>
+                    )}
                   </div>
                 )}
               </div>

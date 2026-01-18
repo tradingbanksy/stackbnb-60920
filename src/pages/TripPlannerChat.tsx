@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { PageTransition } from "@/components/PageTransition";
 import { 
   TripPlannerChatProvider, 
@@ -10,15 +11,53 @@ import {
   ChatInputArea,
   QuickActionsBar,
   CreateItineraryButton,
+  AuthPromptDialog,
 } from "@/features/trip-planner/components";
+import { useAuthContext } from "@/contexts/AuthContext";
+
+const AUTH_PROMPT_STORAGE_KEY = "tripPlannerAuthPromptShown";
 
 function TripPlannerChatContent() {
   const { messages } = useTripPlannerChatContext();
+  const { isAuthenticated, isLoading } = useAuthContext();
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const hasMessages = messages.length > 1;
+
+  // Show auth prompt for non-authenticated users on first visit
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      const hasSeenPrompt = sessionStorage.getItem(AUTH_PROMPT_STORAGE_KEY);
+      if (!hasSeenPrompt) {
+        // Small delay to let the page load first
+        const timer = setTimeout(() => {
+          setShowAuthPrompt(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isAuthenticated, isLoading]);
+
+  const handleAuthPromptSkip = () => {
+    sessionStorage.setItem(AUTH_PROMPT_STORAGE_KEY, "true");
+  };
+
+  const handleAuthPromptClose = (open: boolean) => {
+    setShowAuthPrompt(open);
+    if (!open) {
+      sessionStorage.setItem(AUTH_PROMPT_STORAGE_KEY, "true");
+    }
+  };
 
   return (
     <div className="relative w-full h-screen bg-background flex flex-col">
       <ChatHeader />
+
+      {/* Auth Prompt Dialog */}
+      <AuthPromptDialog
+        open={showAuthPrompt}
+        onOpenChange={handleAuthPromptClose}
+        onSkip={handleAuthPromptSkip}
+      />
 
       {!hasMessages ? (
         <div className="flex-1 flex flex-col items-center justify-center px-4">
