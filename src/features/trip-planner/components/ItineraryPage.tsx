@@ -19,11 +19,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PageTransition } from "@/components/PageTransition";
 import { useItineraryContext, type RegenerateMode } from "../context/ItineraryContext";
-import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import { ItineraryDaySchedule } from "./ItineraryDaySchedule";
 import { EditableItineraryDaySchedule } from "./EditableItineraryDaySchedule";
 import { RegenerateDialog, type RegenerateOption } from "./RegenerateDialog";
-import type { ItineraryDay } from "../types";
+import type { ItineraryDay, Message } from "../types";
 
 function formatDateRange(startDate: string, endDate: string): string {
   try {
@@ -85,7 +84,12 @@ function DaySelector({ days, selectedIndex, onSelect }: DaySelectorProps) {
   );
 }
 
-export function ItineraryPage() {
+// Props allow passing messages from parent (when chat context is available)
+interface ItineraryPageProps {
+  messages?: Message[];
+}
+
+export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
   const navigate = useNavigate();
   const { 
     itinerary, 
@@ -100,15 +104,6 @@ export function ItineraryPage() {
     confirmItinerary,
     unconfirmItinerary,
   } = useItineraryContext();
-  
-  // Try to get messages from chat context (may not be available)
-  let messages: { role: "user" | "assistant"; content: string }[] = [];
-  try {
-    const chatContext = useTripPlannerChatContext();
-    messages = chatContext.messages;
-  } catch {
-    // Chat context not available, regeneration will use stored data
-  }
 
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -128,13 +123,11 @@ export function ItineraryPage() {
   };
 
   const handleToggleEdit = () => {
-    // Don't allow edit mode when confirmed
     if (isConfirmed) return;
     setIsEditMode(!isEditMode);
   };
 
   const handleRegenerateClick = () => {
-    // Don't allow regeneration when confirmed
     if (isConfirmed) return;
     setShowRegenerateDialog(true);
   };
@@ -145,14 +138,11 @@ export function ItineraryPage() {
     if (!option) return;
 
     if (messages.length > 0) {
-      // Regenerate using chat messages
       generateItineraryFromChat(messages, option as RegenerateMode);
     } else if (option === "full") {
-      // No messages available, clear and go back to trip planner
       clearItinerary();
       navigate("/trip-planner");
     }
-    // For "improve" without messages, we just close the dialog (nothing to improve from)
   };
 
   const handleConfirm = () => {
@@ -259,7 +249,6 @@ export function ItineraryPage() {
         <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 safe-area-bottom">
           <div className="flex gap-2 max-w-lg mx-auto">
             {isConfirmed ? (
-              // Confirmed state - show unlock option and share/export placeholders
               <>
                 <Button variant="outline" className="flex-1" onClick={handleUnlock}>
                   <Lock className="h-4 w-4 mr-2" />
