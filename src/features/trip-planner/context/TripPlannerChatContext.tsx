@@ -146,8 +146,51 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       return;
     }
 
-    setMessages((prev) => [...prev, { role: "user", content: trimmedInput }]);
+    const userMessage: Message = { role: "user", content: trimmedInput };
+    let outgoingMessages: Message[] = [];
+
+    // 1) Add the user's message (and capture the exact outgoing history)
+    setMessages((prev) => {
+      outgoingMessages = [...prev, userMessage];
+      return outgoingMessages;
+    });
+
+    // 2) Add an assistant placeholder immediately so the UI never looks "stuck"
+    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
     setIsLoading(true);
+
+    const updateAssistant = (nextContent: string) => {
+      setMessages((prev) => {
+        if (prev.length === 0) return prev;
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.role === "assistant") {
+          updated[updated.length - 1] = { ...last, content: nextContent };
+        }
+        return updated;
+      });
+    };
+
+    const parseFullSse = (sseText: string) => {
+      let text = "";
+      for (let line of sseText.split("\n")) {
+        line = line.trim();
+        if (!line || line.startsWith(":")) continue;
+        if (!line.startsWith("data:")) continue;
+        const dataStr = line.replace(/^data:\s*/, "").trim();
+        if (!dataStr || dataStr === "[DONE]") continue;
+        try {
+          const json = JSON.parse(dataStr);
+          const chunkContent = json.choices?.[0]?.delta?.content as string | undefined;
+          if (typeof chunkContent === "string" && chunkContent.length) {
+            text += chunkContent.replace(/[¡¿]/g, "");
+          }
+        } catch {
+          // ignore malformed lines
+        }
+      }
+      return text;
+    };
 
     try {
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/trip-planner-chat`;
@@ -157,26 +200,51 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: [...messages, { role: "user", content: trimmedInput }],
+          messages: outgoingMessages,
           hostVendors: hostVendors.length > 0 ? hostVendors : undefined,
         }),
       });
 
       if (!response.ok || !response.body) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(errorData.error || `API error: ${response.status}`);
+        const raw = await response.text().catch(() => "");
+        let message = `API error: ${response.status}`;
+        try {
+          const parsed = JSON.parse(raw);
+          message = parsed?.error || message;
+        } catch {
+          // ignore
+        }
+        throw new Error(message);
       }
+
+      // If streaming parsing fails for any reason, we can fall back to full-text parsing.
+      const responseClone = response.clone();
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
       let assistantText = "";
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
-
+      let gotAnyChunk = false;
       let textBuffer = "";
       let streamDone = false;
+
+      const processDataStr = (dataStr: string) => {
+        if (dataStr === "[DONE]") return true;
+
+        try {
+          const json = JSON.parse(dataStr);
+          const chunkContent = json.choices?.[0]?.delta?.content as string | undefined;
+          if (typeof chunkContent === "string" && chunkContent.length) {
+            gotAnyChunk = true;
+            assistantText += chunkContent.replace(/[¡¿]/g, "");
+            updateAssistant(assistantText);
+          }
+        } catch {
+          // Ignore any malformed partial line; we'll either recover on next chunks or fall back.
+        }
+
+        return false;
+      };
 
       while (!streamDone) {
         const { done, value } = await reader.read();
@@ -196,60 +264,40 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           if (!trimmed.startsWith("data:")) continue;
 
           const dataStr = trimmed.replace(/^data:\s*/, "").trim();
-          if (dataStr === "[DONE]") {
+          if (!dataStr) continue;
+
+          if (processDataStr(dataStr)) {
             streamDone = true;
-            break;
-          }
-
-          try {
-            const json = JSON.parse(dataStr);
-            const chunkContent = json.choices?.[0]?.delta?.content as string | undefined;
-
-            if (chunkContent) {
-              assistantText += chunkContent.replace(/[¡¿]/g, "");
-              assistantText = assistantText.replace(/(^|\n)\s*[!]\s*(?=[A-Za-z])/g, "$1");
-              assistantText = assistantText.replace(/^[^A-Za-z]+/, "");
-
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1].content = assistantText;
-                return updated;
-              });
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
 
-      // Final flush
+      // Flush leftovers
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           raw = raw.trim();
           if (!raw || raw.startsWith(":")) continue;
           if (!raw.startsWith("data:")) continue;
           const dataStr = raw.replace(/^data:\s*/, "").trim();
-          if (!dataStr || dataStr === "[DONE]") continue;
-
-          try {
-            const json = JSON.parse(dataStr);
-            const chunkContent = json.choices?.[0]?.delta?.content as string | undefined;
-            if (chunkContent) {
-              assistantText += chunkContent.replace(/[¡¿]/g, "");
-              assistantText = assistantText.replace(/(^|\n)\s*[!]\s*(?=[A-Za-z])/g, "$1");
-              assistantText = assistantText.replace(/^[^A-Za-z]+/, "");
-
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1].content = assistantText;
-                return updated;
-              });
-            }
-          } catch {
-            // ignore leftovers
-          }
+          if (!dataStr) continue;
+          if (processDataStr(dataStr)) break;
         }
+      }
+
+      // Fallback: if we somehow got no content from the stream, parse the full SSE payload.
+      if (!gotAnyChunk) {
+        const full = await responseClone.text();
+        const parsed = parseFullSse(full);
+        if (parsed) {
+          assistantText = parsed;
+          updateAssistant(assistantText);
+        }
+      }
+
+      // Final safety: never leave an empty assistant bubble
+      if (!assistantText.trim()) {
+        updateAssistant("Sorry — I didn't get a response. Please try again.");
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to get AI response";
@@ -258,9 +306,11 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
         description: errorMessage,
         variant: "destructive",
       });
+
+      // Remove placeholder assistant message if it never received content
       setMessages((prev) => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.role === "assistant" && lastMessage.content === "") {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.content === "") {
           return prev.slice(0, -1);
         }
         return prev;
@@ -268,7 +318,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, messages, hostVendors, toast]);
+  }, [hostVendors, isLoading, toast]);
 
   const value: TripPlannerChatContextValue = {
     messages,
