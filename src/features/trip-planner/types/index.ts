@@ -39,3 +39,33 @@ export interface UseTripPlannerChatReturn {
   sendMessage: (message: string) => Promise<void>;
   clearChat: () => void;
 }
+
+// ============================================
+// Itinerary Data Model
+// ============================================
+
+export type ItineraryItemCategory = "food" | "activity" | "transport" | "free";
+
+export interface ItineraryItem {
+  time: string;
+  title: string;
+  description: string;
+  vendorId?: string;
+  location?: string;
+  bookingLink?: string;
+  category: ItineraryItemCategory;
+}
+
+export interface ItineraryDay {
+  date: string;
+  title: string;
+  items: ItineraryItem[];
+}
+
+export interface Itinerary {
+  id: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  days: ItineraryDay[];
+}
