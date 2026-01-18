@@ -6,3 +6,4 @@ export { ChatInputArea } from "./ChatInputArea";
 export { QuickActionsBar } from "./QuickActionsBar";
 export { CreateItineraryButton } from "./CreateItineraryButton";
 export { ItineraryPage } from "./ItineraryPage";
+export { ItineraryDaySchedule } from "./ItineraryDaySchedule";
