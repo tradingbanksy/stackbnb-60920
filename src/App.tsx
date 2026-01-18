@@ -165,6 +165,7 @@ const AppRoutes = () => (
     <Route path="/trip-planner/itinerary" element={<TripItinerary />} />
     <Route path="/itinerary" element={<ProtectedRoute><Itinerary /></ProtectedRoute>} />
     <Route path="/itinerary/shared/:token" element={<SharedItinerary />} />
+    <Route path="/shared/:token" element={<SharedItinerary />} />
     <Route path="/restaurant/:id" element={<RestaurantDetail />} />
     <Route path="/restaurants" element={<AllRestaurants />} />
     <Route path="/experiences" element={<AllExperiences />} />

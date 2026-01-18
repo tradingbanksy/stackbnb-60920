@@ -59,6 +59,15 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
             included: v.included_items || [],
           }));
           setHostVendors(mapped);
+          
+          // Update the initial greeting message with the vendor count
+          setMessages(prev => {
+            // Only update if this is still the initial greeting (1 message, no user interaction)
+            if (prev.length === 1 && prev[0].role === "assistant") {
+              return [{ role: "assistant", content: getInitialMessage(mapped.length) }];
+            }
+            return prev;
+          });
         }
       };
       fetchVendors();
