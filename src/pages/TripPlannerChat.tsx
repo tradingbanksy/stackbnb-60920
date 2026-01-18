@@ -1,10 +1,15 @@
 import { PageTransition } from "@/components/PageTransition";
-import { TripPlannerChatProvider, useTripPlannerChatContext } from "@/features/trip-planner/context";
+import { 
+  TripPlannerChatProvider, 
+  useTripPlannerChatContext,
+  ItineraryProvider 
+} from "@/features/trip-planner/context";
 import {
   ChatHeader,
   ChatMessageList,
   ChatInputArea,
   QuickActionsBar,
+  CreateItineraryButton,
 } from "@/features/trip-planner/components";
 
 function TripPlannerChatContent() {
@@ -36,7 +41,14 @@ function TripPlannerChatContent() {
       ) : (
         <>
           <ChatMessageList />
-          <ChatInputArea placeholder="Ask about restaurants or activities..." />
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border">
+            <div className="max-w-2xl mx-auto px-3 py-2">
+              <div className="flex justify-center mb-2">
+                <CreateItineraryButton />
+              </div>
+            </div>
+            <ChatInputArea placeholder="Ask about restaurants or activities..." className="border-t-0 pt-0" />
+          </div>
         </>
       )}
     </div>
@@ -47,7 +59,9 @@ const TripPlannerChat = () => {
   return (
     <PageTransition>
       <TripPlannerChatProvider>
-        <TripPlannerChatContent />
+        <ItineraryProvider>
+          <TripPlannerChatContent />
+        </ItineraryProvider>
       </TripPlannerChatProvider>
     </PageTransition>
   );
