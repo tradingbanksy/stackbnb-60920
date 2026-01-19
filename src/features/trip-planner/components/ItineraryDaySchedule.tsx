@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   MapPin,
   Clock,
@@ -22,6 +22,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ActivityDropdownMenu } from "./ActivityDropdownMenu";
 import type { ItineraryDay, ItineraryItem, ItineraryItemCategory } from "../types";
 
 const categoryIcons: Record<ItineraryItemCategory, typeof Utensils> = {
@@ -117,9 +118,11 @@ interface ScheduleItemProps {
   item: ItineraryItem;
   index: number;
   isLast: boolean;
+  onEdit?: () => void;
+  onRemove?: () => void;
 }
 
-function ScheduleItem({ item, index, isLast }: ScheduleItemProps) {
+function ScheduleItem({ item, index, isLast, onEdit, onRemove }: ScheduleItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const Icon = categoryIcons[item.category];
   const colorClass = categoryColors[item.category];
@@ -129,6 +132,30 @@ function ScheduleItem({ item, index, isLast }: ScheduleItemProps) {
                      item.duration ||
                      item.distanceFromPrevious ||
                      item.distanceToNext;
+
+  const handleViewDetails = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const handleEdit = useCallback(() => {
+    onEdit?.();
+  }, [onEdit]);
+
+  const handleRemove = useCallback(() => {
+    onRemove?.();
+  }, [onRemove]);
+
+  const handleReplace = useCallback(() => {
+    // TODO: Open a dialog to find alternative activities
+    console.log("Replace activity:", item.title);
+  }, [item.title]);
+
+  const handleViewOnMap = useCallback(() => {
+    if (item.location) {
+      const query = encodeURIComponent(item.location);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+    }
+  }, [item.location]);
 
   return (
     <motion.div
@@ -161,15 +188,29 @@ function ScheduleItem({ item, index, isLast }: ScheduleItemProps) {
 
         {/* Content Card */}
         <Card className="flex-1 p-4 mb-4 border-border/60 hover:border-border transition-colors">
-          {/* Category label */}
-          <span className={`inline-flex items-center gap-1 text-xs font-medium mb-2 ${categoryColors[item.category].split(' ')[0]}`}>
-            {categoryLabels[item.category]}
-          </span>
-          
-          {/* Title */}
-          <h4 className="font-semibold text-foreground leading-tight">
-            {item.title}
-          </h4>
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex-1 min-w-0">
+              {/* Category label */}
+              <span className={`inline-flex items-center gap-1 text-xs font-medium mb-2 ${categoryColors[item.category].split(' ')[0]}`}>
+                {categoryLabels[item.category]}
+              </span>
+              
+              {/* Title */}
+              <h4 className="font-semibold text-foreground leading-tight">
+                {item.title}
+              </h4>
+            </div>
+            
+            {/* Dropdown Menu */}
+            <ActivityDropdownMenu
+              onViewDetails={handleViewDetails}
+              onEdit={handleEdit}
+              onRemove={handleRemove}
+              onReplace={handleReplace}
+              onViewOnMap={handleViewOnMap}
+              hasLocation={!!item.location}
+            />
+          </div>
           
           {/* Duration badge */}
           {item.duration && (
@@ -241,9 +282,9 @@ function ScheduleItem({ item, index, isLast }: ScheduleItemProps) {
                           <span>What to Bring</span>
                         </div>
                         <ul className="grid gap-1.5 pl-5">
-                          {item.whatToBring.map((item, i) => (
+                          {item.whatToBring.map((bringItem, i) => (
                             <li key={i} className="text-xs text-muted-foreground list-disc">
-                              {item}
+                              {bringItem}
                             </li>
                           ))}
                         </ul>
@@ -285,9 +326,11 @@ function ScheduleItem({ item, index, isLast }: ScheduleItemProps) {
 
 interface ItineraryDayScheduleProps {
   day: ItineraryDay;
+  onEditItem?: (itemIndex: number) => void;
+  onRemoveItem?: (itemIndex: number) => void;
 }
 
-export function ItineraryDaySchedule({ day }: ItineraryDayScheduleProps) {
+export function ItineraryDaySchedule({ day, onEditItem, onRemoveItem }: ItineraryDayScheduleProps) {
   const formattedDate = (() => {
     try {
       return format(parseISO(day.date), "EEEE, MMMM d");
@@ -341,6 +384,8 @@ export function ItineraryDaySchedule({ day }: ItineraryDayScheduleProps) {
             item={item}
             index={index}
             isLast={index === day.items.length - 1}
+            onEdit={() => onEditItem?.(index)}
+            onRemove={() => onRemoveItem?.(index)}
           />
         ))}
       </div>

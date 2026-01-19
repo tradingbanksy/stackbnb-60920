@@ -10,8 +10,7 @@ import {
   ChatMessageList,
   ChatInputArea,
   QuickActionsBar,
-  CreateItineraryButton,
-  GenerateItineraryButton,
+  ChatSuggestionPills,
   AuthPromptDialog,
 } from "@/features/trip-planner/components";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -83,10 +82,8 @@ function TripPlannerChatContent() {
           <ChatMessageList />
           <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border">
             <div className="max-w-2xl mx-auto px-3 py-2">
-              <div className="flex justify-center gap-2 mb-2">
-                <GenerateItineraryButton />
-                <CreateItineraryButton />
-              </div>
+              {/* Chat-style suggestion pills instead of buttons */}
+              <ChatSuggestionPills className="mb-2" />
             </div>
             <ChatInputArea placeholder="Ask about restaurants or activities..." className="border-t-0 pt-0" />
           </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +23,7 @@ import { ItineraryDaySchedule } from "./ItineraryDaySchedule";
 import { EditableItineraryDaySchedule } from "./EditableItineraryDaySchedule";
 import { RegenerateDialog, type RegenerateOption } from "./RegenerateDialog";
 import { ShareItineraryDialog } from "./ShareItineraryDialog";
+import { ItinerarySkeleton } from "./ItinerarySkeleton";
 import type { ItineraryDay, Message } from "../types";
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -113,6 +114,29 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [skeletonStep, setSkeletonStep] = useState(0);
+  const skeletonIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Animate skeleton steps while generating
+  useEffect(() => {
+    if (isGenerating) {
+      skeletonIntervalRef.current = setInterval(() => {
+        setSkeletonStep(prev => (prev + 1) % 4);
+      }, 2000);
+    } else {
+      if (skeletonIntervalRef.current) {
+        clearInterval(skeletonIntervalRef.current);
+        skeletonIntervalRef.current = null;
+      }
+      setSkeletonStep(0);
+    }
+
+    return () => {
+      if (skeletonIntervalRef.current) {
+        clearInterval(skeletonIntervalRef.current);
+      }
+    };
+  }, [isGenerating]);
 
   const selectedDay = useMemo(() => {
     if (!itinerary || !itinerary.days.length) return null;
@@ -120,11 +144,8 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
   }, [itinerary, selectedDayIndex]);
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/trip-planner");
-    }
+    // Navigate back to chat, preserving state
+    navigate("/trip-planner");
   };
 
   const handleToggleEdit = () => {
@@ -165,6 +186,15 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
   const handleGenerateShareLink = async () => {
     await generateShareLink();
   };
+
+  // Show skeleton while generating
+  if (isGenerating) {
+    return (
+      <PageTransition>
+        <ItinerarySkeleton currentStep={skeletonStep} />
+      </PageTransition>
+    );
+  }
 
   // Empty state
   if (!itinerary) {
@@ -251,7 +281,15 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
                     onRemoveItem={(itemIndex) => removeItem(selectedDayIndex, itemIndex)}
                   />
                 ) : (
-                  <ItineraryDaySchedule day={selectedDay} />
+                  <ItineraryDaySchedule 
+                    day={selectedDay} 
+                    onEditItem={(itemIndex) => {
+                      setIsEditMode(true);
+                    }}
+                    onRemoveItem={(itemIndex) => {
+                      removeItem(selectedDayIndex, itemIndex);
+                    }}
+                  />
                 )}
               </motion.div>
             )}
