@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,19 +60,17 @@ export function GenerateItineraryButton() {
     };
   }, [messages]);
 
-  const handleGenerate = useCallback(async () => {
-    if (isLoading || isGenerating) return;
-    
-    setIsGenerating(true);
-    
-    try {
-      // Send the prompt to generate a full itinerary
-      await sendMessage(GENERATE_ITINERARY_PROMPT);
-      
-      // Wait a moment for the response to be added to messages
-      // Then generate the itinerary from the updated chat
-      setTimeout(() => {
-        // Get the latest messages including the AI response
+  // Effect to watch for AI response completion and then generate itinerary
+  const pendingGenerationRef = useRef(false);
+  
+  useEffect(() => {
+    // Check if we're waiting for generation and AI has finished responding
+    if (pendingGenerationRef.current && !isLoading && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "assistant" && lastMessage.content.trim()) {
+        pendingGenerationRef.current = false;
+        
+        // Now generate with the updated messages including AI response
         generateItineraryFromChat(messages);
         
         toast({
@@ -82,9 +80,23 @@ export function GenerateItineraryButton() {
         
         navigate("/trip-planner/itinerary");
         setIsGenerating(false);
-      }, 2000);
+      }
+    }
+  }, [messages, isLoading, generateItineraryFromChat, destination, navigate, toast]);
+
+  const handleGenerate = useCallback(async () => {
+    if (isLoading || isGenerating) return;
+    
+    setIsGenerating(true);
+    pendingGenerationRef.current = true;
+    
+    try {
+      // Send the prompt to generate a full itinerary
+      // The useEffect above will handle the navigation after AI responds
+      await sendMessage(GENERATE_ITINERARY_PROMPT);
     } catch (error) {
       console.error("Error generating itinerary:", error);
+      pendingGenerationRef.current = false;
       toast({
         title: "Error",
         description: "Failed to generate itinerary. Please try again.",
@@ -92,7 +104,7 @@ export function GenerateItineraryButton() {
       });
       setIsGenerating(false);
     }
-  }, [isLoading, isGenerating, sendMessage, generateItineraryFromChat, messages, destination, navigate, toast]);
+  }, [isLoading, isGenerating, sendMessage, toast]);
 
   if (!shouldShow) {
     return null;
