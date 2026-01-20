@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Home, Calendar, MapPin, Utensils, Coffee, Compass } from "lucide-react";
+import { Sparkles, Home, MapPin, Utensils, Coffee, Compass } from "lucide-react";
 import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import { useItineraryContext } from "../context/ItineraryContext";
 
@@ -115,12 +115,12 @@ export function ChatSuggestionPills({ className }: ChatSuggestionPillsProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
   const { itinerary } = useItineraryContext();
   
-  const destination = useMemo(() => detectDestination(messages), [messages]);
+  const detectedDestination = useMemo(() => detectDestination(messages), [messages]);
   const hasItinerary = !!itinerary;
   
   const suggestions = useMemo(() => {
-    return getSuggestions(messages.length, hasItinerary, destination);
-  }, [messages.length, hasItinerary, destination]);
+    return getSuggestions(messages.length, hasItinerary, detectedDestination);
+  }, [messages.length, hasItinerary, detectedDestination]);
 
   const handleClick = useCallback((prompt: string) => {
     if (!isLoading) {

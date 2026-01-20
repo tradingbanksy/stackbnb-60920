@@ -283,7 +283,7 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
                 ) : (
                   <ItineraryDaySchedule 
                     day={selectedDay} 
-                    onEditItem={(itemIndex) => {
+                    onEditItem={() => {
                       setIsEditMode(true);
                     }}
                     onRemoveItem={(itemIndex) => {
