@@ -17,3 +17,5 @@ export { ItinerarySkeleton } from "./ItinerarySkeleton";
 export { ChatSuggestionPills } from "./ChatSuggestionPills";
 export { ActivityDropdownMenu } from "./ActivityDropdownMenu";
 export { DateDurationPicker } from "./DateDurationPicker";
+export { ItinerarySheet } from "./ItinerarySheet";
+export { ItineraryPreviewCard } from "./ItineraryPreviewCard";

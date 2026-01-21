@@ -12,6 +12,7 @@ import {
   QuickActionsBar,
   ChatSuggestionPills,
   AuthPromptDialog,
+  ItinerarySheet,
 } from "@/features/trip-planner/components";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -21,6 +22,7 @@ function TripPlannerChatContent() {
   const { messages } = useTripPlannerChatContext();
   const { isAuthenticated, isLoading } = useAuthContext();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showItinerarySheet, setShowItinerarySheet] = useState(false);
   const hasMessages = messages.length > 1;
 
   // Show auth prompt for non-authenticated users on first visit
@@ -48,6 +50,10 @@ function TripPlannerChatContent() {
     }
   };
 
+  const handleOpenItinerary = () => {
+    setShowItinerarySheet(true);
+  };
+
   return (
     <div className="relative w-full h-screen bg-background flex flex-col">
       <ChatHeader />
@@ -57,6 +63,12 @@ function TripPlannerChatContent() {
         open={showAuthPrompt}
         onOpenChange={handleAuthPromptClose}
         onSkip={handleAuthPromptSkip}
+      />
+
+      {/* Itinerary Sheet */}
+      <ItinerarySheet
+        open={showItinerarySheet}
+        onOpenChange={setShowItinerarySheet}
       />
 
       {!hasMessages ? (
@@ -79,11 +91,14 @@ function TripPlannerChatContent() {
         </div>
       ) : (
         <>
-          <ChatMessageList />
+          <ChatMessageList onOpenItinerary={handleOpenItinerary} />
           <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border">
             <div className="max-w-2xl mx-auto px-3 py-2">
               {/* Chat-style suggestion pills instead of buttons */}
-              <ChatSuggestionPills className="mb-2" />
+              <ChatSuggestionPills 
+                className="mb-2" 
+                onOpenItinerary={handleOpenItinerary}
+              />
             </div>
             <ChatInputArea placeholder="Ask about restaurants or activities..." className="border-t-0 pt-0" />
           </div>

@@ -4,7 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Clock, AlertCircle } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
+import { ItineraryPreviewCard } from "./ItineraryPreviewCard";
 import { useTripPlannerChatContext } from "../context";
+import { useItineraryContext } from "../context/ItineraryContext";
 import type { StreamingStatus } from "../context/TripPlannerChatContext";
 
 const TypingIndicator = memo(function TypingIndicator() {
@@ -70,13 +72,18 @@ const StreamingBanner = memo(function StreamingBanner({ status, onRetry }: Strea
   return null;
 });
 
-export function ChatMessageList() {
+interface ChatMessageListProps {
+  onOpenItinerary?: () => void;
+}
+
+export function ChatMessageList({ onOpenItinerary }: ChatMessageListProps) {
   const { messages, isLoading, bionicEnabled, streamingStatus, retryLastMessage } = useTripPlannerChatContext();
+  const { itinerary, isGenerating } = useItineraryContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, streamingStatus]);
+  }, [messages.length, streamingStatus, itinerary, isGenerating]);
 
   // Filter out empty assistant messages when showing the timeout banner
   const displayMessages = messages.filter((msg, idx) => {
@@ -89,6 +96,9 @@ export function ChatMessageList() {
     return true;
   });
 
+  // Show itinerary preview card after messages if we have an itinerary or are generating one
+  const showItineraryPreview = (itinerary || isGenerating) && onOpenItinerary;
+
   return (
     <ScrollArea className="flex-1 p-4">
       <div className="space-y-4 max-w-2xl mx-auto" role="log" aria-live="polite">
@@ -100,7 +110,14 @@ export function ChatMessageList() {
           />
         ))}
         
-        {isLoading && streamingStatus !== "timeout" && (
+        {/* Itinerary preview card - appears in chat flow */}
+        {showItineraryPreview && (
+          <div className="flex flex-col items-start">
+            <ItineraryPreviewCard onExpand={onOpenItinerary} />
+          </div>
+        )}
+        
+        {isLoading && streamingStatus !== "timeout" && !isGenerating && (
           <>
             <TypingIndicator />
             <StreamingBanner status={streamingStatus} onRetry={retryLastMessage} />

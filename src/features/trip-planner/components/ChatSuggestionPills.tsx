@@ -109,11 +109,12 @@ function detectDestination(messages: Array<{ role: string; content: string }>): 
 
 interface ChatSuggestionPillsProps {
   className?: string;
+  onOpenItinerary?: () => void;
 }
 
-export function ChatSuggestionPills({ className }: ChatSuggestionPillsProps) {
+export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggestionPillsProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
-  const { itinerary } = useItineraryContext();
+  const { itinerary, generateItineraryFromChat } = useItineraryContext();
   
   const detectedDestination = useMemo(() => detectDestination(messages), [messages]);
   const hasItinerary = !!itinerary;
@@ -122,11 +123,25 @@ export function ChatSuggestionPills({ className }: ChatSuggestionPillsProps) {
     return getSuggestions(messages.length, hasItinerary, detectedDestination);
   }, [messages.length, hasItinerary, detectedDestination]);
 
-  const handleClick = useCallback((prompt: string) => {
-    if (!isLoading) {
-      sendMessage(prompt);
+  const handleClick = useCallback((suggestion: SuggestionPill) => {
+    if (isLoading) return;
+    
+    // If this is a "Generate itinerary" action and we have a destination detected
+    if (suggestion.label === "Generate itinerary" || suggestion.label === "Host's picks") {
+      // Send the prompt to get AI response
+      sendMessage(suggestion.prompt);
+      // Generate itinerary from existing messages (will include the new response when it arrives)
+      // The itinerary context will pick up the new messages
+      setTimeout(() => {
+        generateItineraryFromChat(messages);
+        if (onOpenItinerary) {
+          onOpenItinerary();
+        }
+      }, 2000);
+    } else {
+      sendMessage(suggestion.prompt);
     }
-  }, [isLoading, sendMessage]);
+  }, [isLoading, sendMessage, messages, generateItineraryFromChat, onOpenItinerary]);
 
   // Only show after some conversation
   const userMessageCount = messages.filter(m => m.role === "user").length;
@@ -144,7 +159,7 @@ export function ChatSuggestionPills({ className }: ChatSuggestionPillsProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: index * 0.05 }}
-          onClick={() => handleClick(suggestion.prompt)}
+          onClick={() => handleClick(suggestion)}
           disabled={isLoading}
           className={`
             inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
