@@ -17,23 +17,55 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Check authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      logStep("Authentication required - no auth header");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2. Verify user with the auth header
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      logStep("Invalid authentication", { error: claimsError?.message });
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    logStep("User authenticated", { userId });
+
     const { bookingId, reason, guestCancellation } = await req.json();
-    logStep("Cancellation request received", { bookingId, reason, guestCancellation });
+    logStep("Cancellation request received", { bookingId, reason, guestCancellation, userId });
 
     if (!bookingId) {
       throw new Error("Booking ID is required");
     }
 
+    // 3. Use service role for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    // Get booking details
+    // 4. Get booking details with vendor profile user_id for authorization check
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("*")
+      .select("*, vendor_profiles(user_id)")
       .eq("id", bookingId)
       .single();
 
@@ -41,6 +73,26 @@ serve(async (req) => {
       logStep("Booking not found", { error: bookingError?.message });
       throw new Error("Booking not found");
     }
+
+    // 5. Authorization check: only booking owner, vendor, or host can cancel
+    const isBookingOwner = booking.user_id === userId;
+    const isVendor = booking.vendor_profiles?.user_id === userId;
+    const isHost = booking.host_user_id === userId;
+
+    if (!isBookingOwner && !isVendor && !isHost) {
+      logStep("Authorization denied", { 
+        userId, 
+        bookingUserId: booking.user_id, 
+        vendorUserId: booking.vendor_profiles?.user_id,
+        hostUserId: booking.host_user_id
+      });
+      return new Response(
+        JSON.stringify({ error: "You are not authorized to cancel this booking" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep("Authorization granted", { isBookingOwner, isVendor, isHost });
 
     if (booking.status === "cancelled") {
       logStep("Booking already cancelled");
@@ -51,7 +103,8 @@ serve(async (req) => {
     }
 
     // If this is a guest-initiated cancellation, check the vendor's cancellation policy
-    if (guestCancellation && booking.vendor_profile_id) {
+    // Only enforce cancellation window for guests, not vendors/hosts
+    if (guestCancellation && isBookingOwner && booking.vendor_profile_id) {
       const { data: vendorProfile, error: vendorError } = await supabaseAdmin
         .from("vendor_profiles")
         .select("cancellation_hours, name")
@@ -104,7 +157,7 @@ serve(async (req) => {
       throw updateError;
     }
 
-    logStep("Booking cancelled successfully", { bookingId });
+    logStep("Booking cancelled successfully", { bookingId, cancelledBy: userId });
 
     // Get guest email
     const { data: guestUserData } = await supabaseAdmin.auth.admin.getUserById(booking.user_id);
