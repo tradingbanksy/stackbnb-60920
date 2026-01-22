@@ -126,20 +126,21 @@ export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggesti
   const handleClick = useCallback((suggestion: SuggestionPill) => {
     if (isLoading) return;
     
-    // If this is a "Generate itinerary" action and we have a destination detected
+    // Send the message - the AI will respond conversationally
+    sendMessage(suggestion.prompt);
+    
+    // For "Generate itinerary" and "Host's picks", generate itinerary after AI responds
+    // Do NOT navigate - keep everything in chat
     if (suggestion.label === "Generate itinerary" || suggestion.label === "Host's picks") {
-      // Send the prompt to get AI response
-      sendMessage(suggestion.prompt);
       // Generate itinerary from existing messages (will include the new response when it arrives)
       // The itinerary context will pick up the new messages
       setTimeout(() => {
         generateItineraryFromChat(messages);
+        // Open itinerary sheet when ready
         if (onOpenItinerary) {
           onOpenItinerary();
         }
-      }, 2000);
-    } else {
-      sendMessage(suggestion.prompt);
+      }, 2500); // Slight delay to let AI respond first
     }
   }, [isLoading, sendMessage, messages, generateItineraryFromChat, onOpenItinerary]);
 

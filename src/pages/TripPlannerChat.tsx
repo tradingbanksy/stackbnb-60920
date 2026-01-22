@@ -56,7 +56,7 @@ function TripPlannerChatContent() {
 
   return (
     <div className="relative w-full h-screen bg-background flex flex-col">
-      <ChatHeader />
+      <ChatHeader onOpenItinerary={handleOpenItinerary} />
 
       {/* Auth Prompt Dialog */}
       <AuthPromptDialog
