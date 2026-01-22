@@ -1,4 +1,4 @@
-import { memo, useMemo, lazy, Suspense, type ReactNode } from "react";
+import { memo, useMemo, lazy, Suspense, useState, useRef, useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Card } from "@/components/ui/card";
@@ -46,6 +46,42 @@ const ExternalLink = memo(function ExternalLink({ href, children }: { href: stri
     </a>
   );
 });
+
+// Lazy-loaded map that only renders when visible
+function LazyVendorMap({ vendorName }: { vendorName: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full max-w-[85%] mt-3" style={{ minHeight: '200px' }}>
+      {isVisible ? (
+        <Suspense fallback={<Skeleton className="h-48 w-full rounded-lg" aria-label="Loading map" />}>
+          <VendorLocationMap vendorName={vendorName} />
+        </Suspense>
+      ) : (
+        <Skeleton className="h-48 w-full rounded-lg" aria-label="Loading map" />
+      )}
+    </div>
+  );
+}
 
 export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }: ChatMessageProps) {
   const isUser = message.role === "user";
@@ -103,11 +139,7 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
       </Card>
       
       {isQuoteMessage && vendorName && (
-        <div className="w-full max-w-[85%] mt-3">
-          <Suspense fallback={<Skeleton className="h-48 w-full rounded-lg" aria-label="Loading map" />}>
-            <VendorLocationMap vendorName={vendorName} />
-          </Suspense>
-        </div>
+        <LazyVendorMap vendorName={vendorName} />
       )}
     </article>
   );

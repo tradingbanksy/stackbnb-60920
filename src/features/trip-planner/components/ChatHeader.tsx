@@ -16,17 +16,25 @@ import {
   Sun,
   Check,
   Cloud,
+  CalendarDays,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTripPlannerChatContext } from "../context";
+import { useItineraryContext } from "../context/ItineraryContext";
 
-export function ChatHeader() {
+interface ChatHeaderProps {
+  onOpenItinerary?: () => void;
+}
+
+export function ChatHeader({ onOpenItinerary }: ChatHeaderProps) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { messages, isSaving, bionicEnabled, setBionicEnabled, clearChat } = useTripPlannerChatContext();
+  const { itinerary } = useItineraryContext();
 
   const hasMessages = messages.length > 1;
+  const hasItinerary = !!itinerary && itinerary.days.length > 0;
 
   return (
     <TooltipProvider>
@@ -73,6 +81,26 @@ export function ChatHeader() {
         </div>
         
         <div className="flex items-center gap-1">
+          {/* View Itinerary button - only appears when itinerary exists */}
+          {hasItinerary && onOpenItinerary && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onOpenItinerary}
+                  aria-label="View itinerary"
+                  className="text-primary"
+                >
+                  <CalendarDays className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Itinerary</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
           {hasMessages && (
             <Tooltip>
               <TooltipTrigger asChild>
