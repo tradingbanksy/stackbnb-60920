@@ -78,12 +78,12 @@ interface ChatMessageListProps {
 
 export function ChatMessageList({ onOpenItinerary }: ChatMessageListProps) {
   const { messages, isLoading, bionicEnabled, streamingStatus, retryLastMessage } = useTripPlannerChatContext();
-  const { itinerary, isGenerating } = useItineraryContext();
+  const { itinerary, isGenerating, generationError } = useItineraryContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, streamingStatus, itinerary, isGenerating]);
+  }, [messages.length, streamingStatus, itinerary, isGenerating, generationError]);
 
   // Filter out empty assistant messages when showing the timeout banner
   const displayMessages = messages.filter((msg, idx) => {
@@ -96,8 +96,8 @@ export function ChatMessageList({ onOpenItinerary }: ChatMessageListProps) {
     return true;
   });
 
-  // Show itinerary preview card after messages if we have an itinerary or are generating one
-  const showItineraryPreview = (itinerary || isGenerating) && onOpenItinerary;
+  // Show itinerary preview card after messages if we have an itinerary, are generating one, or have an error
+  const showItineraryPreview = (itinerary || isGenerating || generationError) && onOpenItinerary;
 
   return (
     <ScrollArea className="flex-1 p-4">

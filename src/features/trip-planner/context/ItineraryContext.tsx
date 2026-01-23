@@ -6,6 +6,11 @@ import { extractDestination, extractDates, extractActivities, generateDays } fro
 const ITINERARY_STORAGE_KEY = "tripPlannerItinerary";
 
 export type RegenerateMode = "full" | "improve";
+export type GenerationError = {
+  message: string;
+  code: "NETWORK_ERROR" | "PARSE_ERROR" | "NO_DATA" | "UNKNOWN";
+  retryable: boolean;
+};
 
 interface ItineraryContextValue {
   itinerary: Itinerary | null;
@@ -15,7 +20,11 @@ interface ItineraryContextValue {
   hasUserEdits: boolean;
   isConfirmed: boolean;
   shareUrl: string | null;
+  generationError: GenerationError | null;
+  lastMessages: Message[] | null;
   generateItineraryFromChat: (messages: Message[], mode?: RegenerateMode) => void;
+  retryGeneration: () => void;
+  clearError: () => void;
   updateItinerary: (partialUpdate: Partial<Itinerary>) => void;
   updateDayItems: (dayIndex: number, items: ItineraryItem[]) => void;
   updateItem: (dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => void;
@@ -41,6 +50,9 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [generationError, setGenerationError] = useState<GenerationError | null>(null);
+  const [lastMessages, setLastMessages] = useState<Message[] | null>(null);
+  const [lastMode, setLastMode] = useState<RegenerateMode>("full");
   const hasInitialized = useRef(false);
 
   // Load from storage on mount
@@ -71,19 +83,54 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
 
   const generateItineraryFromChat = useCallback((messages: Message[], mode: RegenerateMode = "full") => {
     setIsGenerating(true);
+    setGenerationError(null);
+    setLastMessages(messages);
+    setLastMode(mode);
     
     // Process in next tick to allow UI to update
     setTimeout(() => {
       try {
         // Extract only assistant messages
         const assistantMessages = messages.filter(m => m.role === "assistant");
+        
+        if (assistantMessages.length === 0) {
+          setGenerationError({
+            message: "No trip information found. Please chat about your destination first.",
+            code: "NO_DATA",
+            retryable: false,
+          });
+          setIsGenerating(false);
+          return;
+        }
+        
         const combinedText = assistantMessages.map(m => m.content).join("\n\n");
         
         // Extract components
         const destination = extractDestination(combinedText);
+        
+        if (!destination) {
+          setGenerationError({
+            message: "Couldn't detect a destination. Try mentioning a specific place like 'Tulum' or 'Cancún'.",
+            code: "PARSE_ERROR",
+            retryable: false,
+          });
+          setIsGenerating(false);
+          return;
+        }
+        
         const { startDate, endDate } = extractDates(combinedText);
         const activities = extractActivities(combinedText);
         const newGeneratedDays = generateDays(startDate, endDate, activities);
+
+        if (newGeneratedDays.length === 0) {
+          setGenerationError({
+            message: "Couldn't generate any days for your trip. Try asking for specific activities or recommendations.",
+            code: "PARSE_ERROR",
+            retryable: true,
+          });
+          setIsGenerating(false);
+          return;
+        }
 
         if (mode === "improve" && itinerary) {
           // Preserve user-edited items, only regenerate non-edited/low-confidence items
@@ -129,11 +176,31 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
           
           setItinerary(newItinerary);
         }
+        
+        // Clear error on success
+        setGenerationError(null);
+      } catch (err) {
+        console.error("Error generating itinerary:", err);
+        setGenerationError({
+          message: "Something went wrong while creating your itinerary. Please try again.",
+          code: "UNKNOWN",
+          retryable: true,
+        });
       } finally {
         setIsGenerating(false);
       }
     }, 100);
   }, [itinerary]);
+
+  const retryGeneration = useCallback(() => {
+    if (lastMessages) {
+      generateItineraryFromChat(lastMessages, lastMode);
+    }
+  }, [lastMessages, lastMode, generateItineraryFromChat]);
+
+  const clearError = useCallback(() => {
+    setGenerationError(null);
+  }, []);
 
   const updateItinerary = useCallback((partialUpdate: Partial<Itinerary>) => {
     setItinerary(prev => {
@@ -289,7 +356,11 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     hasUserEdits,
     isConfirmed,
     shareUrl,
+    generationError,
+    lastMessages,
     generateItineraryFromChat,
+    retryGeneration,
+    clearError,
     updateItinerary,
     updateDayItems,
     updateItem,
