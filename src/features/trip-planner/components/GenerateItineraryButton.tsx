@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
@@ -34,8 +33,11 @@ const GENERATE_ITINERARY_PROMPT = `Please create a complete day-by-day itinerary
 
 Please format each day clearly with Day 1, Day 2, etc. and organize activities in a logical sequence considering travel times between locations.`;
 
-export function GenerateItineraryButton() {
-  const navigate = useNavigate();
+interface GenerateItineraryButtonProps {
+  onOpenItinerary?: () => void;
+}
+
+export function GenerateItineraryButton({ onOpenItinerary }: GenerateItineraryButtonProps) {
   const { toast } = useToast();
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
   const { generateItineraryFromChat } = useItineraryContext();
@@ -60,29 +62,37 @@ export function GenerateItineraryButton() {
     };
   }, [messages]);
 
+  // Keep a ref to the latest messages for use in effect
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
   // Effect to watch for AI response completion and then generate itinerary
   const pendingGenerationRef = useRef(false);
   
   useEffect(() => {
     // Check if we're waiting for generation and AI has finished responding
-    if (pendingGenerationRef.current && !isLoading && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
+    if (pendingGenerationRef.current && !isLoading && messagesRef.current.length > 0) {
+      const lastMessage = messagesRef.current[messagesRef.current.length - 1];
       if (lastMessage.role === "assistant" && lastMessage.content.trim()) {
         pendingGenerationRef.current = false;
         
         // Now generate with the updated messages including AI response
-        generateItineraryFromChat(messages);
+        generateItineraryFromChat(messagesRef.current);
         
         toast({
           title: "Itinerary Generated!",
           description: `Your ${destination || 'trip'} itinerary is ready to view and customize.`,
         });
         
-        navigate("/trip-planner/itinerary");
+        // Open itinerary sheet instead of navigating
+        if (onOpenItinerary) {
+          onOpenItinerary();
+        }
+        
         setIsGenerating(false);
       }
     }
-  }, [messages, isLoading, generateItineraryFromChat, destination, navigate, toast]);
+  }, [messages, isLoading, generateItineraryFromChat, destination, onOpenItinerary, toast]);
 
   const handleGenerate = useCallback(async () => {
     if (isLoading || isGenerating) return;
@@ -92,7 +102,7 @@ export function GenerateItineraryButton() {
     
     try {
       // Send the prompt to generate a full itinerary
-      // The useEffect above will handle the navigation after AI responds
+      // The useEffect above will handle opening the sheet after AI responds
       await sendMessage(GENERATE_ITINERARY_PROMPT);
     } catch (error) {
       console.error("Error generating itinerary:", error);

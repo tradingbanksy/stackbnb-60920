@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Home, MapPin, Utensils, Coffee, Compass } from "lucide-react";
 import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
@@ -9,6 +9,7 @@ interface SuggestionPill {
   label: string;
   prompt: string;
   variant?: "primary" | "secondary";
+  triggersItinerary?: boolean;
 }
 
 // Context-aware suggestions based on conversation state
@@ -25,12 +26,14 @@ function getSuggestions(
         label: "Generate itinerary",
         prompt: "Create a complete day-by-day itinerary for my trip with all the details including times, durations, what's included, and what to bring.",
         variant: "primary",
+        triggersItinerary: true,
       },
       {
         icon: <Home className="h-3.5 w-3.5" />,
         label: "Host's picks",
         prompt: "Show me your top recommended experiences that my host has curated for guests.",
         variant: "secondary",
+        triggersItinerary: true,
       },
     ];
   }
@@ -44,6 +47,7 @@ function getSuggestions(
     label: "Generate itinerary",
     prompt: "Now create a complete day-by-day itinerary based on our conversation. Include times, durations, what's included, what to bring, and travel info between activities.",
     variant: "primary",
+    triggersItinerary: true,
   });
 
   suggestions.push({
@@ -51,6 +55,7 @@ function getSuggestions(
     label: "Host's picks",
     prompt: "Create an itinerary using only your host's top recommended experiences.",
     variant: "secondary",
+    triggersItinerary: true,
   });
 
   // If itinerary exists, show modification suggestions
@@ -115,6 +120,7 @@ interface ChatSuggestionPillsProps {
 export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggestionPillsProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
   const { itinerary, generateItineraryFromChat } = useItineraryContext();
+  const [pendingItinerary, setPendingItinerary] = useState(false);
   
   const detectedDestination = useMemo(() => detectDestination(messages), [messages]);
   const hasItinerary = !!itinerary;
@@ -123,26 +129,39 @@ export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggesti
     return getSuggestions(messages.length, hasItinerary, detectedDestination);
   }, [messages.length, hasItinerary, detectedDestination]);
 
+  // Keep a ref to the latest messages
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
+  // Watch for AI response completion when pending itinerary generation
+  useEffect(() => {
+    if (pendingItinerary && !isLoading && messagesRef.current.length > 0) {
+      const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+      if (lastMessage.role === "assistant" && lastMessage.content.trim()) {
+        setPendingItinerary(false);
+        
+        // Generate itinerary from the updated messages
+        generateItineraryFromChat(messagesRef.current);
+        
+        // Open itinerary sheet
+        if (onOpenItinerary) {
+          onOpenItinerary();
+        }
+      }
+    }
+  }, [messages, isLoading, pendingItinerary, generateItineraryFromChat, onOpenItinerary]);
+
   const handleClick = useCallback((suggestion: SuggestionPill) => {
     if (isLoading) return;
     
     // Send the message - the AI will respond conversationally
     sendMessage(suggestion.prompt);
     
-    // For "Generate itinerary" and "Host's picks", generate itinerary after AI responds
-    // Do NOT navigate - keep everything in chat
-    if (suggestion.label === "Generate itinerary" || suggestion.label === "Host's picks") {
-      // Generate itinerary from existing messages (will include the new response when it arrives)
-      // The itinerary context will pick up the new messages
-      setTimeout(() => {
-        generateItineraryFromChat(messages);
-        // Open itinerary sheet when ready
-        if (onOpenItinerary) {
-          onOpenItinerary();
-        }
-      }, 2500); // Slight delay to let AI respond first
+    // For itinerary-triggering pills, set pending flag
+    if (suggestion.triggersItinerary) {
+      setPendingItinerary(true);
     }
-  }, [isLoading, sendMessage, messages, generateItineraryFromChat, onOpenItinerary]);
+  }, [isLoading, sendMessage]);
 
   // Only show after some conversation
   const userMessageCount = messages.filter(m => m.role === "user").length;
