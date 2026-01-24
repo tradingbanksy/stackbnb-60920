@@ -96,8 +96,9 @@ export function ChatMessageList({ onOpenItinerary }: ChatMessageListProps) {
     return true;
   });
 
-  // Show itinerary preview card after messages if we have an itinerary, are generating one, or have an error
-  const showItineraryPreview = (itinerary || isGenerating || generationError) && onOpenItinerary;
+  // Only show itinerary preview when user has explicitly added items
+  const hasUserAddedItems = itinerary?.days.some(day => day.items.length > 0) ?? false;
+  const showItineraryPreview = hasUserAddedItems && onOpenItinerary;
 
   return (
     <ScrollArea className="flex-1 p-4">

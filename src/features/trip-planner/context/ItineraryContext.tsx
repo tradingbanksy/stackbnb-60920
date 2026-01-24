@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Message, Itinerary, ItineraryDay, ItineraryItem } from "../types";
+import type { Message, Itinerary, ItineraryDay, ItineraryItem, ItineraryItemCategory } from "../types";
 import { extractDestination, extractDates, extractActivities, generateDays } from "../utils";
+import type { ParsedActivity } from "../components/AddToItineraryButton";
 
 const ITINERARY_STORAGE_KEY = "tripPlannerItinerary";
 
@@ -29,6 +30,7 @@ interface ItineraryContextValue {
   updateDayItems: (dayIndex: number, items: ItineraryItem[]) => void;
   updateItem: (dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => void;
   removeItem: (dayIndex: number, itemIndex: number) => void;
+  addActivityToItinerary: (activity: ParsedActivity, dayIndex?: number) => void;
   confirmItinerary: () => void;
   unconfirmItinerary: () => void;
   clearItinerary: () => void;
@@ -256,6 +258,98 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     setItinerary(null);
   }, []);
 
+  // Add a single activity to the itinerary incrementally
+  const addActivityToItinerary = useCallback((activity: ParsedActivity, dayIndex?: number) => {
+    setItinerary(prev => {
+      // If no itinerary exists, create a new one
+      if (!prev) {
+        const today = new Date();
+        const startDate = today.toISOString().split('T')[0];
+        const endDate = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        // Create empty days
+        const days: ItineraryDay[] = [];
+        for (let i = 0; i < 3; i++) {
+          const dayDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+          days.push({
+            date: dayDate.toISOString().split('T')[0],
+            items: [],
+          });
+        }
+        
+        // Add the activity to the first day
+        const newItem: ItineraryItem = {
+          id: crypto.randomUUID(),
+          title: activity.title,
+          description: activity.description || "",
+          time: activity.time || "09:00",
+          duration: activity.duration,
+          category: activity.category,
+          location: activity.location,
+          includes: activity.includes,
+          whatToBring: activity.whatToBring,
+          vendorId: activity.vendorId,
+          bookingLink: activity.bookingLink,
+          travelInfo: activity.travelInfo,
+          isUserEdited: true,
+          confidence: 1.0,
+        };
+        
+        days[0].items.push(newItem);
+        
+        return {
+          id: crypto.randomUUID(),
+          destination: "Tulum", // Default destination
+          startDate,
+          endDate,
+          days,
+        };
+      }
+      
+      // Find which day to add to
+      let targetDayIndex = dayIndex ?? 0;
+      
+      // If no specific day, find the first day with fewer than 4 items
+      if (dayIndex === undefined) {
+        const foundIndex = prev.days.findIndex(day => day.items.length < 4);
+        targetDayIndex = foundIndex >= 0 ? foundIndex : 0;
+      }
+      
+      // Calculate next available time slot
+      const targetDay = prev.days[targetDayIndex];
+      const existingTimes = targetDay?.items.map(item => item.time) || [];
+      const timeSlots = ["09:00", "11:00", "13:00", "15:00", "17:00", "19:00"];
+      const nextAvailableTime = timeSlots.find(t => !existingTimes.includes(t)) || activity.time || "12:00";
+      
+      const newItem: ItineraryItem = {
+        id: crypto.randomUUID(),
+        title: activity.title,
+        description: activity.description || "",
+        time: activity.time || nextAvailableTime,
+        duration: activity.duration,
+        category: activity.category,
+        location: activity.location,
+        includes: activity.includes,
+        whatToBring: activity.whatToBring,
+        vendorId: activity.vendorId,
+        bookingLink: activity.bookingLink,
+        travelInfo: activity.travelInfo,
+        isUserEdited: true,
+        confidence: 1.0,
+      };
+      
+      const newDays = [...prev.days];
+      if (newDays[targetDayIndex]) {
+        newDays[targetDayIndex] = {
+          ...newDays[targetDayIndex],
+          items: [...newDays[targetDayIndex].items, newItem].sort((a, b) => a.time.localeCompare(b.time)),
+        };
+      }
+      
+      return { ...prev, days: newDays };
+    });
+  }, []);
+
   const confirmItinerary = useCallback(() => {
     setItinerary(prev => {
       if (!prev) return prev;
@@ -365,6 +459,7 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     updateDayItems,
     updateItem,
     removeItem,
+    addActivityToItinerary,
     confirmItinerary,
     unconfirmItinerary,
     clearItinerary,

@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Message } from "../types";
+import type { Message, ItineraryItemCategory } from "../types";
 import { applyBionicReading, extractVendorFromMessage, hasQuoteInMessage } from "../utils";
+import { AddToItineraryButton, type ParsedActivity } from "./AddToItineraryButton";
 
 const VendorLocationMap = lazy(() => 
   import("@/components/VendorLocationMap").then(m => ({ default: m.VendorLocationMap }))
@@ -46,6 +47,98 @@ const ExternalLink = memo(function ExternalLink({ href, children }: { href: stri
     </a>
   );
 });
+
+// Parse activity blocks from AI response
+function parseActivitiesFromContent(content: string): ParsedActivity[] {
+  const activities: ParsedActivity[] = [];
+  
+  // Pattern to match activity blocks with bold titles
+  // Matches: **Activity Title** or **9:00 AM - Activity Title** or **🫧 Activity Title**
+  const activityBlockPattern = /\*\*(?:\d{1,2}:\d{2}\s*(?:AM|PM)?\s*[-–]?\s*)?([^*]+?)\*\*(?:\s*🫧|\s*🌊|\s*🏖️|\s*🍽️|\s*🏛️)?[^\n]*\n(?:(?!\*\*)[^\n]*\n)*/gi;
+  
+  const matches = content.matchAll(activityBlockPattern);
+  
+  for (const match of matches) {
+    const block = match[0];
+    const title = match[1]?.trim().replace(/[🫧🌊🏖️🍽️🏛️⭐]/g, '').trim();
+    
+    if (!title || title.length < 3 || title.length > 100) continue;
+    
+    // Skip section headers and non-activity items
+    const skipPatterns = [
+      /^(pro tips?|rules?|notes?|important|recommended|what's included|what to bring|travel|duration)/i,
+      /^(snorkeling|water activities|cenotes|beach clubs|restaurants|activities)/i,
+    ];
+    if (skipPatterns.some(p => p.test(title))) continue;
+    
+    // Extract duration
+    const durationMatch = block.match(/duration[:\s]+([^\n]+)/i);
+    const duration = durationMatch?.[1]?.trim();
+    
+    // Extract what's included
+    const includesMatch = block.match(/what's included[:\s]+([^\n]+(?:\n[•\-\*][^\n]+)*)/i);
+    const includesText = includesMatch?.[1]?.trim() || "";
+    const includes = includesText
+      .split(/[•\-\*\n,]/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && s.length < 100);
+    
+    // Extract what to bring
+    const bringMatch = block.match(/what to bring[:\s]+([^\n]+(?:\n[•\-\*][^\n]+)*)/i);
+    const bringText = bringMatch?.[1]?.trim() || "";
+    const whatToBring = bringText
+      .split(/[•\-\*\n,]/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && s.length < 100);
+    
+    // Extract location
+    const locationMatch = block.match(/(?:location|at|📍)[:\s]+([^\n]+)/i);
+    const location = locationMatch?.[1]?.trim();
+    
+    // Extract travel info
+    const travelMatch = block.match(/travel[:\s]+([^\n]+)/i);
+    const travelInfo = travelMatch ? {
+      travelTime: travelMatch[1]?.trim(),
+    } : undefined;
+    
+    // Detect category based on keywords
+    let category: ItineraryItemCategory = "activity";
+    const lowerBlock = block.toLowerCase();
+    if (/restaurant|food|eat|dining|taco|burrito|breakfast|lunch|dinner/i.test(lowerBlock)) {
+      category = "food";
+    } else if (/cenote|snorkel|dive|swim|beach|water|kayak|paddleboard/i.test(lowerBlock)) {
+      category = "activity";
+    }
+    
+    // Extract time if present
+    const timeMatch = block.match(/\*\*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i);
+    const time = timeMatch?.[1]?.trim();
+    
+    // Extract booking link if present
+    const bookingMatch = block.match(/\[Book[^\]]*\]\(([^)]+)\)/i);
+    const bookingLink = bookingMatch?.[1];
+    
+    // Extract vendor ID from booking link
+    const vendorIdMatch = bookingLink?.match(/\/experience\/(\d+)/);
+    const vendorId = vendorIdMatch?.[1];
+    
+    activities.push({
+      title,
+      description: block.slice(0, 200).replace(/\*\*/g, '').trim(),
+      time,
+      duration,
+      category,
+      location,
+      includes: includes.length > 0 ? includes : undefined,
+      whatToBring: whatToBring.length > 0 ? whatToBring : undefined,
+      vendorId,
+      bookingLink,
+      travelInfo,
+    });
+  }
+  
+  return activities;
+}
 
 // Lazy-loaded map that only renders when visible
 function LazyVendorMap({ vendorName }: { vendorName: string }) {
@@ -102,6 +195,12 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
     [isAssistant, bionicEnabled, message.content]
   );
 
+  // Parse activities from assistant messages for "Add to itinerary" buttons
+  const parsedActivities = useMemo(() => {
+    if (!isAssistant) return [];
+    return parseActivitiesFromContent(message.content);
+  }, [isAssistant, message.content]);
+
   const markdownComponents = useMemo(() => ({
     a: ({ href, children }: { href?: string; children?: ReactNode }) => {
       const text = String(children);
@@ -136,6 +235,19 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
             {formattedContent}
           </ReactMarkdown>
         </div>
+        
+        {/* Show "Add to itinerary" buttons for parsed activities */}
+        {parsedActivities.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-border/50">
+            {parsedActivities.slice(0, 5).map((activity, index) => (
+              <AddToItineraryButton
+                key={`${activity.title}-${index}`}
+                activity={activity}
+                variant="compact"
+              />
+            ))}
+          </div>
+        )}
       </Card>
       
       {isQuoteMessage && vendorName && (
