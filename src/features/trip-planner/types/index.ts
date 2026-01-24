@@ -47,6 +47,7 @@ export interface UseTripPlannerChatReturn {
 export type ItineraryItemCategory = "food" | "activity" | "transport" | "free";
 
 export interface ItineraryItem {
+  id?: string;
   time: string;
   title: string;
   description: string;
@@ -68,6 +69,11 @@ export interface ItineraryItem {
   distanceToNext?: string;
   /** Travel time to next activity */
   travelTimeToNext?: string;
+  /** Travel info object */
+  travelInfo?: {
+    distance?: string;
+    travelTime?: string;
+  };
   /** Tracks if this item was manually edited by the user */
   isUserEdited?: boolean;
   /** Confidence score from generation (0-1), lower = candidate for regeneration */
@@ -76,7 +82,7 @@ export interface ItineraryItem {
 
 export interface ItineraryDay {
   date: string;
-  title: string;
+  title?: string;
   items: ItineraryItem[];
 }
 

@@ -1,93 +1,72 @@
-import { useMemo, useCallback, useRef, useEffect, useState } from "react";
+import { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Home, MapPin, Utensils, Coffee, Compass } from "lucide-react";
+import { Sparkles, Home, MapPin, Utensils, Calendar } from "lucide-react";
 import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import { useItineraryContext } from "../context/ItineraryContext";
 
 interface SuggestionPill {
   icon: React.ReactNode;
   label: string;
-  prompt: string;
+  prompt?: string;
+  action?: "openItinerary";
   variant?: "primary" | "secondary";
-  triggersItinerary?: boolean;
 }
 
 // Context-aware suggestions based on conversation state
 function getSuggestions(
   messageCount: number,
-  hasItinerary: boolean,
+  hasItineraryItems: boolean,
   destination: string | null
 ): SuggestionPill[] {
-  // Initial state - generation options
+  // Initial state - conversational prompts
   if (messageCount <= 2) {
     return [
       {
         icon: <Sparkles className="h-3.5 w-3.5" />,
-        label: "Generate itinerary",
-        prompt: "Create a complete day-by-day itinerary for my trip with all the details including times, durations, what's included, and what to bring.",
+        label: "Suggest activities",
+        prompt: "What are the top activities you'd recommend for my trip? Show me 2-3 great options with full details.",
         variant: "primary",
-        triggersItinerary: true,
       },
       {
         icon: <Home className="h-3.5 w-3.5" />,
-        label: "Host's picks",
-        prompt: "Show me your top recommended experiences that my host has curated for guests.",
+        label: "Host's favorites",
+        prompt: "Show me my host's favorite experiences. I'd like to see what they recommend for guests.",
         variant: "secondary",
-        triggersItinerary: true,
       },
     ];
   }
 
-  // After some conversation - contextual suggestions
   const suggestions: SuggestionPill[] = [];
 
-  // Generation options (always available after enough context)
-  suggestions.push({
-    icon: <Sparkles className="h-3.5 w-3.5" />,
-    label: "Generate itinerary",
-    prompt: "Now create a complete day-by-day itinerary based on our conversation. Include times, durations, what's included, what to bring, and travel info between activities.",
-    variant: "primary",
-    triggersItinerary: true,
-  });
-
-  suggestions.push({
-    icon: <Home className="h-3.5 w-3.5" />,
-    label: "Host's picks",
-    prompt: "Create an itinerary using only your host's top recommended experiences.",
-    variant: "secondary",
-    triggersItinerary: true,
-  });
-
-  // If itinerary exists, show modification suggestions
-  if (hasItinerary) {
+  // If user has items in itinerary, show view option prominently
+  if (hasItineraryItems) {
     suggestions.push({
-      icon: <Coffee className="h-3.5 w-3.5" />,
-      label: "Add rest day",
-      prompt: "Add a relaxed rest day to my itinerary with optional activities.",
-    });
-    suggestions.push({
-      icon: <Utensils className="h-3.5 w-3.5" />,
-      label: "More local food",
-      prompt: "Add more authentic local food experiences to my itinerary.",
-    });
-    suggestions.push({
-      icon: <Compass className="h-3.5 w-3.5" />,
-      label: "Make it more relaxed",
-      prompt: "Adjust my itinerary to be more relaxed with fewer activities per day.",
-    });
-  } else {
-    // Discovery suggestions
-    suggestions.push({
-      icon: <Utensils className="h-3.5 w-3.5" />,
-      label: "Best restaurants",
-      prompt: "What are the must-try restaurants and food experiences?",
-    });
-    suggestions.push({
-      icon: <MapPin className="h-3.5 w-3.5" />,
-      label: "Hidden gems",
-      prompt: "What hidden gems should I not miss?",
+      icon: <Calendar className="h-3.5 w-3.5" />,
+      label: "View itinerary",
+      action: "openItinerary",
+      variant: "primary",
     });
   }
+
+  // More discovery suggestions
+  suggestions.push({
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+    label: "More activities",
+    prompt: "Show me more activity options with full details. What else do you recommend?",
+    variant: hasItineraryItems ? "secondary" : "primary",
+  });
+
+  suggestions.push({
+    icon: <Utensils className="h-3.5 w-3.5" />,
+    label: "Best restaurants",
+    prompt: "What are the must-try restaurants? Show me 2-3 top picks with details.",
+  });
+
+  suggestions.push({
+    icon: <MapPin className="h-3.5 w-3.5" />,
+    label: "Hidden gems",
+    prompt: "What hidden gems should I not miss? Show me unique local experiences.",
+  });
 
   return suggestions;
 }
@@ -119,49 +98,29 @@ interface ChatSuggestionPillsProps {
 
 export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggestionPillsProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
-  const { itinerary, generateItineraryFromChat } = useItineraryContext();
-  const [pendingItinerary, setPendingItinerary] = useState(false);
+  const { itinerary } = useItineraryContext();
   
   const detectedDestination = useMemo(() => detectDestination(messages), [messages]);
-  const hasItinerary = !!itinerary;
+  const hasItineraryItems = itinerary?.days.some(day => day.items.length > 0) ?? false;
   
   const suggestions = useMemo(() => {
-    return getSuggestions(messages.length, hasItinerary, detectedDestination);
-  }, [messages.length, hasItinerary, detectedDestination]);
-
-  // Keep a ref to the latest messages
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
-
-  // Watch for AI response completion when pending itinerary generation
-  useEffect(() => {
-    if (pendingItinerary && !isLoading && messagesRef.current.length > 0) {
-      const lastMessage = messagesRef.current[messagesRef.current.length - 1];
-      if (lastMessage.role === "assistant" && lastMessage.content.trim()) {
-        setPendingItinerary(false);
-        
-        // Generate itinerary from the updated messages
-        generateItineraryFromChat(messagesRef.current);
-        
-        // Open itinerary sheet
-        if (onOpenItinerary) {
-          onOpenItinerary();
-        }
-      }
-    }
-  }, [messages, isLoading, pendingItinerary, generateItineraryFromChat, onOpenItinerary]);
+    return getSuggestions(messages.length, hasItineraryItems, detectedDestination);
+  }, [messages.length, hasItineraryItems, detectedDestination]);
 
   const handleClick = useCallback((suggestion: SuggestionPill) => {
     if (isLoading) return;
     
-    // Send the message - the AI will respond conversationally
-    sendMessage(suggestion.prompt);
-    
-    // For itinerary-triggering pills, set pending flag
-    if (suggestion.triggersItinerary) {
-      setPendingItinerary(true);
+    // Handle special actions
+    if (suggestion.action === "openItinerary" && onOpenItinerary) {
+      onOpenItinerary();
+      return;
     }
-  }, [isLoading, sendMessage]);
+    
+    // Send the conversational prompt
+    if (suggestion.prompt) {
+      sendMessage(suggestion.prompt);
+    }
+  }, [isLoading, sendMessage, onOpenItinerary]);
 
   // Only show after some conversation
   const userMessageCount = messages.filter(m => m.role === "user").length;
