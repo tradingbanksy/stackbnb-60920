@@ -2,6 +2,7 @@ import { useState, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Check, Calendar } from "lucide-react";
 import { useItineraryContext } from "../context/ItineraryContext";
+import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import type { ItineraryItemCategory } from "../types";
 
 export interface ParsedActivity {
@@ -31,6 +32,7 @@ export const AddToItineraryButton = memo(function AddToItineraryButton({
   variant = "default",
 }: AddToItineraryButtonProps) {
   const { addActivityToItinerary, itinerary } = useItineraryContext();
+  const { messages } = useTripPlannerChatContext();
   const [isAdded, setIsAdded] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -45,14 +47,15 @@ export const AddToItineraryButton = memo(function AddToItineraryButton({
     if (isAdded || isAlreadyAdded || isAnimating) return;
 
     setIsAnimating(true);
-    addActivityToItinerary(activity);
+    // Pass messages so the itinerary can extract dates from chat
+    addActivityToItinerary(activity, undefined, messages);
     
     // Show confirmation
     setTimeout(() => {
       setIsAdded(true);
       setIsAnimating(false);
     }, 300);
-  }, [activity, addActivityToItinerary, isAdded, isAlreadyAdded, isAnimating]);
+  }, [activity, addActivityToItinerary, messages, isAdded, isAlreadyAdded, isAnimating]);
 
   const showAdded = isAdded || isAlreadyAdded;
 

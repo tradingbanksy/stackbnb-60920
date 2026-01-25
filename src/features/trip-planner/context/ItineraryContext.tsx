@@ -13,6 +13,93 @@ export type GenerationError = {
   retryable: boolean;
 };
 
+// Parse trip dates from chat messages
+function extractTripDatesFromMessages(messages: Message[]): { 
+  startDate: string; 
+  endDate: string; 
+  destination: string;
+  numDays: number;
+} {
+  const today = new Date();
+  const defaultStart = today.toISOString().split('T')[0];
+  const defaultEnd = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  
+  // Combine all messages for parsing
+  const allText = messages.map(m => m.content).join("\n");
+  
+  // Try to extract destination
+  const destination = extractDestination(allText) || "Tulum";
+  
+  // Try to find date patterns in user messages
+  // Patterns: "January 22-25", "Jan 22 - Jan 25", "22-25 January", "4 days", "3 nights"
+  const userMessages = messages.filter(m => m.role === "user").map(m => m.content).join("\n");
+  const assistantMessages = messages.filter(m => m.role === "assistant").map(m => m.content).join("\n");
+  
+  // Look for explicit date mentions like "January 22-25" or "Jan 22 - 25"
+  const monthNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+  const monthAbbrev = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  
+  // Pattern: Month DD-DD or Month DD - Month DD
+  const dateRangePattern = new RegExp(
+    `(${monthNames.join("|")}|${monthAbbrev.join("|")})\\s*(\\d{1,2})(?:\\s*[-–]\\s*(\\d{1,2}))?(?:\\s*(?:to|-)\\s*(${monthNames.join("|")}|${monthAbbrev.join("|")})?\\s*(\\d{1,2}))?`,
+    "i"
+  );
+  
+  const dateMatch = (userMessages + " " + assistantMessages).match(dateRangePattern);
+  
+  // Look for "X days" or "X nights" patterns
+  const daysPattern = /(\d+)\s*(?:days?|nights?)/i;
+  const daysMatch = (userMessages + " " + assistantMessages).match(daysPattern);
+  
+  let numDays = 4; // Default
+  let startDate = defaultStart;
+  let endDate = defaultEnd;
+  
+  if (daysMatch) {
+    numDays = parseInt(daysMatch[1], 10);
+    if (numDays < 1) numDays = 1;
+    if (numDays > 14) numDays = 14;
+  }
+  
+  if (dateMatch) {
+    const monthStr = dateMatch[1].toLowerCase();
+    const startDay = parseInt(dateMatch[2], 10);
+    let endDay = dateMatch[3] ? parseInt(dateMatch[3], 10) : (dateMatch[5] ? parseInt(dateMatch[5], 10) : startDay + numDays - 1);
+    
+    // Find month index
+    let monthIndex = monthNames.indexOf(monthStr);
+    if (monthIndex === -1) {
+      monthIndex = monthAbbrev.indexOf(monthStr);
+    }
+    
+    if (monthIndex !== -1) {
+      // Use current or next year
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth();
+      const year = monthIndex < currentMonth ? currentYear + 1 : currentYear;
+      
+      const parsedStart = new Date(year, monthIndex, startDay);
+      const parsedEnd = new Date(year, monthIndex, endDay);
+      
+      if (!isNaN(parsedStart.getTime())) {
+        startDate = parsedStart.toISOString().split('T')[0];
+      }
+      if (!isNaN(parsedEnd.getTime())) {
+        endDate = parsedEnd.toISOString().split('T')[0];
+      }
+      
+      // Recalculate numDays from actual dates
+      numDays = Math.max(1, Math.ceil((parsedEnd.getTime() - parsedStart.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    }
+  } else if (daysMatch) {
+    // No specific dates but we have a duration - use today as start
+    const endDateObj = new Date(today.getTime() + (numDays - 1) * 24 * 60 * 60 * 1000);
+    endDate = endDateObj.toISOString().split('T')[0];
+  }
+  
+  return { startDate, endDate, destination, numDays };
+}
+
 interface ItineraryContextValue {
   itinerary: Itinerary | null;
   isGenerating: boolean;
@@ -30,7 +117,8 @@ interface ItineraryContextValue {
   updateDayItems: (dayIndex: number, items: ItineraryItem[]) => void;
   updateItem: (dayIndex: number, itemIndex: number, updates: Partial<ItineraryItem>) => void;
   removeItem: (dayIndex: number, itemIndex: number) => void;
-  addActivityToItinerary: (activity: ParsedActivity, dayIndex?: number) => void;
+  addActivityToItinerary: (activity: ParsedActivity, dayIndex?: number, messages?: Message[]) => void;
+  setTripDates: (startDate: string, endDate: string, destination?: string) => void;
   confirmItinerary: () => void;
   unconfirmItinerary: () => void;
   clearItinerary: () => void;
@@ -41,6 +129,7 @@ const ItineraryContext = createContext<ItineraryContextValue | null>(null);
 
 interface ItineraryProviderProps {
   children: ReactNode;
+  messages?: Message[];
 }
 
 // ============================================
@@ -258,19 +347,80 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     setItinerary(null);
   }, []);
 
-  // Add a single activity to the itinerary incrementally
-  const addActivityToItinerary = useCallback((activity: ParsedActivity, dayIndex?: number) => {
+  // Set trip dates explicitly (can be called when dates are confirmed in chat)
+  const setTripDates = useCallback((startDate: string, endDate: string, destination?: string) => {
     setItinerary(prev => {
-      // If no itinerary exists, create a new one
       if (!prev) {
-        const today = new Date();
-        const startDate = today.toISOString().split('T')[0];
-        const endDate = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        // Create a new itinerary with the dates
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const numDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
         
-        // Create empty days
         const days: ItineraryDay[] = [];
-        for (let i = 0; i < 3; i++) {
-          const dayDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+        for (let i = 0; i < numDays; i++) {
+          const dayDate = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+          days.push({
+            date: dayDate.toISOString().split('T')[0],
+            items: [],
+          });
+        }
+        
+        return {
+          id: crypto.randomUUID(),
+          destination: destination || "Tulum",
+          startDate,
+          endDate,
+          days,
+        };
+      }
+      
+      // Update existing itinerary dates
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const numDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+      
+      // Rebuild days to match new date range
+      const newDays: ItineraryDay[] = [];
+      for (let i = 0; i < numDays; i++) {
+        const dayDate = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+        const dateStr = dayDate.toISOString().split('T')[0];
+        
+        // Try to keep existing day data if date matches
+        const existingDay = prev.days.find(d => d.date === dateStr);
+        if (existingDay) {
+          newDays.push(existingDay);
+        } else {
+          newDays.push({
+            date: dateStr,
+            items: [],
+          });
+        }
+      }
+      
+      return {
+        ...prev,
+        startDate,
+        endDate,
+        destination: destination || prev.destination,
+        days: newDays,
+      };
+    });
+  }, []);
+
+  // Add a single activity to the itinerary incrementally
+  const addActivityToItinerary = useCallback((activity: ParsedActivity, dayIndex?: number, messages?: Message[]) => {
+    setItinerary(prev => {
+      // If no itinerary exists, create a new one with dates from chat
+      if (!prev) {
+        // Extract dates from chat messages if provided
+        const chatMessages = messages || [];
+        const { startDate, endDate, destination, numDays } = extractTripDatesFromMessages(chatMessages);
+        
+        // Create days based on extracted dates
+        const days: ItineraryDay[] = [];
+        const start = new Date(startDate);
+        for (let i = 0; i < numDays; i++) {
+          const dayDate = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
           days.push({
             date: dayDate.toISOString().split('T')[0],
             items: [],
@@ -299,7 +449,7 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
         
         return {
           id: crypto.randomUUID(),
-          destination: "Tulum", // Default destination
+          destination,
           startDate,
           endDate,
           days,
@@ -460,6 +610,7 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     updateItem,
     removeItem,
     addActivityToItinerary,
+    setTripDates,
     confirmItinerary,
     unconfirmItinerary,
     clearItinerary,
