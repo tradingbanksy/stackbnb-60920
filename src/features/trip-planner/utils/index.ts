@@ -86,16 +86,38 @@ export function getInitialMessage(vendorCount: number): string {
 
 import type { ItineraryItemCategory, ItineraryDay, ItineraryItem } from "../types";
 
+// Known destinations to match first (prevents matching random phrases)
+const KNOWN_DESTINATIONS = [
+  "Tulum", "Cancun", "Cancún", "Playa del Carmen", "Mexico City", "Ciudad de México",
+  "Riviera Maya", "Cozumel", "Isla Mujeres", "Holbox", "Bacalar", "Merida", "Mérida",
+  "Puerto Vallarta", "Los Cabos", "Cabo San Lucas", "San Miguel de Allende", "Oaxaca",
+  "Miami", "New York", "Los Angeles", "Paris", "London", "Tokyo", "Barcelona", "Rome",
+  "Bali", "Phuket", "Dubai", "Sydney", "Amsterdam", "Berlin", "Prague", "Vienna"
+];
+
 export function extractDestination(text: string): string {
+  // First, check for known destinations (case-insensitive)
+  for (const destination of KNOWN_DESTINATIONS) {
+    const regex = new RegExp(`\\b${destination}\\b`, "i");
+    if (regex.test(text)) {
+      return destination;
+    }
+  }
+  
+  // Fallback patterns for destinations not in the known list
   const patterns = [
-    /(?:welcome to|visiting|trip to|traveling to|in)\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|!|\?|$)/i,
-    /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:is|has|offers|features)/,
+    /(?:welcome to|visiting|trip to|traveling to)\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|!|\?|$)/i,
+    /(?:your\s+)?(?:trip|stay|visit)\s+(?:to|in)\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|!|\?|$)/i,
   ];
   
   for (const pattern of patterns) {
     const match = text.match(pattern);
     if (match?.[1]) {
-      return match[1].trim();
+      const dest = match[1].trim();
+      // Validate it looks like a destination (not a phrase like "the ocean")
+      if (dest.length >= 3 && dest.length <= 40 && !dest.toLowerCase().startsWith("the ")) {
+        return dest;
+      }
     }
   }
   
