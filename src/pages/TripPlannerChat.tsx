@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PageTransition } from "@/components/PageTransition";
 import { 
   TripPlannerChatProvider, 
@@ -14,6 +14,7 @@ import {
   AuthPromptDialog,
   ItinerarySheet,
 } from "@/features/trip-planner/components";
+import { useItineraryContext } from "@/features/trip-planner/context/ItineraryContext";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 const AUTH_PROMPT_STORAGE_KEY = "tripPlannerAuthPromptShown";
@@ -21,9 +22,25 @@ const AUTH_PROMPT_STORAGE_KEY = "tripPlannerAuthPromptShown";
 function TripPlannerChatContent() {
   const { messages } = useTripPlannerChatContext();
   const { isAuthenticated, isLoading } = useAuthContext();
+  const { syncTripFromChat } = useItineraryContext();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showItinerarySheet, setShowItinerarySheet] = useState(false);
   const hasMessages = messages.length > 1;
+  const didAutoSyncTripRef = useRef(false);
+
+  // Only sync itinerary dates once we actually detect that dates were discussed/confirmed in chat
+  useEffect(() => {
+    if (didAutoSyncTripRef.current) return;
+
+    const text = messages.map(m => m.content).join("\n");
+    const hasDateRange = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\s*\d{1,2}\s*[-–]\s*\d{1,2}/i.test(text);
+    const hasDuration = /\b\d+\s*(?:days?|nights?)\b/i.test(text);
+
+    if (hasDateRange || hasDuration) {
+      syncTripFromChat(messages);
+      didAutoSyncTripRef.current = true;
+    }
+  }, [messages, syncTripFromChat]);
 
   // Show auth prompt for non-authenticated users on first visit
   useEffect(() => {

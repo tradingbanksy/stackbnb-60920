@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Message, Itinerary, ItineraryDay, ItineraryItem, ItineraryItemCategory } from "../types";
-import { extractDestination, extractDates, extractActivities, generateDays } from "../utils";
+import { extractDestination, extractActivities, generateDays } from "../utils";
 import type { ParsedActivity } from "../components/AddToItineraryButton";
 
 const ITINERARY_STORAGE_KEY = "tripPlannerItinerary";
@@ -110,6 +110,8 @@ interface ItineraryContextValue {
   shareUrl: string | null;
   generationError: GenerationError | null;
   lastMessages: Message[] | null;
+  /** Sync destination + dates from chat without regenerating items */
+  syncTripFromChat: (messages: Message[]) => void;
   generateItineraryFromChat: (messages: Message[], mode?: RegenerateMode) => void;
   retryGeneration: () => void;
   clearError: () => void;
@@ -181,7 +183,7 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     // Process in next tick to allow UI to update
     setTimeout(() => {
       try {
-        // Extract only assistant messages
+        // Extract assistant messages for activities (but dates/destination can be in either role)
         const assistantMessages = messages.filter(m => m.role === "assistant");
         
         if (assistantMessages.length === 0) {
@@ -195,21 +197,11 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
         }
         
         const combinedText = assistantMessages.map(m => m.content).join("\n\n");
-        
-        // Extract components
-        const destination = extractDestination(combinedText);
-        
-        if (!destination) {
-          setGenerationError({
-            message: "Couldn't detect a destination. Try mentioning a specific place like 'Tulum' or 'Cancún'.",
-            code: "PARSE_ERROR",
-            retryable: false,
-          });
-          setIsGenerating(false);
-          return;
-        }
-        
-        const { startDate, endDate } = extractDates(combinedText);
+
+        // Extract dates + destination from the full conversation (user + assistant)
+        const { startDate, endDate, destination } = extractTripDatesFromMessages(messages);
+
+        // Extract activities from assistant content
         const activities = extractActivities(combinedText);
         const newGeneratedDays = generateDays(startDate, endDate, activities);
 
@@ -282,6 +274,85 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
       }
     }, 100);
   }, [itinerary]);
+
+  // Sync destination + dates from chat (no regeneration)
+  const syncTripFromChat = useCallback((messages: Message[]) => {
+    if (!messages.length) return;
+    const { startDate, endDate, destination } = extractTripDatesFromMessages(messages);
+
+    setItinerary(prev => {
+      // If no itinerary yet, create one with empty days
+      if (!prev) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const numDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+        const days: ItineraryDay[] = [];
+        for (let i = 0; i < numDays; i++) {
+          const dayDate = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+          days.push({
+            date: dayDate.toISOString().split("T")[0],
+            items: [],
+          });
+        }
+
+        return {
+          id: crypto.randomUUID(),
+          destination,
+          startDate,
+          endDate,
+          days,
+        };
+      }
+
+      // If already matches, do nothing
+      if (prev.startDate === startDate && prev.endDate === endDate && prev.destination === destination) {
+        return prev;
+      }
+
+      // Reuse setTripDates behavior but preserve as much as possible via its date-matching logic
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const numDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+      const newDays: ItineraryDay[] = [];
+      const prevHasAnyItems = prev.days.some(d => d.items.length > 0);
+      for (let i = 0; i < numDays; i++) {
+        const dayDate = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+        const dateStr = dayDate.toISOString().split("T")[0];
+
+        // Prefer keeping days by exact date match (best for small adjustments)
+        const existingByDate = prev.days.find(d => d.date === dateStr);
+        if (existingByDate) {
+          newDays.push(existingByDate);
+          continue;
+        }
+
+        // If dates changed significantly, preserve items by index so the user's plan doesn't disappear
+        const existingByIndex = prevHasAnyItems ? prev.days[i] : undefined;
+        if (existingByIndex) {
+          newDays.push({
+            ...existingByIndex,
+            date: dateStr,
+          });
+          continue;
+        }
+
+        newDays.push({
+          date: dateStr,
+          items: [],
+        });
+      }
+
+      return {
+        ...prev,
+        startDate,
+        endDate,
+        destination,
+        days: newDays,
+      };
+    });
+  }, []);
 
   const retryGeneration = useCallback(() => {
     if (lastMessages) {
@@ -602,6 +673,7 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     shareUrl,
     generationError,
     lastMessages,
+    syncTripFromChat,
     generateItineraryFromChat,
     retryGeneration,
     clearError,

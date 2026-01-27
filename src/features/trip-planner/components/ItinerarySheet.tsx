@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { X, MapPin, Calendar, ChevronLeft, ChevronRight, Check, Share2, Pencil, GripHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,7 @@ export function ItinerarySheet({ open, onOpenChange }: ItinerarySheetProps) {
     hasUserEdits, 
     isConfirmed,
     shareUrl,
+    syncTripFromChat,
     confirmItinerary,
     unconfirmItinerary,
     generateItineraryFromChat,
@@ -96,6 +97,27 @@ export function ItinerarySheet({ open, onOpenChange }: ItinerarySheetProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [dragY, setDragY] = useState(0);
   const constraintsRef = useRef(null);
+  const didSyncOnOpenRef = useRef(false);
+
+  // When the sheet opens, sync destination/dates from chat and (if needed) prepopulate items from chat.
+  useEffect(() => {
+    if (!open) {
+      didSyncOnOpenRef.current = false;
+      return;
+    }
+    if (didSyncOnOpenRef.current) return;
+    didSyncOnOpenRef.current = true;
+
+    // Always sync destination + date range from conversation
+    syncTripFromChat(messages);
+
+    // If we don't have any items yet, generate from chat so the sheet is prepopulated
+    const hasAnyItems = itinerary?.days.some(d => d.items.length > 0) ?? false;
+    if (!hasAnyItems) {
+      generateItineraryFromChat(messages, "full");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Skeleton animation
   if (isGenerating) {
