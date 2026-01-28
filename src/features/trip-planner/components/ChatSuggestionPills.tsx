@@ -1,6 +1,7 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Home, MapPin, Utensils, Calendar, Wand2 } from "lucide-react";
+import { toast } from "sonner";
 import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import { useItineraryContext } from "../context/ItineraryContext";
 
@@ -108,11 +109,28 @@ interface ChatSuggestionPillsProps {
 
 export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggestionPillsProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
-  const { itinerary, generateItineraryFromChat, isGenerating } = useItineraryContext();
+  const { itinerary, generateItineraryFromChat, isGenerating, generationError } = useItineraryContext();
   
   const detectedDestination = useMemo(() => detectDestination(messages), [messages]);
   const hasItineraryItems = itinerary?.days.some(day => day.items.length > 0) ?? false;
   const hasDestination = !!detectedDestination;
+  
+  // Track if we triggered the build to show toast on completion
+  const didTriggerBuildRef = useRef(false);
+  const wasGeneratingRef = useRef(false);
+
+  // Show toast when generation completes successfully after "Build itinerary now"
+  useEffect(() => {
+    if (wasGeneratingRef.current && !isGenerating && didTriggerBuildRef.current) {
+      didTriggerBuildRef.current = false;
+      if (!generationError) {
+        toast.success("Itinerary generated!", {
+          description: "Your trip plan is ready to view and customize.",
+        });
+      }
+    }
+    wasGeneratingRef.current = isGenerating;
+  }, [isGenerating, generationError]);
   
   const suggestions = useMemo(() => {
     return getSuggestions(messages.length, hasItineraryItems, hasDestination);
@@ -123,6 +141,7 @@ export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggesti
     
     // Handle "Build itinerary now" action
     if (suggestion.action === "buildItinerary") {
+      didTriggerBuildRef.current = true;
       generateItineraryFromChat(messages, "full");
       // Open sheet after a short delay to let generation start
       setTimeout(() => onOpenItinerary?.(), 100);
