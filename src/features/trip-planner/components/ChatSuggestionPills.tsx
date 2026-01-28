@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Home, MapPin, Utensils, Calendar } from "lucide-react";
+import { Sparkles, Home, MapPin, Utensils, Calendar, Wand2 } from "lucide-react";
 import { useTripPlannerChatContext } from "../context/TripPlannerChatContext";
 import { useItineraryContext } from "../context/ItineraryContext";
 
@@ -8,7 +8,7 @@ interface SuggestionPill {
   icon: React.ReactNode;
   label: string;
   prompt?: string;
-  action?: "openItinerary";
+  action?: "openItinerary" | "buildItinerary";
   variant?: "primary" | "secondary";
 }
 
@@ -16,7 +16,7 @@ interface SuggestionPill {
 function getSuggestions(
   messageCount: number,
   hasItineraryItems: boolean,
-  destination: string | null
+  hasDestination: boolean
 ): SuggestionPill[] {
   // Initial state - conversational prompts
   if (messageCount <= 2) {
@@ -38,6 +38,16 @@ function getSuggestions(
 
   const suggestions: SuggestionPill[] = [];
 
+  // If destination detected but no items yet, show "Build itinerary now" prominently
+  if (hasDestination && !hasItineraryItems) {
+    suggestions.push({
+      icon: <Wand2 className="h-3.5 w-3.5" />,
+      label: "Build itinerary now",
+      action: "buildItinerary",
+      variant: "primary",
+    });
+  }
+
   // If user has items in itinerary, show view option prominently
   if (hasItineraryItems) {
     suggestions.push({
@@ -53,7 +63,7 @@ function getSuggestions(
     icon: <Sparkles className="h-3.5 w-3.5" />,
     label: "More activities",
     prompt: "Show me more activity options with full details. What else do you recommend?",
-    variant: hasItineraryItems ? "secondary" : "primary",
+    variant: hasItineraryItems || hasDestination ? "secondary" : "primary",
   });
 
   suggestions.push({
@@ -98,19 +108,28 @@ interface ChatSuggestionPillsProps {
 
 export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggestionPillsProps) {
   const { messages, sendMessage, isLoading } = useTripPlannerChatContext();
-  const { itinerary } = useItineraryContext();
+  const { itinerary, generateItineraryFromChat, isGenerating } = useItineraryContext();
   
   const detectedDestination = useMemo(() => detectDestination(messages), [messages]);
   const hasItineraryItems = itinerary?.days.some(day => day.items.length > 0) ?? false;
+  const hasDestination = !!detectedDestination;
   
   const suggestions = useMemo(() => {
-    return getSuggestions(messages.length, hasItineraryItems, detectedDestination);
-  }, [messages.length, hasItineraryItems, detectedDestination]);
+    return getSuggestions(messages.length, hasItineraryItems, hasDestination);
+  }, [messages.length, hasItineraryItems, hasDestination]);
 
   const handleClick = useCallback((suggestion: SuggestionPill) => {
-    if (isLoading) return;
+    if (isLoading || isGenerating) return;
     
-    // Handle special actions
+    // Handle "Build itinerary now" action
+    if (suggestion.action === "buildItinerary") {
+      generateItineraryFromChat(messages, "full");
+      // Open sheet after a short delay to let generation start
+      setTimeout(() => onOpenItinerary?.(), 100);
+      return;
+    }
+    
+    // Handle view itinerary action
     if (suggestion.action === "openItinerary" && onOpenItinerary) {
       onOpenItinerary();
       return;
@@ -120,7 +139,7 @@ export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggesti
     if (suggestion.prompt) {
       sendMessage(suggestion.prompt);
     }
-  }, [isLoading, sendMessage, onOpenItinerary]);
+  }, [isLoading, isGenerating, sendMessage, onOpenItinerary, generateItineraryFromChat, messages]);
 
   // Only show after some conversation
   const userMessageCount = messages.filter(m => m.role === "user").length;
