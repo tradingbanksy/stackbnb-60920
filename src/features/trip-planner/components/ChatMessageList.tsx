@@ -7,14 +7,17 @@ import { ChatMessage } from "./ChatMessage";
 import { useTripPlannerChatContext } from "../context";
 import type { StreamingStatus } from "../context/TripPlannerChatContext";
 
-const TypingIndicator = memo(function TypingIndicator() {
+const ThinkingIndicator = memo(function ThinkingIndicator() {
   return (
-    <div className="flex justify-start" role="status" aria-label="Assistant is typing">
+    <div className="flex justify-start animate-fade-in" role="status" aria-label="JC is thinking">
       <Card className="max-w-[85%] p-3 bg-muted">
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
-          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" />
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">JC is thinking</span>
+          <span className="flex items-center gap-0.5">
+            <span className="w-1.5 h-1.5 bg-primary/70 rounded-full animate-bounce [animation-delay:-0.3s]" />
+            <span className="w-1.5 h-1.5 bg-primary/70 rounded-full animate-bounce [animation-delay:-0.15s]" />
+            <span className="w-1.5 h-1.5 bg-primary/70 rounded-full animate-bounce" />
+          </span>
         </div>
       </Card>
     </div>
@@ -27,22 +30,13 @@ interface StreamingBannerProps {
 }
 
 const StreamingBanner = memo(function StreamingBanner({ status, onRetry }: StreamingBannerProps) {
-  if (status === "idle") return null;
-
-  if (status === "streaming") {
-    return (
-      <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-primary/10 text-primary text-sm animate-pulse">
-        <Clock className="w-4 h-4" />
-        <span>Streaming response...</span>
-      </div>
-    );
-  }
+  if (status === "idle" || status === "streaming") return null;
 
   if (status === "slow") {
     return (
       <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm">
         <Clock className="w-4 h-4 animate-spin" />
-        <span>Still working... This is taking longer than usual.</span>
+        <span>Still thinking... This is taking longer than usual.</span>
       </div>
     );
   }
@@ -52,7 +46,7 @@ const StreamingBanner = memo(function StreamingBanner({ status, onRetry }: Strea
       <div className="flex flex-col items-center gap-3 py-4 px-4 rounded-lg bg-destructive/10 text-destructive">
         <div className="flex items-center gap-2 text-sm">
           <AlertCircle className="w-4 h-4" />
-          <span>Response timed out. The AI might be busy.</span>
+          <span>Response timed out. JC might be busy.</span>
         </div>
         <Button
           variant="outline"
@@ -106,7 +100,7 @@ export function ChatMessageList({ onOpenItinerary }: ChatMessageListProps) {
         
         {isLoading && streamingStatus !== "timeout" && (
           <>
-            <TypingIndicator />
+            <ThinkingIndicator />
             <StreamingBanner status={streamingStatus} onRetry={retryLastMessage} />
           </>
         )}
