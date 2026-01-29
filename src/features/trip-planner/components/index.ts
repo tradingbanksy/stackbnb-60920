@@ -19,3 +19,5 @@ export { ActivityDropdownMenu } from "./ActivityDropdownMenu";
 export { DateDurationPicker } from "./DateDurationPicker";
 export { ItinerarySheet } from "./ItinerarySheet";
 export { ItineraryPreviewCard } from "./ItineraryPreviewCard";
+export { CollaboratorsList } from "./CollaboratorsList";
+export { EditPermissionBanner } from "./EditPermissionBanner";

@@ -123,6 +123,86 @@ export type Database = {
           },
         ]
       }
+      itineraries: {
+        Row: {
+          created_at: string
+          destination: string
+          end_date: string
+          id: string
+          is_confirmed: boolean
+          is_public: boolean
+          itinerary_data: Json
+          share_token: string
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          end_date: string
+          id?: string
+          is_confirmed?: boolean
+          is_public?: boolean
+          itinerary_data?: Json
+          share_token?: string
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          end_date?: string
+          id?: string
+          is_confirmed?: boolean
+          is_public?: boolean
+          itinerary_data?: Json
+          share_token?: string
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      itinerary_collaborators: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          invite_token: string
+          itinerary_id: string
+          permission: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          invite_token?: string
+          itinerary_id: string
+          permission?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          invite_token?: string
+          itinerary_id?: string
+          permission?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_collaborators_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       itinerary_items: {
         Row: {
           arrival_tips: string[] | null

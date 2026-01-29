@@ -423,6 +423,8 @@ export function ItinerarySheet({ open, onOpenChange }: ItinerarySheetProps) {
                   isGenerating={isSharing}
                   shareUrl={shareUrl}
                   onGenerateLink={handleGenerateShareLink}
+                  itineraryId={itinerary?.id}
+                  isOwner={true}
                 />
               </motion.div>
             </SheetPrimitive.Content>
