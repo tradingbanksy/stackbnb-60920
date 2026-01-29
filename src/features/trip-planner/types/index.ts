@@ -100,4 +100,56 @@ export interface Itinerary {
   shareToken?: string;
   /** Full share URL */
   shareUrl?: string;
+  /** Owner user ID */
+  userId?: string;
+  /** Whether the itinerary is publicly viewable */
+  isPublic?: boolean;
+}
+
+// ============================================
+// Collaboration Data Model
+// ============================================
+
+export type CollaboratorPermission = "viewer" | "editor";
+
+export interface Collaborator {
+  id: string;
+  itineraryId: string;
+  userId?: string;
+  email?: string;
+  permission: CollaboratorPermission;
+  inviteToken: string;
+  createdAt: string;
+}
+
+export interface ItineraryWithPermission extends Itinerary {
+  /** Current user's permission level */
+  userPermission: "owner" | CollaboratorPermission;
+  /** List of collaborators */
+  collaborators?: Collaborator[];
+}
+
+// Database row types for type safety
+export interface ItineraryRow {
+  id: string;
+  user_id: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  itinerary_data: Itinerary;
+  is_confirmed: boolean;
+  share_token: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CollaboratorRow {
+  id: string;
+  itinerary_id: string;
+  user_id: string | null;
+  email: string | null;
+  permission: CollaboratorPermission;
+  invite_token: string;
+  created_at: string;
 }
