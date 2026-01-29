@@ -187,10 +187,11 @@ const AppRoutes = () => (
     <Route path="/admin/settings" element={<PlatformSettings />} />
     <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
     
-    {/* Legacy routes */}
+    {/* Legacy routes - commented out to prevent routing conflicts
     <Route path="/storefront/:id" element={<Storefront />} />
     <Route path="/booking/:id" element={<Booking />} />
     <Route path="/confirmation" element={<Confirmation />} />
+    */ }
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />

@@ -202,6 +202,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       }
     }, TIMEOUT_THRESHOLD);
 
+    // Optimized update function with throttling
     const updateAssistant = (nextContent: string) => {
       if (nextContent.trim()) {
         receivedContent = true;
@@ -273,6 +274,10 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       let gotAnyChunk = false;
       let textBuffer = "";
       let streamDone = false;
+      
+      // Throttling control
+      let lastUpdateTime = 0;
+      const THROTTLE_MS = 50; // Update UI every 50ms max
 
       const processDataStr = (dataStr: string) => {
         if (dataStr === "[DONE]") return true;
@@ -283,7 +288,13 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           if (typeof chunkContent === "string" && chunkContent.length) {
             gotAnyChunk = true;
             assistantText += chunkContent.replace(/[¡¿]/g, "");
-            updateAssistant(assistantText);
+            
+            // Throttled update
+            const now = Date.now();
+            if (now - lastUpdateTime > THROTTLE_MS) {
+              updateAssistant(assistantText);
+              lastUpdateTime = now;
+            }
           }
         } catch {
           // Ignore any malformed partial line
@@ -330,6 +341,9 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           if (processDataStr(dataStr)) break;
         }
       }
+      
+      // Ensure final state is updated
+      updateAssistant(assistantText);
 
       // Fallback: if we somehow got no content from the stream, parse the full SSE payload.
       if (!gotAnyChunk) {
