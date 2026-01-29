@@ -79,22 +79,57 @@ serve(async (req) => {
     logStep("Booking details received", { experienceName, vendorName, date, time, guests, totalPrice, vendorId, hostId });
 
     // Validate required fields
-    if (!experienceName || !totalPrice || totalPrice <= 0) {
+    if (!experienceName || !guests || guests <= 0) {
       throw new Error("Invalid booking details");
     }
 
-    // Get vendor profile with commission settings
+    // Get vendor profile with commission settings AND price
     const { data: vendorProfile, error: vendorError } = await supabaseAdmin
       .from("vendor_profiles")
-      .select("stripe_account_id, stripe_onboarding_complete, commission_percentage")
+      .select("stripe_account_id, stripe_onboarding_complete, commission_percentage, price_per_person, name")
       .eq("id", vendorId)
       .single();
 
-    if (vendorError) {
-      logStep("Error fetching vendor profile", { error: vendorError.message });
+    if (vendorError || !vendorProfile) {
+      logStep("Error fetching vendor profile", { error: vendorError?.message });
+      throw new Error("Vendor not found");
     }
 
-    logStep("Vendor profile", vendorProfile);
+    logStep("Vendor profile fetched", { id: vendorId, name: vendorProfile.name, price: vendorProfile.price_per_person });
+
+    // SECURITY: Calculate total price server-side
+    // We ignore the 'totalPrice' sent from the client to prevent tampering
+    let calculatedTotal = (vendorProfile.price_per_person || 0) * guests;
+    let finalDiscountAmount = 0;
+
+    // Validate Promo Code Server-Side
+    if (promoCode) {
+       const { data: promoData, error: promoError } = await supabaseAdmin.rpc('validate_promo_code', {
+        p_code: promoCode,
+        p_order_amount: calculatedTotal
+      });
+      
+      if (!promoError && promoData && promoData.length > 0 && promoData[0].valid) {
+         finalDiscountAmount = Number(promoData[0].discount_amount);
+         logStep("Promo code applied", { code: promoCode, discount: finalDiscountAmount });
+      } else {
+         logStep("Invalid promo code provided", { code: promoCode });
+         // We silently ignore invalid promos and charge full price, or you could throw an error
+      }
+    }
+
+    // Final charge amount
+    const finalAmountToCharge = Math.max(0, calculatedTotal - finalDiscountAmount);
+
+    logStep("Price calculation", { 
+      basePrice: vendorProfile.price_per_person, 
+      guests, 
+      subtotal: calculatedTotal, 
+      discount: finalDiscountAmount,
+      finalCharge: finalAmountToCharge 
+    });
+
+    // Get platform fee percentage (fixed at 3%)
 
     // Get platform fee percentage (fixed at 3%)
     const { data: platformSettings } = await supabaseAdmin
@@ -158,7 +193,7 @@ serve(async (req) => {
     // Calculate payment splits
     // If host is valid: Host gets hostCommissionPercent, Platform gets 3%, Vendor gets rest
     // If no host: Platform gets hostCommissionPercent + 3%, Vendor gets rest
-    const totalAmountCents = Math.round(totalPrice * 100);
+    const totalAmountCents = Math.round(finalAmountToCharge * 100);
     
     let platformFeeCents: number;
     let hostPayoutCents: number;
@@ -210,7 +245,7 @@ serve(async (req) => {
       cancel_url: `${origin}/vendor/${vendorId}/payment`,
       metadata: {
         vendor_id: vendorId,
-        vendor_name: vendorName,
+        vendor_name: vendorProfile.name, // Use verified name
         experience_name: experienceName,
         date: date,
         time: time,
@@ -222,8 +257,8 @@ serve(async (req) => {
         vendor_payout_cents: vendorPayoutCents.toString(),
         host_payout_cents: hostPayoutCents.toString(),
         promo_code: promoCode || "",
-        discount_amount: discountAmount ? discountAmount.toString() : "0",
-        original_amount: originalPrice ? originalPrice.toString() : totalPrice.toString(),
+        discount_amount: finalDiscountAmount.toString(),
+        original_amount: calculatedTotal.toString(),
       },
     };
 
