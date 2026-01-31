@@ -716,6 +716,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_itinerary_collaborator: {
+        Args: { _itinerary_id: string; _permission?: string }
+        Returns: boolean
+      }
+      is_itinerary_owner: { Args: { _itinerary_id: string }; Returns: boolean }
       validate_promo_code: {
         Args: { p_code: string; p_order_amount: number }
         Returns: {
