@@ -238,7 +238,7 @@ export function ShareItineraryDialog({
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  Anyone with this link can view your itinerary
+                  Anyone with this link can {defaultPermission === "editor" ? "edit" : "view"} your itinerary
                 </p>
               </div>
             )}
