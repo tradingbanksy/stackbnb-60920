@@ -1,6 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { formatTo12Hour } from "../utils/formatTime";
 import {
   MapPin,
@@ -147,9 +148,8 @@ function ScheduleItem({ item, index, isLast, onEdit, onRemove }: ScheduleItemPro
   }, [onRemove]);
 
   const handleReplace = useCallback(() => {
-    // TODO: Open a dialog to find alternative activities
-    console.log("Replace activity:", item.title);
-  }, [item.title]);
+    toast.info("Replace activity feature coming soon!");
+  }, []);
 
   const handleViewOnMap = useCallback(() => {
     if (item.location) {

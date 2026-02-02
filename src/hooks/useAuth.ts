@@ -14,7 +14,6 @@ interface AuthState {
 
 const fetchUserRole = async (userId: string): Promise<UserRole> => {
   try {
-    console.log('[Auth] Fetching role for user:', userId);
     // Fetch all roles for the user (handles cases with multiple roles)
     const { data, error } = await supabase
       .from('user_roles')
@@ -22,14 +21,10 @@ const fetchUserRole = async (userId: string): Promise<UserRole> => {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('[Auth] Error fetching user role:', error);
       return null;
     }
 
-    console.log('[Auth] Roles data:', data);
-
     if (!data || data.length === 0) {
-      console.log('[Auth] No roles found for user');
       return null;
     }
 
@@ -42,10 +37,8 @@ const fetchUserRole = async (userId: string): Promise<UserRole> => {
     else if (roles.includes('user')) resolvedRole = 'user';
     else resolvedRole = (data[0]?.role as UserRole) ?? null;
     
-    console.log('[Auth] Resolved role:', resolvedRole);
     return resolvedRole;
-  } catch (err) {
-    console.error('[Auth] Error fetching user role:', err);
+  } catch {
     return null;
   }
 };

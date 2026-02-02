@@ -8,6 +8,7 @@ import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -321,29 +322,31 @@ const AppRoutes = () => (
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem={false}
-        disableTransitionOnChange
-      >
-        <AuthProvider>
-          <ProfileProvider>
-            <UserProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <ScrollToTop />
-                  <AppRoutes />
-                </BrowserRouter>
-              </TooltipProvider>
-            </UserProvider>
-          </ProfileProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <ProfileProvider>
+              <UserProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <ScrollToTop />
+                    <AppRoutes />
+                  </BrowserRouter>
+                </TooltipProvider>
+              </UserProvider>
+            </ProfileProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
