@@ -195,12 +195,6 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
     [isAssistant, bionicEnabled, message.content]
   );
 
-  // Parse activities from assistant messages for "Add to itinerary" buttons
-  const parsedActivities = useMemo(() => {
-    if (!isAssistant) return [];
-    return parseActivitiesFromContent(message.content);
-  }, [isAssistant, message.content]);
-
   const markdownComponents = useMemo(() => ({
     a: ({ href, children }: { href?: string; children?: ReactNode }) => {
       const text = String(children);
@@ -235,19 +229,6 @@ export const ChatMessage = memo(function ChatMessage({ message, bionicEnabled }:
             {formattedContent}
           </ReactMarkdown>
         </div>
-        
-        {/* Show "Add to itinerary" buttons for parsed activities */}
-        {parsedActivities.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-border/50">
-            {parsedActivities.slice(0, 5).map((activity, index) => (
-              <AddToItineraryButton
-                key={`${activity.title}-${index}`}
-                activity={activity}
-                variant="compact"
-              />
-            ))}
-          </div>
-        )}
       </Card>
       
       {isQuoteMessage && vendorName && (

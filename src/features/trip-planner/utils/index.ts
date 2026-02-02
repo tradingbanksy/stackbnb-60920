@@ -1,7 +1,141 @@
-import type { Message } from "../types";
+import type { Message, ItineraryItemCategory, ItineraryDay, ItineraryItem } from "../types";
 
 export const CHAT_HISTORY_KEY = "tripPlannerChatHistory";
 export const MAX_MESSAGE_LENGTH = 2000;
+
+// ============================================
+// Confirmed Activity Detection (for auto-add)
+// ============================================
+
+export interface ConfirmedActivity {
+  title: string;
+  dayNumber?: number;
+  duration?: string;
+  location?: string;
+  includes?: string[];
+  whatToBring?: string[];
+  category: ItineraryItemCategory;
+}
+
+/**
+ * Detect when JC confirms an activity has been added to the itinerary.
+ * Looks for structured confirmation patterns like:
+ * - ✅ **Added to your itinerary:** **Gran Cenote** - Day 1
+ * - I've added Gran Cenote to your itinerary
+ * - Great! Gran Cenote is now on your plan
+ */
+export function detectConfirmedActivities(message: string): ConfirmedActivity[] {
+  const activities: ConfirmedActivity[] = [];
+  
+  // Pattern 1: Structured format - ✅ **Added to your itinerary:** **[Name]** - Day [X]
+  const structuredPattern = /✅\s*\*\*Added to your itinerary:\*\*\s*\n\n\*\*([^*]+)\*\*\s*[-–]\s*Day\s*(\d+)/gi;
+  let match: RegExpExecArray | null;
+  
+  while ((match = structuredPattern.exec(message)) !== null) {
+    const title = match[1].trim();
+    const dayNumber = parseInt(match[2], 10);
+    
+    // Extract additional details from the surrounding text
+    const blockStart = match.index;
+    const blockEnd = message.indexOf("---", blockStart);
+    const block = blockEnd > blockStart ? message.slice(blockStart, blockEnd) : message.slice(blockStart, blockStart + 500);
+    
+    activities.push({
+      title,
+      dayNumber,
+      duration: extractFieldFromBlock(block, "Duration"),
+      location: extractFieldFromBlock(block, "Location"),
+      includes: extractListFromBlock(block, "What's Included"),
+      whatToBring: extractListFromBlock(block, "What to Bring"),
+      category: categorizeFromTitle(title),
+    });
+  }
+  
+  // Pattern 2: Natural language confirmations (fallback)
+  if (activities.length === 0) {
+    const naturalPatterns = [
+      /I've added\s+\*?\*?([^*\n,]+?)\*?\*?\s+to (?:your|the) itinerary(?:\s+for\s+Day\s*(\d+))?/gi,
+      /\*?\*?([^*\n,]+?)\*?\*?\s+(?:is now|has been) added to (?:your|the) itinerary(?:\s+for\s+Day\s*(\d+))?/gi,
+      /Great[!,]?\s+(?:I've )?added\s+\*?\*?([^*\n,]+?)\*?\*?(?:\s+to (?:your|the) (?:itinerary|plan))?(?:\s+for\s+Day\s*(\d+))?/gi,
+    ];
+    
+    for (const pattern of naturalPatterns) {
+      while ((match = pattern.exec(message)) !== null) {
+        const title = match[1].trim().replace(/[🌊🫧🏖️🍽️🏛️✨🐠🐢🌴⭐]/g, '').trim();
+        
+        // Skip if it's too short or looks like a phrase
+        if (title.length < 3 || title.length > 80) continue;
+        if (/^(it|that|this|the activity|your|some)/i.test(title)) continue;
+        
+        // Check if we already have this activity
+        if (activities.some(a => a.title.toLowerCase() === title.toLowerCase())) continue;
+        
+        const dayNumber = match[2] ? parseInt(match[2], 10) : undefined;
+        
+        activities.push({
+          title,
+          dayNumber,
+          category: categorizeFromTitle(title),
+        });
+      }
+    }
+  }
+  
+  return activities;
+}
+
+/**
+ * Extract a single field value from a confirmation block
+ */
+function extractFieldFromBlock(block: string, fieldName: string): string | undefined {
+  const patterns = [
+    new RegExp(`${fieldName}[:\\s]+([^\\n]+)`, 'i'),
+    new RegExp(`[📍⏱️✨🎒]\\s*${fieldName}[:\\s]+([^\\n]+)`, 'i'),
+  ];
+  
+  for (const pattern of patterns) {
+    const match = block.match(pattern);
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Extract a list of items from a confirmation block
+ */
+function extractListFromBlock(block: string, fieldName: string): string[] | undefined {
+  const field = extractFieldFromBlock(block, fieldName);
+  if (!field) return undefined;
+  
+  const items = field
+    .split(/[,•]/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && s.length < 100);
+  
+  return items.length > 0 ? items : undefined;
+}
+
+/**
+ * Categorize an activity based on its title
+ */
+function categorizeFromTitle(title: string): ItineraryItemCategory {
+  const lowerTitle = title.toLowerCase();
+  
+  if (/restaurant|food|eat|dining|breakfast|lunch|dinner|brunch|cafe|taco|pizza|sushi/i.test(lowerTitle)) {
+    return "food";
+  }
+  if (/transport|taxi|uber|bus|flight|train|drive|airport|transfer/i.test(lowerTitle)) {
+    return "transport";
+  }
+  if (/free time|rest|relax|leisure|optional/i.test(lowerTitle)) {
+    return "free";
+  }
+  
+  return "activity";
+}
 
 /**
  * Bionic reading: bold first part of each word for improved readability
@@ -84,7 +218,7 @@ export function getInitialMessage(vendorCount: number): string {
 // Itinerary Extraction Utilities (pure functions)
 // ============================================
 
-import type { ItineraryItemCategory, ItineraryDay, ItineraryItem } from "../types";
+// Note: ItineraryItemCategory imported at top of file
 
 // Known destinations to match first (prevents matching random phrases)
 const KNOWN_DESTINATIONS = [

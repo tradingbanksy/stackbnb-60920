@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { 
   TripPlannerChatProvider, 
@@ -16,17 +17,19 @@ import {
 } from "@/features/trip-planner/components";
 import { useItineraryContext } from "@/features/trip-planner/context/ItineraryContext";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { detectConfirmedActivities } from "@/features/trip-planner/utils";
 
 const AUTH_PROMPT_STORAGE_KEY = "tripPlannerAuthPromptShown";
 
 function TripPlannerChatContent() {
   const { messages } = useTripPlannerChatContext();
   const { isAuthenticated, isLoading } = useAuthContext();
-  const { syncTripFromChat } = useItineraryContext();
+  const { syncTripFromChat, addActivityToItinerary, itinerary } = useItineraryContext();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showItinerarySheet, setShowItinerarySheet] = useState(false);
   const hasMessages = messages.length > 1;
   const didAutoSyncTripRef = useRef(false);
+  const processedMessagesRef = useRef<Set<string>>(new Set());
 
   // Only sync itinerary dates once we actually detect that dates were discussed/confirmed in chat
   useEffect(() => {
@@ -41,6 +44,58 @@ function TripPlannerChatContent() {
       didAutoSyncTripRef.current = true;
     }
   }, [messages, syncTripFromChat]);
+
+  // Auto-add confirmed activities from AI responses
+  useEffect(() => {
+    // Only process the last assistant message
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.role !== "assistant") return;
+    
+    // Create a unique ID for this message to avoid re-processing
+    const messageId = `${messages.length}-${lastMessage.content.slice(0, 100)}`;
+    if (processedMessagesRef.current.has(messageId)) return;
+    processedMessagesRef.current.add(messageId);
+    
+    // Detect confirmed activities in the AI response
+    const confirmedActivities = detectConfirmedActivities(lastMessage.content);
+    
+    if (confirmedActivities.length === 0) return;
+    
+    // Check for duplicates against existing itinerary
+    const existingTitles = new Set(
+      itinerary?.days.flatMap(d => d.items.map(i => i.title.toLowerCase())) || []
+    );
+    
+    for (const activity of confirmedActivities) {
+      // Skip if already in itinerary
+      if (existingTitles.has(activity.title.toLowerCase())) continue;
+      
+      // Add to itinerary
+      addActivityToItinerary(
+        {
+          title: activity.title,
+          description: "",
+          category: activity.category,
+          duration: activity.duration,
+          location: activity.location,
+          includes: activity.includes,
+          whatToBring: activity.whatToBring,
+        },
+        activity.dayNumber ? activity.dayNumber - 1 : undefined,
+        messages
+      );
+      
+      // Show toast notification
+      const dayLabel = activity.dayNumber ? ` to Day ${activity.dayNumber}` : "";
+      toast.success(`${activity.title} added${dayLabel}`, {
+        description: "Activity added to your itinerary",
+        duration: 3000,
+      });
+      
+      // Add to existing titles to prevent duplicates within same message
+      existingTitles.add(activity.title.toLowerCase());
+    }
+  }, [messages, addActivityToItinerary, itinerary]);
 
   // Show auth prompt for non-authenticated users on first visit
   useEffect(() => {

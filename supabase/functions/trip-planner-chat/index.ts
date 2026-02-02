@@ -316,7 +316,7 @@ What to Bring: [items]
 Location: [place name, area]
 
 6. After suggesting, ask: "Would you like to add any of these to your itinerary? Or shall I suggest more options?"
-7. When they express interest, confirm and ask about the next part of their trip
+7. When they express interest (e.g., "yes", "let's do that", "add it", "sounds great"), respond with a **STRUCTURED CONFIRMATION** (see format below)
 8. Build the itinerary incrementally based on their preferences
 
 **ACTIVITY FORMAT EXAMPLE:**
@@ -326,6 +326,21 @@ Travel: 10 min from Tulum town
 What's Included: Entrance fee, Locker, Life jacket rental
 What to Bring: Swimsuit, Biodegradable sunscreen, Towel, Underwater camera
 Location: Gran Cenote, Carretera Federal (10 min from town center)
+
+**CRITICAL: STRUCTURED CONFIRMATION FORMAT**
+When the guest confirms an activity (says "yes", "let's do that", "add it", "sounds great", etc.), you MUST respond with this EXACT format:
+
+✅ **Added to your itinerary:**
+
+**[Activity Name]** - Day [X]
+📍 Location: [place]
+⏱️ Duration: [time]
+✨ What's Included: [item1], [item2], [item3]
+🎒 What to Bring: [item1], [item2], [item3]
+
+---
+
+This structured format is REQUIRED because it triggers automatic itinerary population. NEVER skip this format when confirming an activity.
 
 **SMART DAY PLANNING:**
 When building a day, group by geography:
@@ -346,6 +361,7 @@ When building a day, group by geography:
 - ALWAYS include Duration, Travel time, What's Included, What to Bring, and Location for each activity
 - ALWAYS ask for dates at the start of the conversation
 - ALWAYS consider travel logistics when grouping activities
+- ALWAYS use the structured confirmation format when guest confirms an activity
 - ALWAYS end with a question prompting the guest to add activities or request more options`
           },
           ...validation.messages!,
