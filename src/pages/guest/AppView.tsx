@@ -366,7 +366,7 @@ const AppView = () => {
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
                   <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
                     <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="text-sm text-foreground font-medium flex-1 min-w-0">{destination}</span>
+                    <span className="text-xs text-muted-foreground flex-1 min-w-0">{destination}</span>
                     <div className="h-4 w-px bg-border/50 flex-shrink-0" />
                     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
