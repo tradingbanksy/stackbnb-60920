@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Copy, Check, Link2, Share2, Eye, Pencil, Users, Loader2 } from "lucide-react";
+import { Copy, Check, Link2, Share2, Eye, Pencil, Users, Loader2, Mail, MessageCircle, Phone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -206,7 +206,8 @@ export function ShareItineraryDialog({
                   </Button>
                 </div>
 
-                <div className="flex gap-2">
+                {/* Share buttons grid */}
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     className="flex-1"
@@ -225,17 +226,55 @@ export function ShareItineraryDialog({
                     )}
                   </Button>
                   
-                  {typeof navigator.share === "function" && (
-                    <Button
-                      variant="default"
-                      className="flex-1"
-                      onClick={handleNativeShare}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const text = `Check out my trip itinerary! ${shareUrl}`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2 text-green-600" />
+                    WhatsApp
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const subject = "My Trip Itinerary";
+                      const body = `Check out my trip itinerary!\n\n${shareUrl}`;
+                      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    }}
+                  >
+                    <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                    Email
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const text = `Check out my trip itinerary! ${shareUrl}`;
+                      window.open(`sms:?body=${encodeURIComponent(text)}`, "_self");
+                    }}
+                  >
+                    <Phone className="h-4 w-4 mr-2 text-primary" />
+                    Text
+                  </Button>
                 </div>
+
+                {/* Native share button for mobile */}
+                {typeof navigator.share === "function" && (
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    onClick={handleNativeShare}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    More Options
+                  </Button>
+                )}
 
                 <p className="text-xs text-muted-foreground text-center">
                   Anyone with this link can {defaultPermission === "editor" ? "edit" : "view"} your itinerary
