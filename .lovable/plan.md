@@ -1,111 +1,66 @@
 
 
-# Plan: Simplify AI Trip Planning to Auto-Optimize Logistics
+# Plan: Delete /home Page and Update Navigation
 
-## Problem
+## Summary
 
-Currently, JC (the AI) asks detailed, potentially overwhelming questions like:
-> "How would you like to structure your days? For example, would you prefer to have the more active snorkeling day at the beginning, or save the massage for a specific day?"
+Remove the `/home` page entirely since you work exclusively from `/appview`. The "Browser" link in AppView's bottom navigation will be updated to point elsewhere (or removed).
 
-This puts the burden of logistics on the guest, who likely doesn't know Tulum's geography or optimal activity groupings.
+## Current State
 
-## Solution
+| Reference | Location | Details |
+|-----------|----------|---------|
+| Route definition | `src/App.tsx` line 148 | `<Route path="/home" element={<Home />} />` |
+| Import statement | `src/App.tsx` line 21 | `import Home from "./pages/Home"` |
+| Bottom nav link | `src/pages/AppView.tsx` line 1172 | "Browser" button links to `/home` |
+| Page file | `src/pages/Home.tsx` | 517-line component |
 
-Make JC proactive and simple. After confirming a few activities, JC should offer:
-> "Would you like me to space these activities out for you, add some lunch spots, dinners, and downtime? I'll make sure the travel between locations flows smoothly."
+## Decision: What Should "Browser" Do?
 
-When the guest agrees, JC should automatically:
-1. Consider travel times between locations
-2. Group geographically close activities
-3. Add meal suggestions near the activity locations
-4. Include appropriate downtime/rest periods
-5. Create a smooth, logical flow for each day
+The "Browser" button in AppView currently links to `/home` for users who want to see the desktop browser experience. 
 
-## Changes Required
+**Options:**
+1. **Remove the "Browser" button entirely** - Since you don't use /home
+2. **Link to the splash page (`/`)** - Entry point of the app  
+3. **Link to `/for-hosts` or `/for-vendors`** - The marketing/info pages
 
-### Update System Prompt (Edge Function)
+**Recommendation:** Remove the "Browser" button entirely, since the app is now mobile-first and the desktop view is deprecated for your workflow.
 
-**File:** `supabase/functions/trip-planner-chat/index.ts`
+## Changes
 
-Add new instructions that:
+### 1. Delete Home.tsx
 
-1. **Remove detailed planning questions** - Don't ask guests to make complex scheduling decisions
-2. **Proactive optimization offer** - After 2-3 activities are confirmed, offer to build out the full days with meals and flow
-3. **Auto-optimize logistics** - When guest agrees, automatically:
-   - Group activities by geography (cenotes in morning near each other, beach zone afternoon)
-   - Add lunch near morning activities, dinner near evening activities
-   - Include 1-2 hour rest/pool time between active excursions
-   - Calculate and factor in travel times
-4. **Simple confirmation** - Just ask "Does this flow work for you?" instead of detailed options
+Remove `src/pages/Home.tsx` entirely (517 lines).
 
-### New Prompt Additions
+### 2. Update App.tsx
 
-```
-**SIMPLIFIED PLANNING APPROACH:**
-After the guest confirms 2-3 activities, proactively offer to optimize their schedule:
+- Remove the `import Home from "./pages/Home"` statement
+- Remove the `<Route path="/home" element={<Home />} />` route
 
-"I've got [X activities] confirmed! Would you like me to space these out for you, add some great lunch and dinner spots, and build in some downtime? I'll make sure the travel between locations flows smoothly so you're not rushing around."
+### 3. Update AppView.tsx Bottom Navigation
 
-When they agree, automatically:
-1. Group activities by geographic proximity (morning cenotes together, afternoon beach zone together)
-2. Add meal suggestions near activity locations (not the other way around)
-3. Include 1-2 hours of downtime/pool time between active excursions
-4. Factor in travel times to create a relaxed pace
-5. Present the optimized day as a complete flow
+Remove the "Browser" nav item from the bottom navigation array:
 
-**DO NOT ask detailed questions like:**
-- "How would you like to structure your days?"
-- "Would you prefer active mornings or evenings?"
-- "Should we save the massage for a specific day?"
-
-**INSTEAD, be proactive:**
-- "Here's how I'd lay out Day 1 for a smooth flow..."
-- "I've spaced things out with lunch at [nearby spot] between activities"
-- "This gives you a 2-hour break at the pool before dinner"
-
-**OPTIMIZED DAY EXAMPLE:**
-When building out a day, present it like this:
-
----
-**Day 1 - Cenotes & Beach Vibes** 🫧🏖️
-
-**Morning**
-8:00am - Gran Cenote (2 hrs) - Beat the crowds!
-↓ 10 min drive
-
-**Late Morning**
-10:30am - Cenote Calavera (1.5 hrs) - Cliff jumping!
-↓ 15 min drive to town
-
-**Lunch**
-12:30pm - Burrito Amor 🌯 - Quick, delicious, affordable
-↓ 15 min drive to beach zone
-
-**Afternoon**
-2:30pm - Downtime at your hotel/pool 🏊
-↓ 5 min walk
-
-**Sunset**
-5:00pm - Ziggy's Beach Club 🍹 - Catch sunset, stay for dinner
-
----
-
-This format shows the logical flow with travel times built in.
+```diff
+  {[
+    { to: "/wishlists", icon: Heart, label: "Wishlists", badge: favorites.length },
+    { to: "/trip-planner", icon: Sparkles, label: "AI" },
+    { to: profileRoute, icon: User, label: "Profile", roleBadge: role },
+-   { to: "/home", icon: Monitor, label: "Browser" },
+  ].map((item) => {
 ```
 
-## Summary of Changes
+## Files to Modify
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| Planning style | Asks detailed questions about preferences | Proactively offers to optimize |
-| Meal additions | Guest must request | JC suggests adding meals automatically |
-| Travel times | Mentioned but not optimized | Built into the flow with clear timing |
-| Downtime | Not considered | Explicitly added between activities |
-| Day presentation | Activity-by-activity | Complete day flow with transitions |
-
-## Files to Edit
-
-| File | Change |
+| File | Action |
 |------|--------|
-| `supabase/functions/trip-planner-chat/index.ts` | Update system prompt with simplified planning approach, proactive optimization offer, and optimized day format |
+| `src/pages/Home.tsx` | Delete |
+| `src/App.tsx` | Remove import and route |
+| `src/pages/AppView.tsx` | Remove "Browser" nav item |
+
+## Impact
+
+- Users navigating directly to `/home` will see the 404 Not Found page
+- The bottom navigation in AppView will have 3 items instead of 4 (Wishlists, AI, Profile)
+- Mobile-first experience is fully consolidated to AppView
 
