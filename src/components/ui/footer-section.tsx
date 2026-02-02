@@ -145,13 +145,13 @@ function Footerdemo() {
             © 2024 stackd. All rights reserved.
           </p>
           <nav className="flex gap-4 text-sm">
-            <Link to="#" className="transition-colors hover:text-primary">
+            <Link to="/privacy" className="transition-colors hover:text-primary">
               Privacy Policy
             </Link>
-            <Link to="#" className="transition-colors hover:text-primary">
+            <Link to="/terms" className="transition-colors hover:text-primary">
               Terms of Service
             </Link>
-            <Link to="#" className="transition-colors hover:text-primary">
+            <Link to="/privacy#cookies" className="transition-colors hover:text-primary">
               Cookie Settings
             </Link>
           </nav>

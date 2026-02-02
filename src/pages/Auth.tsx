@@ -64,7 +64,7 @@ const Auth = () => {
               navigate("/vendor/dashboard", { replace: true });
             } else {
               // New vendor without profile - go to create profile
-              navigate("/test-instagram", { replace: true });
+              navigate("/vendor/upload-photos", { replace: true });
             }
           }
         } else if (userRole === "user") {
@@ -127,7 +127,7 @@ const Auth = () => {
     // Check for returnTo parameter first
     if (returnTo) return returnTo;
     if (selectedRole === "host") return "/host/vendors";
-    if (selectedRole === "vendor") return hasVendorProfile ? "/vendor/dashboard" : "/test-instagram";
+    if (selectedRole === "vendor") return hasVendorProfile ? "/vendor/dashboard" : "/vendor/upload-photos";
     return "/appview";
   };
 
