@@ -73,7 +73,8 @@ import SplashPage from "./pages/SplashPage";
 import RoleSelection from "./pages/RoleSelection";
 import GuestGuide from "./pages/GuestGuide";
 import TestInstagramScrape from "./pages/TestInstagramScrape";
-import TestCancellationEmail from "./pages/TestCancellationEmail";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import CreateVendorProfile from "./pages/CreateVendorProfile";
 import VendorProfilePreview from "./pages/VendorProfilePreview";
 import VendorPublicProfile from "./pages/VendorPublicProfile";
@@ -171,8 +172,9 @@ const AppRoutes = () => (
     <Route path="/experiences" element={<AllExperiences />} />
     <Route path="/wishlists" element={<Wishlists />} />
     <Route path="/guide/:hostId" element={<GuestGuide />} />
-    <Route path="/test-instagram" element={<TestInstagramScrape />} />
-    <Route path="/test-cancellation-email" element={<TestCancellationEmail />} />
+    <Route path="/privacy" element={<PrivacyPolicy />} />
+    <Route path="/terms" element={<TermsOfService />} />
+    <Route path="/vendor/upload-photos" element={<TestInstagramScrape />} />
     <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/edit-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
