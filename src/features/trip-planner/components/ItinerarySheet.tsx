@@ -99,7 +99,8 @@ export function ItinerarySheet({ open, onOpenChange }: ItinerarySheetProps) {
   const constraintsRef = useRef(null);
   const didSyncOnOpenRef = useRef(false);
 
-  // When the sheet opens, sync destination/dates from chat and (if needed) prepopulate items from chat.
+  // When the sheet opens, sync destination/dates from chat ONLY (no auto-generation)
+  // The user explicitly adds items via "Add to Itinerary" buttons in the chat
   useEffect(() => {
     if (!open) {
       didSyncOnOpenRef.current = false;
@@ -108,14 +109,9 @@ export function ItinerarySheet({ open, onOpenChange }: ItinerarySheetProps) {
     if (didSyncOnOpenRef.current) return;
     didSyncOnOpenRef.current = true;
 
-    // Always sync destination + date range from conversation
+    // Only sync destination + date range from conversation — do NOT auto-generate items
+    // Items should only come from explicit "Add to Itinerary" actions in the chat
     syncTripFromChat(messages);
-
-    // If we don't have any items yet, generate from chat so the sheet is prepopulated
-    const hasAnyItems = itinerary?.days.some(d => d.items.length > 0) ?? false;
-    if (!hasAnyItems) {
-      generateItineraryFromChat(messages, "full");
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
