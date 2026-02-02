@@ -1,10 +1,12 @@
 import { type ReactNode, useEffect } from 'react';
 import { SignupProvider, useSignup } from './SignupContext';
 import { BookingProvider, useBooking } from './BookingContext';
+import { SearchProvider } from './SearchContext';
 
 // Re-export hooks for backward compatibility
 export { useSignup } from './SignupContext';
 export { useBooking } from './BookingContext';
+export { useSearch } from './SearchContext';
 
 // Re-export types for backward compatibility
 export type { 
@@ -20,8 +22,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SignupProvider>
       <BookingProvider>
-        <LegacyCleanup />
-        {children}
+        <SearchProvider>
+          <LegacyCleanup />
+          {children}
+        </SearchProvider>
       </BookingProvider>
     </SignupProvider>
   );
