@@ -9,7 +9,7 @@ interface SuggestionPill {
   icon: React.ReactNode;
   label: string;
   prompt?: string;
-  action?: "openItinerary" | "buildItinerary" | "shareItinerary";
+  action?: "openItinerary" | "shareItinerary";
   variant?: "primary" | "secondary";
 }
 
@@ -36,7 +36,7 @@ function detectItineraryComplete(messages: Array<{ role: string; content: string
 function getSuggestions(
   messageCount: number,
   hasItineraryItems: boolean,
-  hasDestination: boolean,
+  _hasDestination: boolean,
   isItineraryComplete: boolean
 ): SuggestionPill[] {
   // Initial state - conversational prompts
@@ -59,22 +59,12 @@ function getSuggestions(
 
   const suggestions: SuggestionPill[] = [];
 
-  // If itinerary is complete, show share option prominently
+  // If itinerary is complete and has items, show share option prominently
   if (isItineraryComplete && hasItineraryItems) {
     suggestions.push({
       icon: <Share2 className="h-3.5 w-3.5" />,
       label: "Generate shareable itinerary",
       action: "shareItinerary",
-      variant: "primary",
-    });
-  }
-
-  // If destination detected but no items yet, show "Build itinerary now" prominently
-  if (hasDestination && !hasItineraryItems) {
-    suggestions.push({
-      icon: <Wand2 className="h-3.5 w-3.5" />,
-      label: "Build itinerary now",
-      action: "buildItinerary",
       variant: "primary",
     });
   }
@@ -94,7 +84,7 @@ function getSuggestions(
     icon: <Sparkles className="h-3.5 w-3.5" />,
     label: "More activities",
     prompt: "Show me more activity options with full details. What else do you recommend?",
-    variant: hasItineraryItems || hasDestination ? "secondary" : "primary",
+    variant: hasItineraryItems ? "secondary" : "primary",
   });
 
   suggestions.push({
@@ -205,15 +195,6 @@ export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggesti
           description: "Please try again.",
         });
       }
-      return;
-    }
-    
-    // Handle "Build itinerary now" action
-    if (suggestion.action === "buildItinerary") {
-      didTriggerBuildRef.current = true;
-      generateItineraryFromChat(messages, "full");
-      // Open sheet after a short delay to let generation start
-      setTimeout(() => onOpenItinerary?.(), 100);
       return;
     }
     
