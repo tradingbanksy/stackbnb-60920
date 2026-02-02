@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   },
 });
 
-import Home from "./pages/Home";
+
 import Explore from "./pages/Explore";
 import ExperienceDetailsPage from "./pages/ExperienceDetailsPage";
 import BookingForm from "./pages/BookingForm";
@@ -145,7 +145,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<SplashPage />} />
     <Route path="/select-role" element={<RoleSelection />} />
-    <Route path="/home" element={<Home />} />
+    
     <Route path="/appview" element={<AppView />} />
     
     {/* Guest/Public Routes */}

@@ -1169,7 +1169,6 @@ const AppView = () => {
                 { to: "/wishlists", icon: Heart, label: "Wishlists", badge: favorites.length },
                 { to: "/trip-planner", icon: Sparkles, label: "AI" },
                 { to: profileRoute, icon: User, label: "Profile", roleBadge: role },
-                { to: "/home", icon: Monitor, label: "Browser" },
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.to;
