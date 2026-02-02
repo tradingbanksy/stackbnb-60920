@@ -381,6 +381,18 @@ const Auth = () => {
       }
       
       const rawMessage = error instanceof Error ? error.message : "An error occurred. Please try again.";
+      
+      // Handle leaked password detection
+      if (rawMessage.includes("data breach") || rawMessage.includes("leaked password") || rawMessage.includes("Password has been found in data breaches")) {
+        toast({
+          title: "Password Security Alert",
+          description: "This password has been found in a data breach. Please choose a different, more secure password.",
+          variant: "destructive",
+          duration: 6000,
+        });
+        return;
+      }
+      
       const errorMessage = rawMessage.includes("Invalid login credentials")
         ? "Invalid email or password. If you recently enabled leaked-password protection, you may need to reset your password."
         : rawMessage;

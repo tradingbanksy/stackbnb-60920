@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,6 +24,29 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting - 20 requests per minute per IP
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               req.headers.get('x-real-ip') || 
+               'unknown';
+    
+    const rateLimitResult = await checkRateLimit(
+      supabaseAdmin,
+      `google:${ip}`,
+      'google-reviews',
+      { windowMinutes: 1, maxRequests: 20 }
+    );
+
+    if (!rateLimitResult.allowed) {
+      console.log(`Rate limit exceeded for Google reviews from IP: ${ip}`);
+      return createRateLimitResponse(rateLimitResult.resetAt, corsHeaders);
+    }
+
     const { placeId, searchQuery, lat, lng } = await req.json();
     const apiKey = Deno.env.get('GOOGLE_REVIEWS_API_KEY');
 
