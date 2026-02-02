@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatTo12Hour } from "../utils/formatTime";
 import {
   DndContext,
   closestCenter,
@@ -175,7 +176,7 @@ function EditableItem({ item, index, onUpdate, onRemove }: EditableItemProps) {
           <div className="flex flex-col items-center gap-2 flex-shrink-0">
             <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-xs font-medium text-muted-foreground">
               <Clock className="h-3 w-3" />
-              <span>{item.time}</span>
+              <span>{formatTo12Hour(item.time)}</span>
             </div>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${colorClass}`}>
               <Icon className="h-4 w-4" />

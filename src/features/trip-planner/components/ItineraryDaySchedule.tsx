@@ -1,6 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
+import { formatTo12Hour } from "../utils/formatTime";
 import {
   MapPin,
   Clock,
@@ -170,7 +171,7 @@ function ScheduleItem({ item, index, isLast, onEdit, onRemove }: ScheduleItemPro
           {/* Time badge */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-xs font-medium text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{item.time}</span>
+            <span>{formatTo12Hour(item.time)}</span>
           </div>
           
           {/* Icon */}
