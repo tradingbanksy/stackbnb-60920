@@ -19,75 +19,102 @@ const queryClient = new QueryClient({
   },
 });
 
+// Guest pages
+import {
+  Explore,
+  ExperienceDetailsPage,
+  BookingForm,
+  PaymentPage,
+  BookingConfirmation,
+  Storefront,
+  Booking,
+  Confirmation,
+  AppView,
+  Profile,
+  TripPlannerChat,
+  RestaurantDetail,
+  Wishlists,
+  AllRestaurants,
+  AllExperiences,
+  GuestGuide,
+  MyBookings,
+  Itinerary,
+  SharedItinerary,
+  TripItinerary,
+  PaymentSuccess,
+} from "./pages/guest";
 
-import Explore from "./pages/Explore";
-import ExperienceDetailsPage from "./pages/ExperienceDetailsPage";
-import BookingForm from "./pages/BookingForm";
-import PaymentPage from "./pages/PaymentPage";
-import BookingConfirmation from "./pages/BookingConfirmation";
-import HostStorefront from "./pages/HostStorefront";
-import Storefront from "./pages/Storefront";
-import Booking from "./pages/Booking";
-import Confirmation from "./pages/Confirmation";
-import HostDashboard from "./pages/HostDashboard";
-import HostSignup from "./pages/HostSignup";
-import HostPropertyInfo from "./pages/HostPropertyInfo";
-import HostVendors from "./pages/HostVendors";
-import AddVendor from "./pages/AddVendor";
-import HostProfile from "./pages/HostProfile";
-import VendorSignup from "./pages/VendorSignup";
-import VendorBusinessDetails from "./pages/VendorBusinessDetails";
-import VendorDashboard from "./pages/VendorDashboard";
+// Host pages
+import {
+  HostDashboard,
+  HostSignup,
+  HostPropertyInfo,
+  HostVendors,
+  AddVendor,
+  HostProfile,
+  HostAuth,
+  EditHostProfile,
+  PaymentSettings,
+  PayoutHistory,
+  HostBookings,
+  HostActiveVendors,
+  HostEarnings,
+  HostRatings,
+  HostStorefront,
+  HostVendorManagement,
+} from "./pages/host";
 
-import AddService from "./pages/AddService";
-import VendorProfile from "./pages/VendorProfile";
-import VendorSettings from "./pages/VendorSettings";
-import AllBookings from "./pages/AllBookings";
-import ActiveHosts from "./pages/ActiveHosts";
-import RevenueBreakdown from "./pages/RevenueBreakdown";
-import SignIn from "./pages/SignIn";
-import SignOut from "./pages/SignOut";
+// Vendor pages
+import {
+  VendorSignup,
+  VendorBusinessDetails,
+  VendorDashboard,
+  AddService,
+  VendorProfile,
+  VendorSettings,
+  AllBookings,
+  ActiveHosts,
+  RevenueBreakdown,
+  VendorRatings,
+  CreateVendorProfile,
+  VendorProfilePreview,
+  VendorPublicProfile,
+  VendorBookingForm,
+  TestInstagramScrape,
+} from "./pages/vendor";
+
+// Auth pages
+import {
+  Auth,
+  ResetPassword,
+  ChangePassword,
+  SignIn,
+  SignOut,
+  RoleSelection,
+} from "./pages/auth";
+
+// Marketing pages
+import {
+  ForHosts,
+  ForVendors,
+  SplashPage,
+} from "./pages/marketing";
+
+// Legal pages
+import {
+  PrivacyPolicy,
+  TermsOfService,
+  HelpSupport,
+} from "./pages/legal";
+
+// Admin pages
+import {
+  PlatformSettings,
+  AdminPromoCodes,
+} from "./pages/admin";
+
+// Standalone pages
 import NotFound from "./pages/NotFound";
-import HostAuth from "./pages/HostAuth";
-import EditHostProfile from "./pages/EditHostProfile";
-import PaymentSettings from "./pages/PaymentSettings";
-import PayoutHistory from "./pages/PayoutHistory";
-import ChangePassword from "./pages/ChangePassword";
-import HelpSupport from "./pages/HelpSupport";
-import HostBookings from "./pages/HostBookings";
-import HostActiveVendors from "./pages/HostActiveVendors";
-import HostEarnings from "./pages/HostEarnings";
-import HostRatings from "./pages/HostRatings";
-import VendorRatings from "./pages/VendorRatings";
-import AppView from "./pages/AppView";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Profile from "./pages/Profile";
-import TripPlannerChat from "./pages/TripPlannerChat";
-import RestaurantDetail from "./pages/RestaurantDetail";
-import Wishlists from "./pages/Wishlists";
-import ForHosts from "./pages/ForHosts";
-import ForVendors from "./pages/ForVendors";
-import AllRestaurants from "./pages/AllRestaurants";
-import AllExperiences from "./pages/AllExperiences";
-import SplashPage from "./pages/SplashPage";
-import RoleSelection from "./pages/RoleSelection";
-import GuestGuide from "./pages/GuestGuide";
-import TestInstagramScrape from "./pages/TestInstagramScrape";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import CreateVendorProfile from "./pages/CreateVendorProfile";
-import VendorProfilePreview from "./pages/VendorProfilePreview";
-import VendorPublicProfile from "./pages/VendorPublicProfile";
-import VendorBookingForm from "./pages/VendorBookingForm";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PlatformSettings from "./pages/PlatformSettings";
-import HostVendorManagement from "./pages/HostVendorManagement";
-import AdminPromoCodes from "./pages/AdminPromoCodes";
-import MyBookings from "./pages/MyBookings";
-import Itinerary from "./pages/Itinerary";
-import SharedItinerary from "./pages/SharedItinerary";
-import TripItinerary from "./pages/TripItinerary";
 
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, role } = useAuthContext();
@@ -189,12 +216,6 @@ const AppRoutes = () => (
     {/* Admin Routes */}
     <Route path="/admin/settings" element={<PlatformSettings />} />
     <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
-    
-    {/* Legacy routes - commented out to prevent routing conflicts
-    <Route path="/storefront/:id" element={<Storefront />} />
-    <Route path="/booking/:id" element={<Booking />} />
-    <Route path="/confirmation" element={<Confirmation />} />
-    */ }
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />
