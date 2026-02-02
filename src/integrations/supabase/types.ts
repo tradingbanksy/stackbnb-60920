@@ -92,6 +92,13 @@ export type Database = {
             referencedRelation: "vendor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_vendor_profile_id_fkey"
+            columns: ["vendor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       host_vendor_links: {
@@ -119,6 +126,13 @@ export type Database = {
             columns: ["vendor_profile_id"]
             isOneToOne: false
             referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "host_vendor_links_vendor_profile_id_fkey"
+            columns: ["vendor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -395,6 +409,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          identifier: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          identifier: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          identifier?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string | null
@@ -436,6 +477,13 @@ export type Database = {
             columns: ["vendor_profile_id"]
             isOneToOne: false
             referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_vendor_profile_id_fkey"
+            columns: ["vendor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -701,10 +749,88 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vendor_profiles_public: {
+        Row: {
+          about_experience: string | null
+          age_restriction: string | null
+          airbnb_experience_url: string | null
+          airbnb_reviews: Json | null
+          cancellation_hours: number | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          google_place_id: string | null
+          google_rating: number | null
+          google_reviews_url: string | null
+          id: string | null
+          included_items: string[] | null
+          instagram_url: string | null
+          is_published: boolean | null
+          listing_type: string | null
+          max_guests: number | null
+          menu_url: string | null
+          name: string | null
+          photos: string[] | null
+          price_per_person: number | null
+          price_tiers: Json | null
+        }
+        Insert: {
+          about_experience?: string | null
+          age_restriction?: string | null
+          airbnb_experience_url?: string | null
+          airbnb_reviews?: Json | null
+          cancellation_hours?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_reviews_url?: string | null
+          id?: string | null
+          included_items?: string[] | null
+          instagram_url?: string | null
+          is_published?: boolean | null
+          listing_type?: string | null
+          max_guests?: number | null
+          menu_url?: string | null
+          name?: string | null
+          photos?: string[] | null
+          price_per_person?: number | null
+          price_tiers?: Json | null
+        }
+        Update: {
+          about_experience?: string | null
+          age_restriction?: string | null
+          airbnb_experience_url?: string | null
+          airbnb_reviews?: Json | null
+          cancellation_hours?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_reviews_url?: string | null
+          id?: string | null
+          included_items?: string[] | null
+          instagram_url?: string | null
+          is_published?: boolean | null
+          listing_type?: string | null
+          max_guests?: number | null
+          menu_url?: string | null
+          name?: string | null
+          photos?: string[] | null
+          price_per_person?: number | null
+          price_tiers?: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_expired_otps: { Args: never; Returns: undefined }
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
