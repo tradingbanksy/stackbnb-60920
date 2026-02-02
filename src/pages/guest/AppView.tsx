@@ -7,13 +7,13 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap, Home, Settings, LogOut } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useSearch } from "@/contexts/SearchContext";
 import { Card } from "@/components/ui/card";
 import {
   Collapsible,
@@ -111,6 +111,7 @@ interface VendorProfile {
 
 const AppView = () => {
   const { isAuthenticated, signOut, role } = useAuthContext();
+  const { selectedDate, setSelectedDate, destination } = useSearch();
   
   // Get profile route based on user role
   const profileRoute = useMemo(() => {
@@ -135,8 +136,6 @@ const AppView = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [locationQuery, setLocationQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   const handleSignOut = async () => {
     await signOut();
@@ -367,12 +366,7 @@ const AppView = () => {
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
                   <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
                     <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                    <Input
-                      placeholder="Where to?"
-                      value={locationQuery}
-                      onChange={(e) => setLocationQuery(e.target.value)}
-                      className="border-0 bg-transparent text-sm h-6 shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground flex-1 min-w-0"
-                    />
+                    <span className="text-sm text-foreground font-medium flex-1 min-w-0">{destination}</span>
                     <div className="h-4 w-px bg-border/50 flex-shrink-0" />
                     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>

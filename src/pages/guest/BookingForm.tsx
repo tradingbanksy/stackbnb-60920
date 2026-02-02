@@ -8,12 +8,15 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
 import { useState } from "react";
 import { useBooking } from "@/contexts/BookingContext";
+import { useSearch } from "@/contexts/SearchContext";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 const BookingForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { updateBookingData } = useBooking();
+  const { selectedDate: searchDate } = useSearch();
   const { toast } = useToast();
   
   const experience = experiences.find(exp => exp.id === Number(id));
@@ -27,7 +30,7 @@ const BookingForm = () => {
   };
   
   const [formData, setFormData] = useState({
-    date: '',
+    date: searchDate ? format(searchDate, 'yyyy-MM-dd') : '',
     time: '',
     guests: 1,
   });

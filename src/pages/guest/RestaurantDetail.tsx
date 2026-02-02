@@ -23,6 +23,8 @@ import { formatDistance } from "@/services/googleMapsService";
 import InteractiveSelector from "@/components/ui/interactive-selector";
 import { supabase } from "@/integrations/supabase/client";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
+import { useSearch } from "@/contexts/SearchContext";
+import { format } from "date-fns";
 
 interface GoogleReview {
   author_name: string;
@@ -84,11 +86,13 @@ const setCachedReviews = (restaurantId: string, data: GoogleReviewsData) => {
 const RestaurantDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { selectedDate } = useSearch();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showReservationWebview, setShowReservationWebview] = useState(false);
   const [googleReviews, setGoogleReviews] = useState<GoogleReviewsData | null>(null);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [reservationUrl, setReservationUrl] = useState<string | null>(null);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -208,6 +212,18 @@ const RestaurantDetail = () => {
     if (!restaurant) return;
 
     if (restaurant.reservationUrl && restaurant.reservationPlatform) {
+      // Append date parameter if available
+      let url = restaurant.reservationUrl;
+      if (selectedDate) {
+        try {
+          const urlObj = new URL(url);
+          urlObj.searchParams.set('date', format(selectedDate, 'yyyy-MM-dd'));
+          url = urlObj.toString();
+        } catch {
+          // If URL parsing fails, just use the original URL
+        }
+      }
+      setReservationUrl(url);
       setShowReservationWebview(true);
     } else {
       // Fallback to phone call
@@ -251,21 +267,25 @@ const RestaurantDetail = () => {
   const isOpen = isRestaurantOpen(restaurant);
 
   // Reservation webview modal
-  if (showReservationWebview && restaurant.reservationUrl) {
+  if (showReservationWebview && (reservationUrl || restaurant.reservationUrl)) {
+    const iframeSrc = reservationUrl || restaurant.reservationUrl;
     return (
       <div className="fixed inset-0 z-50 bg-background">
         <div className="sticky top-0 z-10 bg-card border-b border-border flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="sm" onClick={() => setShowReservationWebview(false)}>
+          <Button variant="ghost" size="sm" onClick={() => {
+            setShowReservationWebview(false);
+            setReservationUrl(null);
+          }}>
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back
           </Button>
           <span className="text-sm font-medium capitalize">{restaurant.reservationPlatform}</span>
-          <Button variant="ghost" size="sm" onClick={() => window.open(restaurant.reservationUrl, '_blank')}>
+          <Button variant="ghost" size="sm" onClick={() => window.open(iframeSrc, '_blank')}>
             <ExternalLink className="h-4 w-4" />
           </Button>
         </div>
         <iframe
-          src={restaurant.reservationUrl}
+          src={iframeSrc}
           className="w-full h-[calc(100vh-56px)]"
           title="Reservation"
         />
