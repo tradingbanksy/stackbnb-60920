@@ -88,8 +88,6 @@ const Auth = () => {
         
         if (!roleError) {
           localStorage.removeItem('pending_role');
-        } else {
-          console.error("Error setting user role:", roleError);
         }
       }
     };
@@ -288,16 +286,13 @@ const Auth = () => {
               });
               
               if (roleError) {
-                console.error(`Attempt ${attempt}: Error setting user role:`, roleError);
                 if (attempt < 3) {
                   await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
                 }
               } else if (roleData?.success) {
                 roleAssigned = true;
-                console.log('Role assigned successfully:', role);
               }
-            } catch (err) {
-              console.error(`Attempt ${attempt}: Exception setting role:`, err);
+            } catch {
               if (attempt < 3) {
                 await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
               }

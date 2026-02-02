@@ -50,8 +50,6 @@ export function useItinerarySync({
       return;
     }
 
-    console.log("[useItinerarySync] Subscribing to itinerary:", itineraryId);
-
     const channel = supabase
       .channel(`itinerary:${itineraryId}`)
       .on(
@@ -63,15 +61,12 @@ export function useItinerarySync({
           filter: `id=eq.${itineraryId}`,
         },
         (payload) => {
-          console.log("[useItinerarySync] Received update:", payload);
-          
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const row = payload.new as any;
           
           // Skip if this was our own change (avoid echo)
           const dataHash = JSON.stringify(row.itinerary_data);
           if (dataHash === lastPushedRef.current) {
-            console.log("[useItinerarySync] Skipping own change");
             return;
           }
 
@@ -92,26 +87,22 @@ export function useItinerarySync({
         }
       )
       .subscribe((status) => {
-        console.log("[useItinerarySync] Subscription status:", status);
         setIsConnected(status === "SUBSCRIBED");
       });
 
     channelRef.current = channel;
 
     return () => {
-      console.log("[useItinerarySync] Unsubscribing from itinerary:", itineraryId);
       channel.unsubscribe();
       channelRef.current = null;
       setIsConnected(false);
     };
   }, [itineraryId, onRemoteChange]);
 
-  // Push local changes to database with debounce
   const pushChanges = useCallback(
     (itinerary: Itinerary) => {
       if (!itineraryId) return;
       if (permission !== "owner" && permission !== "editor") {
-        console.log("[useItinerarySync] Cannot push: no edit permission");
         return;
       }
 
@@ -147,14 +138,11 @@ export function useItinerarySync({
             .eq("id", itineraryId);
 
           if (error) {
-            console.error("[useItinerarySync] Push error:", error);
             lastPushedRef.current = null;
           } else {
             setLastSyncAt(new Date());
-            console.log("[useItinerarySync] Push successful");
           }
-        } catch (err) {
-          console.error("[useItinerarySync] Push exception:", err);
+        } catch {
           lastPushedRef.current = null;
         } finally {
           setIsSyncing(false);
@@ -206,7 +194,6 @@ export async function loadItineraryFromDatabase(
     const { data, error } = await query.maybeSingle() as any;
 
     if (error) {
-      console.error("[loadItineraryFromDatabase] Error:", error);
       return { itinerary: null, permission: null, error: error.message };
     }
 
@@ -251,8 +238,7 @@ export async function loadItineraryFromDatabase(
     };
 
     return { itinerary, permission, error: null };
-  } catch (err) {
-    console.error("[loadItineraryFromDatabase] Exception:", err);
+  } catch {
     return { itinerary: null, permission: null, error: "Failed to load itinerary" };
   }
 }
@@ -325,8 +311,7 @@ export async function saveItineraryToDatabase(
     }
 
     return { id: data.id, shareToken: data.share_token, error: null };
-  } catch (err) {
-    console.error("[saveItineraryToDatabase] Exception:", err);
+  } catch {
     return { id: null, shareToken: null, error: "Failed to save itinerary" };
   }
 }
@@ -355,8 +340,7 @@ export async function addCollaborator(
     }
 
     return { inviteToken: data.invite_token, error: null };
-  } catch (err) {
-    console.error("[addCollaborator] Exception:", err);
+  } catch {
     return { inviteToken: null, error: "Failed to add collaborator" };
   }
 }
@@ -378,8 +362,7 @@ export async function removeCollaborator(
     }
 
     return { error: null };
-  } catch (err) {
-    console.error("[removeCollaborator] Exception:", err);
+  } catch {
     return { error: "Failed to remove collaborator" };
   }
 }
@@ -408,8 +391,7 @@ export async function getCollaborators(
     }));
 
     return { collaborators, error: null };
-  } catch (err) {
-    console.error("[getCollaborators] Exception:", err);
+  } catch {
     return { collaborators: [], error: "Failed to get collaborators" };
   }
 }

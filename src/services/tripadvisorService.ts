@@ -152,8 +152,6 @@ export const searchNearbyRestaurants = async (
   limit: number = 10
 ): Promise<Restaurant[]> => {
   try {
-    console.log(`Searching TripAdvisor for restaurants near ${lat}, ${lng}`);
-    
     const { data, error } = await supabase.functions.invoke('tripadvisor-search', {
       body: {
         action: 'search',
@@ -164,19 +162,15 @@ export const searchNearbyRestaurants = async (
     });
 
     if (error) {
-      console.error('TripAdvisor search error:', error);
       throw error;
     }
 
     if (!data?.restaurants) {
-      console.log('No restaurants found from TripAdvisor');
       return [];
     }
 
-    console.log(`Found ${data.restaurants.length} restaurants from TripAdvisor`);
     return data.restaurants.map((r: TripAdvisorRestaurant, i: number) => convertToRestaurant(r, i));
-  } catch (error) {
-    console.error('Error searching TripAdvisor:', error);
+  } catch {
     return [];
   }
 };
@@ -192,7 +186,6 @@ export const getRestaurantDetails = async (locationId: string): Promise<Restaura
     });
 
     if (error) {
-      console.error('TripAdvisor details error:', error);
       return null;
     }
 
@@ -201,8 +194,7 @@ export const getRestaurantDetails = async (locationId: string): Promise<Restaura
     }
 
     return convertToRestaurant({ location_id: locationId, ...data.details, details: data.details }, 0);
-  } catch (error) {
-    console.error('Error getting TripAdvisor details:', error);
+  } catch {
     return null;
   }
 };
@@ -218,7 +210,6 @@ export const getRestaurantPhotos = async (locationId: string): Promise<string[]>
     });
 
     if (error) {
-      console.error('TripAdvisor photos error:', error);
       return [];
     }
 
@@ -229,8 +220,7 @@ export const getRestaurantPhotos = async (locationId: string): Promise<string[]>
       photo.images?.medium?.url || 
       photo.images?.original?.url
     ).filter(Boolean);
-  } catch (error) {
-    console.error('Error getting TripAdvisor photos:', error);
+  } catch {
     return [];
   }
 };
@@ -246,13 +236,11 @@ export const getRestaurantReviews = async (locationId: string): Promise<unknown[
     });
 
     if (error) {
-      console.error('TripAdvisor reviews error:', error);
       return [];
     }
 
     return data?.reviews || [];
-  } catch (error) {
-    console.error('Error getting TripAdvisor reviews:', error);
+  } catch {
     return [];
   }
 };

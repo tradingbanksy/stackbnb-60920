@@ -62,7 +62,6 @@ export const useNearbyPlaces = (): UseNearbyPlacesResult => {
     setError(null);
     
     try {
-      console.log(`Fetching TripAdvisor restaurants for ${lat}, ${lng}`);
       const restaurants = await searchNearbyRestaurants(lat, lng, 15);
       
       // Convert to GeoapifyPlace format for compatibility

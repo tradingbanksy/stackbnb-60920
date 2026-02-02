@@ -166,7 +166,6 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
 
   // Handle remote changes from realtime sync
   const handleRemoteChange = useCallback((remoteItinerary: Itinerary) => {
-    console.log("[ItineraryContext] Received remote change");
     setItinerary(remoteItinerary);
   }, []);
 
@@ -266,7 +265,6 @@ export function ItineraryProvider({ children }: ItineraryProviderProps) {
     setIsSaving(false);
     
     if (error) {
-      console.error("[ItineraryContext] Save error:", error);
       return false;
     }
 

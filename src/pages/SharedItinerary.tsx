@@ -405,7 +405,6 @@ export default function SharedItinerary() {
 
   // Handle remote changes from realtime
   const handleRemoteChange = useCallback((remoteItinerary: Itinerary) => {
-    console.log("[SharedItinerary] Received remote update");
     setItinerary(remoteItinerary);
     toast.info("Itinerary updated by collaborator");
   }, []);
@@ -451,7 +450,6 @@ export default function SharedItinerary() {
         .maybeSingle();
 
       if (sharedError || !sharedData) {
-        console.error('Error fetching shared itinerary:', sharedError);
         setNotFound(true);
         setIsLoading(false);
         return;
