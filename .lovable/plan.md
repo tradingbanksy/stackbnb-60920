@@ -1,188 +1,239 @@
 
 
-# Plan: Complete App Icons Setup for App Store Submission
+# Plan: Codebase Cleanup and Quality Improvements
 
 ## Overview
 
-Copy all uploaded Stackd app icons to `public/icons/` and update `index.html` with comprehensive icon references for iOS App Store, Google Play Store, PWA, and browser support.
+This plan addresses code quality issues, missing infrastructure, and organizational improvements to make the Stackd codebase more maintainable and production-ready.
 
-## New Icons in This Upload
+## Changes Summary
 
-| File | Purpose |
-|------|---------|
-| `appstore.png` | iOS App Store listing (1024x1024) |
-| `playstore.png` | Google Play Store listing (512x512) |
-| `ic_launcher.png` | Android launcher (largest) |
-| `ic_launcher-2.png` | Android launcher (large) |
-| `ic_launcher-3.png` | Android launcher (medium) |
-| `ic_launcher-4.png` | Android launcher (small) |
-| `ic_launcher-5.png` | Android launcher (medium-small) |
+| Area | Issue | Solution |
+|------|-------|----------|
+| Debug Logs | 97 console.log statements | Remove or convert to proper logging |
+| TODO Comments | 1 unfinished feature | Implement or document |
+| Duplicate Pages | 2 experience detail pages | Keep one, remove duplicate |
+| Error Handling | No error boundaries | Add React error boundary |
+| PWA Support | No manifest.json | Create web app manifest |
+| Constants | No centralized config | Add constants file |
+| Loading States | No shared skeleton | Already exists, verify usage |
 
-## Implementation Steps
+---
 
-### Step 1: Create public/icons/ Directory Structure
+## Step 1: Remove Debug Console Logs
 
-Copy all icons from previous uploads plus new uploads:
+Remove unnecessary console.log statements from 8 files:
 
-```text
-public/icons/
-├── appstore.png       ← iOS App Store (1024x1024)
-├── playstore.png      ← Google Play Store (512x512)
-├── ic_launcher.png    ← Android launcher variants
-├── ic_launcher-2.png
-├── ic_launcher-3.png
-├── ic_launcher-4.png
-├── ic_launcher-5.png
-├── icon-1024.png      ← From previous uploads
-├── icon-512.png
-├── icon-258.png
-├── icon-256.png
-├── icon-234.png
-├── icon-216.png
-├── icon-196.png
-├── icon-180.png       ← iOS iPhone @3x
-├── icon-172.png
-├── icon-167.png       ← iOS iPad Pro
-├── icon-152.png       ← iOS iPad @2x
-├── icon-144.png
-├── icon-128.png
-├── icon-120.png       ← iOS Spotlight
-├── icon-114.png
-├── icon-108.png
-├── icon-102.png
-├── icon-100.png
-├── icon-92.png
-├── icon-88.png
-├── icon-87.png        ← iOS Settings @3x
-├── icon-80.png
-├── icon-76.png        ← iOS iPad @1x
-├── icon-72.png
-├── icon-66.png
-├── icon-64.png
-├── icon-60.png        ← iOS iPhone @1x
-├── icon-58.png        ← iOS Settings @2x
-├── icon-57.png
-├── icon-55.png
-├── icon-50.png
-├── icon-48.png
-├── icon-40.png
-├── icon-32.png        ← Browser favicon
-├── icon-29.png        ← iOS Settings @1x
-├── icon-20.png        ← iOS Notification
-├── icon-16.png        ← Browser favicon
-└── Contents.json      ← Xcode asset catalog reference
+**Files to clean:**
+- `src/services/tripadvisorService.ts` - 3 logs
+- `src/hooks/useAuth.ts` - 5 logs  
+- `src/hooks/useNearbyPlaces.ts` - 1 log
+- `src/pages/Auth.tsx` - 1 log
+- `src/pages/SharedItinerary.tsx` - 1 log
+- `src/features/trip-planner/hooks/useItinerarySync.ts` - 7 logs
+- `src/features/trip-planner/context/ItineraryContext.tsx` - 2 logs
+- `src/features/trip-planner/components/ItineraryDaySchedule.tsx` - 1 log
+
+**Approach:** Remove console.log statements entirely. For critical debugging paths, keep as comments or use a proper logger utility.
+
+---
+
+## Step 2: Address TODO Comment
+
+**File:** `src/features/trip-planner/components/ItineraryDaySchedule.tsx`
+
+Current code:
+```typescript
+const handleReplace = useCallback(() => {
+  // TODO: Open a dialog to find alternative activities
+  console.log("Replace activity:", item.title);
+}, [item.title]);
 ```
 
-### Step 2: Update index.html
+**Solution:** Show a toast message explaining the feature is coming soon instead of doing nothing.
 
-Update the head section with comprehensive icon references:
+---
 
+## Step 3: Remove Duplicate Experience Page
+
+**Keep:** `src/pages/ExperienceDetailsPage.tsx` (dynamic, uses mockData)
+**Remove:** `src/pages/ExperienceDetails.tsx` (hardcoded content, unused)
+
+The `ExperienceDetailsPage.tsx` is the active page used in routes. The `ExperienceDetails.tsx` has hardcoded Miami Beach content and is not referenced in the router.
+
+---
+
+## Step 4: Add Error Boundary Component
+
+Create a React error boundary to catch and gracefully handle runtime errors.
+
+**New file:** `src/components/ErrorBoundary.tsx`
+
+```typescript
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log to error reporting service in production
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <Card className="m-4 p-8 text-center">
+          <AlertTriangle className="h-12 w-12 mx-auto text-destructive mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">
+            We're sorry, but something unexpected happened.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reload Page
+          </Button>
+        </Card>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+**Update:** Wrap the app in `App.tsx` with the ErrorBoundary component.
+
+---
+
+## Step 5: Add PWA Manifest
+
+Create a web app manifest for PWA support.
+
+**New file:** `public/manifest.json`
+
+```json
+{
+  "name": "Stackd - Local Experiences",
+  "short_name": "Stackd",
+  "description": "Discover curated local experiences recommended by vacation rental hosts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-72.png", "sizes": "72x72", "type": "image/png" },
+    { "src": "/icons/icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/icons/icon-144.png", "sizes": "144x144", "type": "image/png" },
+    { "src": "/icons/icon-152.png", "sizes": "152x152", "type": "image/png" },
+    { "src": "/icons/icon-196.png", "sizes": "196x196", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["travel", "lifestyle"]
+}
+```
+
+**Update:** Add manifest link to `index.html`:
 ```html
-<!-- iOS App Icons -->
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
-<link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-167.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png">
-<link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-76.png">
-
-<!-- Android/PWA Icons -->
-<link rel="icon" type="image/png" sizes="196x196" href="/icons/icon-196.png">
-<link rel="icon" type="image/png" sizes="128x128" href="/icons/icon-128.png">
-<link rel="icon" type="image/png" sizes="72x72" href="/icons/icon-72.png">
-
-<!-- Standard Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png">
+<link rel="manifest" href="/manifest.json">
 ```
 
-## Files to Create
+---
 
-### Store Icons (This Upload)
-| Destination | Source |
-|-------------|--------|
-| `public/icons/appstore.png` | `user-uploads://appstore.png` |
-| `public/icons/playstore.png` | `user-uploads://playstore.png` |
-| `public/icons/ic_launcher.png` | `user-uploads://ic_launcher.png` |
-| `public/icons/ic_launcher-2.png` | `user-uploads://ic_launcher-2.png` |
-| `public/icons/ic_launcher-3.png` | `user-uploads://ic_launcher-3.png` |
-| `public/icons/ic_launcher-4.png` | `user-uploads://ic_launcher-4.png` |
-| `public/icons/ic_launcher-5.png` | `user-uploads://ic_launcher-5.png` |
+## Step 6: Add Constants File
 
-### iOS/Web Icons (Previous Uploads)
-| Destination | Source |
-|-------------|--------|
-| `public/icons/icon-1024.png` | `user-uploads://1024.png` |
-| `public/icons/icon-512.png` | `user-uploads://512.png` |
-| `public/icons/icon-258.png` | `user-uploads://258.png` |
-| `public/icons/icon-256.png` | `user-uploads://256.png` |
-| `public/icons/icon-234.png` | `user-uploads://234.png` |
-| `public/icons/icon-216.png` | `user-uploads://216.png` |
-| `public/icons/icon-196.png` | `user-uploads://196.png` |
-| `public/icons/icon-180.png` | `user-uploads://180.png` |
-| `public/icons/icon-172.png` | `user-uploads://172.png` |
-| `public/icons/icon-167.png` | `user-uploads://167.png` |
-| `public/icons/icon-152.png` | `user-uploads://152.png` |
-| `public/icons/icon-144.png` | `user-uploads://144.png` |
-| `public/icons/icon-128.png` | `user-uploads://128.png` |
-| `public/icons/icon-120.png` | `user-uploads://120.png` |
-| `public/icons/icon-114.png` | `user-uploads://114.png` |
-| `public/icons/icon-108.png` | `user-uploads://108.png` |
-| `public/icons/icon-102.png` | `user-uploads://102.png` |
-| `public/icons/icon-100.png` | `user-uploads://100.png` |
-| `public/icons/icon-92.png` | `user-uploads://92.png` |
-| `public/icons/icon-88.png` | `user-uploads://88.png` |
-| `public/icons/icon-87.png` | `user-uploads://87.png` |
-| `public/icons/icon-80.png` | `user-uploads://80.png` |
-| `public/icons/icon-76.png` | `user-uploads://76.png` |
-| `public/icons/icon-72.png` | `user-uploads://72.png` |
-| `public/icons/icon-66.png` | `user-uploads://66.png` |
-| `public/icons/icon-64.png` | `user-uploads://64.png` |
-| `public/icons/icon-60.png` | `user-uploads://60.png` |
-| `public/icons/icon-58.png` | `user-uploads://58.png` |
-| `public/icons/icon-57.png` | `user-uploads://57.png` |
-| `public/icons/icon-55.png` | `user-uploads://55.png` |
-| `public/icons/icon-50.png` | `user-uploads://50.png` |
-| `public/icons/icon-48.png` | `user-uploads://48.png` |
-| `public/icons/icon-40.png` | `user-uploads://40.png` |
-| `public/icons/icon-32.png` | `user-uploads://32.png` |
-| `public/icons/icon-29.png` | `user-uploads://29.png` |
-| `public/icons/icon-20.png` | `user-uploads://20.png` |
-| `public/icons/icon-16.png` | `user-uploads://16.png` |
-| `public/icons/Contents.json` | `user-uploads://Contents.json` |
+Create a centralized constants file for configuration values.
 
-## Files to Modify
+**New file:** `src/lib/constants.ts`
 
-| File | Changes |
-|------|---------|
-| `index.html` | Update apple-touch-icon and favicon link tags |
+```typescript
+// App configuration
+export const APP_CONFIG = {
+  name: 'Stackd',
+  tagline: 'Local Experiences',
+  description: 'Curated local experiences recommended by vacation rental hosts',
+} as const;
 
-## Platform Coverage Summary
+// API endpoints (relative to Supabase functions)
+export const API_ENDPOINTS = {
+  tripPlannerChat: 'trip-planner-chat',
+  googleReviews: 'google-reviews',
+  priceComparison: 'price-comparison',
+  vendorDirections: 'vendor-directions',
+  mapboxDirections: 'mapbox-directions',
+} as const;
 
-| Platform | Requirement | Status |
-|----------|-------------|--------|
-| iOS App Store | 1024x1024 | Complete (appstore.png) |
-| Google Play Store | 512x512 | Complete (playstore.png) |
-| iPhone (all densities) | 60-180px | Complete |
-| iPad (all densities) | 76-167px | Complete |
-| Apple Watch | 48-258px | Complete |
-| Android Launcher | Various | Complete (ic_launcher files) |
-| Android Densities | mdpi-xxxhdpi | Complete |
-| Browser Favicons | 16px, 32px | Complete |
-| PWA | 192px+ | Complete |
+// UI constants
+export const UI_CONSTANTS = {
+  maxMobileWidth: 375,
+  defaultPageSize: 20,
+  toastDuration: 4000,
+} as const;
 
-## Total Files
+// Commission rates
+export const COMMISSION_RATES = {
+  default: 15,
+  premium: 20,
+  host: 10,
+} as const;
 
-- **44 icon files** to be copied to `public/icons/`
-- **1 file** to be modified (`index.html`)
+// Cache durations (milliseconds)
+export const CACHE_DURATIONS = {
+  restaurants: 5 * 60 * 1000,  // 5 minutes
+  experiences: 10 * 60 * 1000, // 10 minutes
+  reviews: 30 * 60 * 1000,     // 30 minutes
+} as const;
+```
+
+---
+
+## Files Summary
+
+| Action | File |
+|--------|------|
+| Modify | `src/services/tripadvisorService.ts` |
+| Modify | `src/hooks/useAuth.ts` |
+| Modify | `src/hooks/useNearbyPlaces.ts` |
+| Modify | `src/pages/Auth.tsx` |
+| Modify | `src/pages/SharedItinerary.tsx` |
+| Modify | `src/features/trip-planner/hooks/useItinerarySync.ts` |
+| Modify | `src/features/trip-planner/context/ItineraryContext.tsx` |
+| Modify | `src/features/trip-planner/components/ItineraryDaySchedule.tsx` |
+| Delete | `src/pages/ExperienceDetails.tsx` |
+| Create | `src/components/ErrorBoundary.tsx` |
+| Modify | `src/App.tsx` (wrap with ErrorBoundary) |
+| Create | `public/manifest.json` |
+| Modify | `index.html` (add manifest link) |
+| Create | `src/lib/constants.ts` |
+
+---
 
 ## Result
 
-After implementation, your Stackd app will have:
-- Complete iOS App Store submission readiness with `appstore.png`
-- Complete Google Play Store submission readiness with `playstore.png`
-- Android launcher icons in all required densities
-- Full iOS device coverage (iPhone, iPad, iPad Pro, Apple Watch)
-- Browser favicon support
-- PWA icon support
-- All icons organized in `public/icons/` for easy native project setup
+After implementation:
+- Clean production-ready code without debug logs
+- Graceful error handling with user-friendly recovery
+- PWA-ready with proper manifest
+- Centralized configuration for easier maintenance
+- No duplicate or dead code
 
