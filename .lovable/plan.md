@@ -1,198 +1,342 @@
 
-# Plan: Pre-fill Tulum Location and Pass Selected Date to Bookings
+# Plan: Security Remediation
 
 ## Overview
 
-Make the AppView search bar show "Tulum" as a fixed, non-editable location and pass the selected date from the "When?" calendar to restaurant and experience booking forms.
+Address all active security findings from the security scan. The application has a solid security foundation but needs improvements in three key areas: data exposure protection, rate limiting for Edge Functions, and authentication hardening.
 
-## Current State
+## Current Security Status
 
-- **Location field** in AppView (`src/pages/guest/AppView.tsx` line 370-375): An editable `Input` component with placeholder "Where to?"
-- **Date selection** (`line 139`): A `selectedDate` state variable that currently doesn't persist anywhere
-- **BookingForm** (`src/pages/guest/BookingForm.tsx` line 29-33): Uses local state `formData.date` initialized to empty string
-- **RestaurantDetail** (`src/pages/guest/RestaurantDetail.tsx`): No date pre-filling for reservations
+| Severity | Finding | Category |
+|----------|---------|----------|
+| **ERROR** | Vendor Contact Information Exposure | Data Protection |
+| **ERROR** | Customer Personal Information Exposure | Data Protection |
+| **ERROR** | Edge Functions Lack Rate Limiting | API Protection |
+| **WARN** | Leaked Password Protection Disabled | Authentication |
+| **WARN** | Vendor Business Data Access | Data Protection |
 
-## Changes
+## Remediation Plan
 
-### Step 1: Make Location Non-Editable with "Tulum" Pre-filled
+### Phase 1: Database Security (RLS Policies)
 
-**File:** `src/pages/guest/AppView.tsx`
+**1.1 Fix Vendor Profiles Data Exposure**
 
-Replace the editable Input with a styled static display:
+The `vendor_profiles` table exposes sensitive fields (email via user_id lookup, stripe_account_id, commission rates) to anyone viewing published profiles.
 
-```tsx
-// Before (lines 369-375):
-<MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-<Input
-  placeholder="Where to?"
-  value={locationQuery}
-  onChange={(e) => setLocationQuery(e.target.value)}
-  className="border-0 bg-transparent..."
-/>
+**Solution:** Create a secure view for public access:
 
-// After:
-<MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-<span className="text-sm text-foreground font-medium">Tulum</span>
+```sql
+-- Create a view that only exposes public fields
+CREATE VIEW public.vendor_profiles_public AS
+SELECT 
+  id,
+  name,
+  category,
+  description,
+  about_experience,
+  photos,
+  menu_url,
+  instagram_url,
+  price_per_person,
+  price_tiers,
+  duration,
+  max_guests,
+  google_rating,
+  google_place_id,
+  google_reviews_url,
+  airbnb_experience_url,
+  airbnb_reviews,
+  included_items,
+  age_restriction,
+  listing_type,
+  is_published,
+  created_at
+FROM vendor_profiles
+WHERE is_published = true;
+
+-- Grant SELECT to anon and authenticated
+GRANT SELECT ON public.vendor_profiles_public TO anon, authenticated;
 ```
 
-- Remove `locationQuery` state variable (line 138) since it's no longer needed
-- Remove the input and replace with a static styled text element
+Then update client code to query the view for public access while keeping direct table access for owners.
 
-### Step 2: Create a Global Search Date Context
+**1.2 Protect Profiles Table**
 
-**New File:** `src/contexts/SearchContext.tsx`
+Current RLS only allows users to view their own profile, which is correct. However, we should add an explicit deny for hosts viewing other profiles via recommendations field:
 
-Create a context to share the selected date across the app:
+```sql
+-- Add policy to allow hosts to view limited profile data for their linked vendors
+CREATE POLICY "Hosts can view basic vendor owner profiles"
+ON public.profiles
+FOR SELECT
+USING (
+  auth.uid() = user_id
+  OR 
+  EXISTS (
+    SELECT 1 FROM host_vendor_links hvl
+    JOIN vendor_profiles vp ON vp.id = hvl.vendor_profile_id
+    WHERE hvl.host_user_id = auth.uid()
+    AND vp.user_id = profiles.user_id
+  )
+);
+```
 
-```tsx
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+**1.3 Protect Vendors Table**
 
-interface SearchContextType {
-  selectedDate: Date | undefined;
-  setSelectedDate: (date: Date | undefined) => void;
-  destination: string;
+Add explicit public deny:
+
+```sql
+-- Ensure only authenticated owners can access
+CREATE POLICY "Deny public access to vendors"
+ON public.vendors
+FOR SELECT
+TO anon
+USING (false);
+```
+
+### Phase 2: Rate Limiting for Edge Functions
+
+**2.1 Create Rate Limiting Infrastructure**
+
+```sql
+-- Rate limiting table
+CREATE TABLE public.rate_limits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  identifier TEXT NOT NULL,
+  endpoint TEXT NOT NULL,
+  request_count INTEGER NOT NULL DEFAULT 1,
+  window_start TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Index for fast lookups
+CREATE INDEX idx_rate_limits_lookup 
+ON public.rate_limits(identifier, endpoint, window_start);
+
+-- Enable RLS (only service role should access)
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+
+-- No policies = deny all direct access
+
+-- Cleanup function for expired windows
+CREATE OR REPLACE FUNCTION public.cleanup_rate_limits()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM rate_limits 
+  WHERE window_start < now() - interval '1 hour';
+END;
+$$;
+```
+
+**2.2 Create Shared Rate Limit Helper**
+
+Create file `supabase/functions/_shared/rateLimit.ts`:
+
+```typescript
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+interface RateLimitConfig {
+  windowMinutes: number;
+  maxRequests: number;
 }
 
-const SearchContext = createContext<SearchContextType | undefined>(undefined);
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: Date;
+}
 
-export const SearchProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
-    const stored = sessionStorage.getItem('searchSelectedDate');
-    return stored ? new Date(stored) : undefined;
-  });
-
-  useEffect(() => {
-    if (selectedDate) {
-      sessionStorage.setItem('searchSelectedDate', selectedDate.toISOString());
-    } else {
-      sessionStorage.removeItem('searchSelectedDate');
-    }
-  }, [selectedDate]);
-
-  return (
-    <SearchContext.Provider value={{ 
-      selectedDate, 
-      setSelectedDate, 
-      destination: 'Tulum' 
-    }}>
-      {children}
-    </SearchContext.Provider>
+export async function checkRateLimit(
+  supabase: SupabaseClient,
+  identifier: string,
+  endpoint: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  const windowStart = new Date(
+    Date.now() - config.windowMinutes * 60 * 1000
   );
-};
 
-export const useSearch = () => {
-  const context = useContext(SearchContext);
-  if (context === undefined) {
-    throw new Error('useSearch must be used within a SearchProvider');
-  }
-  return context;
-};
-```
+  const { data: existing } = await supabase
+    .from('rate_limits')
+    .select('request_count, window_start')
+    .eq('identifier', identifier)
+    .eq('endpoint', endpoint)
+    .gte('window_start', windowStart.toISOString())
+    .maybeSingle();
 
-### Step 3: Add SearchProvider to App
-
-**File:** `src/contexts/UserContext.tsx`
-
-Wrap the app with SearchProvider:
-
-```tsx
-import { SearchProvider } from './SearchContext';
-
-export const UserProvider = ({ children }: { children: ReactNode }) => {
-  return (
-    <SignupProvider>
-      <BookingProvider>
-        <SearchProvider>
-          <LegacyCleanup />
-          {children}
-        </SearchProvider>
-      </BookingProvider>
-    </SignupProvider>
-  );
-};
-```
-
-### Step 4: Update AppView to Use Context
-
-**File:** `src/pages/guest/AppView.tsx`
-
-- Remove local `selectedDate` state (line 139)
-- Remove `locationQuery` state (line 138)
-- Import and use `useSearch` context:
-
-```tsx
-import { useSearch } from "@/contexts/SearchContext";
-
-// In component:
-const { selectedDate, setSelectedDate } = useSearch();
-```
-
-### Step 5: Pre-fill Date in BookingForm
-
-**File:** `src/pages/guest/BookingForm.tsx`
-
-```tsx
-import { useSearch } from "@/contexts/SearchContext";
-import { format } from "date-fns";
-
-const BookingForm = () => {
-  const { selectedDate: searchDate } = useSearch();
-  
-  const [formData, setFormData] = useState({
-    date: searchDate ? format(searchDate, 'yyyy-MM-dd') : '',
-    time: '',
-    guests: 1,
-  });
-  // ... rest unchanged
-};
-```
-
-### Step 6: Pre-fill Date in RestaurantDetail Reservation
-
-**File:** `src/pages/guest/RestaurantDetail.tsx`
-
-When user clicks "Make a Reservation", pass the date:
-
-```tsx
-import { useSearch } from "@/contexts/SearchContext";
-
-// In component:
-const { selectedDate } = useSearch();
-
-// When opening reservation iframe, append date if available
-const handleReservation = () => {
-  if (restaurant.reservationUrl) {
-    // Add date parameter if the platform supports it
-    const url = new URL(restaurant.reservationUrl);
-    if (selectedDate) {
-      url.searchParams.set('date', format(selectedDate, 'yyyy-MM-dd'));
+  if (existing) {
+    if (existing.request_count >= config.maxRequests) {
+      return { 
+        allowed: false, 
+        remaining: 0, 
+        resetAt: new Date(
+          new Date(existing.window_start).getTime() + 
+          config.windowMinutes * 60 * 1000
+        )
+      };
     }
-    setShowReservationWebview(true);
+
+    await supabase
+      .from('rate_limits')
+      .update({ request_count: existing.request_count + 1 })
+      .eq('identifier', identifier)
+      .eq('endpoint', endpoint)
+      .gte('window_start', windowStart.toISOString());
+
+    return { 
+      allowed: true, 
+      remaining: config.maxRequests - existing.request_count - 1,
+      resetAt: new Date(
+        new Date(existing.window_start).getTime() + 
+        config.windowMinutes * 60 * 1000
+      )
+    };
   }
-};
+
+  await supabase
+    .from('rate_limits')
+    .insert({
+      identifier,
+      endpoint,
+      request_count: 1,
+      window_start: new Date().toISOString()
+    });
+
+  return { 
+    allowed: true, 
+    remaining: config.maxRequests - 1,
+    resetAt: new Date(Date.now() + config.windowMinutes * 60 * 1000)
+  };
+}
+```
+
+**2.3 Apply Rate Limiting to Critical Functions**
+
+| Function | Limit | Reason |
+|----------|-------|--------|
+| `trip-planner-chat` | 10/min | AI API costs ~$0.01-0.10/message |
+| `send-reset-otp` | 3/min | Email bombing prevention |
+| `verify-reset-otp` | 5/min | Brute force protection |
+| `google-reviews` | 20/min | API quota protection |
+| `tripadvisor-search` | 20/min | API quota protection |
+| `scrape-instagram` | 5/min | Abuse prevention |
+
+**Example implementation for trip-planner-chat:**
+
+```typescript
+import { checkRateLimit } from "../_shared/rateLimit.ts";
+
+// After CORS check, before processing
+const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+const { allowed, remaining, resetAt } = await checkRateLimit(
+  supabaseAdmin,
+  `chat:${ip}`,
+  'trip-planner-chat',
+  { windowMinutes: 1, maxRequests: 10 }
+);
+
+if (!allowed) {
+  return new Response(
+    JSON.stringify({ 
+      error: 'Too many requests. Please wait a moment before trying again.',
+      resetAt: resetAt.toISOString()
+    }),
+    { 
+      status: 429, 
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'Retry-After': String(Math.ceil((resetAt.getTime() - Date.now()) / 1000))
+      } 
+    }
+  );
+}
+```
+
+### Phase 3: Authentication Hardening
+
+**3.1 Enable Leaked Password Protection**
+
+This requires a manual step in the backend dashboard:
+
+1. Open Lovable Cloud Dashboard
+2. Navigate to Users → Authentication Settings
+3. Enable "Leaked Password Protection"
+
+**3.2 Update Error Handling for Leaked Passwords**
+
+Update `src/pages/auth/Auth.tsx` to handle leaked password errors gracefully:
+
+```typescript
+// Add to error handling section
+if (error?.message?.includes('data breach') || 
+    error?.message?.includes('leaked password')) {
+  toast.error(
+    "This password has been found in a data breach. Please choose a different, more secure password.",
+    { duration: 6000 }
+  );
+  return;
+}
 ```
 
 ## Files Changed
 
-| Action | File |
-|--------|------|
-| Create | `src/contexts/SearchContext.tsx` |
-| Modify | `src/contexts/UserContext.tsx` (add SearchProvider) |
-| Modify | `src/pages/guest/AppView.tsx` (static Tulum, use context) |
-| Modify | `src/pages/guest/BookingForm.tsx` (pre-fill date) |
-| Modify | `src/pages/guest/RestaurantDetail.tsx` (pass date to reservation) |
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | Database migration | RLS policies + rate_limits table |
+| Create | `supabase/functions/_shared/rateLimit.ts` | Shared rate limiting helper |
+| Modify | `supabase/functions/trip-planner-chat/index.ts` | Add rate limiting |
+| Modify | `supabase/functions/send-reset-otp/index.ts` | Add rate limiting |
+| Modify | `supabase/functions/verify-reset-otp/index.ts` | Add rate limiting |
+| Modify | `supabase/functions/google-reviews/index.ts` | Add rate limiting |
+| Modify | `supabase/functions/tripadvisor-search/index.ts` | Add rate limiting |
+| Modify | `supabase/functions/scrape-instagram/index.ts` | Add rate limiting |
+| Modify | `src/pages/auth/Auth.tsx` | Leaked password error handling |
 
-## User Experience
+## Implementation Priority
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Phase 1: Data Protection (Database)                        │
+│  ├── Fix vendor_profiles exposure                           │
+│  ├── Add profiles table protection                          │
+│  └── Add vendors table deny policy                          │
+├─────────────────────────────────────────────────────────────┤
+│  Phase 2: Rate Limiting (Edge Functions)                    │
+│  ├── Create rate_limits table                               │
+│  ├── Create shared rateLimit helper                         │
+│  ├── Add to trip-planner-chat (highest priority)            │
+│  ├── Add to send-reset-otp                                  │
+│  └── Add to remaining functions                             │
+├─────────────────────────────────────────────────────────────┤
+│  Phase 3: Auth Hardening                                    │
+│  ├── Enable Leaked Password Protection (manual)             │
+│  └── Add error handling for leaked passwords                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Security Impact
 
 | Before | After |
 |--------|-------|
-| "Where to?" empty text input | "Tulum" displayed as fixed text |
-| Date selection doesn't persist | Date persists in session storage |
-| Booking form date is empty | Date auto-filled from search selection |
-| Restaurant reservations have no date | Date passed to reservation systems |
+| Vendor emails/Stripe IDs exposed | Only public marketing data visible |
+| Unlimited API requests | Rate-limited to prevent abuse |
+| Weak passwords allowed | Compromised passwords blocked |
+| No protection against email bombing | OTP requests limited per IP |
+
+## Manual Steps Required
+
+After implementation, you'll need to:
+
+1. **Enable Leaked Password Protection** in the Lovable Cloud dashboard (Users → Authentication Settings)
 
 ## Technical Notes
 
-- Session storage is used (not localStorage) so the date clears when the browser tab closes
-- The destination "Tulum" is hardcoded but stored in context for future flexibility
-- Date format uses `yyyy-MM-dd` for HTML date inputs and ISO for storage
+- Rate limiting uses database storage instead of Redis for simplicity
+- Rate limit windows are 1-minute sliding windows
+- Expired rate limit records are cleaned up via a scheduled cleanup function
+- All sensitive fields (stripe_account_id, commission rates, emails) are excluded from public views
