@@ -1,76 +1,60 @@
 
 
-# Plan: Compact Horizontal Role Selection Cards
+# Plan: Update Guest Icon to Mustard Color with Radiant Glow
 
 ## Overview
 
-Transform the role selection cards in `/auth` from tall, vertically-stacked cards to slim, horizontal cards that are easier to scroll through on mobile devices.
+Change the Guest role card icon from baby blue to a mustard/amber color that matches the stackd logo branding, with the same radiant glow effect used on Host and Vendor cards.
 
-## Current Design vs New Design
+## Current vs New Design
 
 ```text
-CURRENT (Tall & Stacked):
-┌─────────────────────────────┐
-│         [👤 Icon]           │
-│           Guest             │
-│    Discover local exper...  │
-└─────────────────────────────┘
-┌─────────────────────────────┐
-│         [🏢 Icon]           │
-│           Host              │
-│    List your property...    │
-└─────────────────────────────┘
-┌─────────────────────────────┐
-│         [🏪 Icon]           │
-│          Vendor             │
-│    Offer your services...   │
-└─────────────────────────────┘
+CURRENT Guest Card:
+┌──────────────────────────────────────────┐
+│ [👤 Blue]  Guest                         │
+│            Discover local experiences    │
+└──────────────────────────────────────────┘
+Icon gradient: from-blue-400 to-cyan-500
+Hover border: border-blue-500/50
+Hover shadow: rgba(59,130,246,0.15) (blue glow)
 
-NEW (Slim & Horizontal):
+NEW Guest Card:
 ┌──────────────────────────────────────────┐
-│ [👤]  Guest                              │
-│       Discover local experiences         │
+│ [👤 Mustard/Amber]  Guest                │
+│                     Discover local exp.  │
 └──────────────────────────────────────────┘
-┌──────────────────────────────────────────┐
-│ [🏢]  Host                               │
-│       List your property                 │
-└──────────────────────────────────────────┘
-┌──────────────────────────────────────────┐
-│ [🏪]  Vendor                             │
-│       Offer services to guests           │
-└──────────────────────────────────────────┘
+Icon gradient: from-amber-400 to-yellow-500
+Hover border: border-amber-500/50
+Hover shadow: rgba(245,158,11,0.15) (amber glow)
 ```
 
 ## Changes Required
 
 **File:** `src/pages/auth/Auth.tsx`
 
-### Layout Changes (Lines 152-215)
+### Line 157-162 Changes
 
-| Aspect | Current | New |
-|--------|---------|-----|
-| Card padding | `p-6` | `p-4` |
-| Flex direction | Column (`flex-col`) | Row (`flex-row`) |
-| Icon size | `w-16 h-16` | `w-12 h-12` |
-| Icon inner size | `h-8 w-8` | `h-6 w-6` |
-| Text alignment | Centered | Left-aligned |
-| Card gap | `gap-4` (between icon and text) | `gap-4` (horizontal) |
-| Card spacing | `space-y-4` | `space-y-3` |
-| Description | Full sentences | Shortened (one line) |
+| Element | Current | New |
+|---------|---------|-----|
+| Icon gradient | `from-blue-400 to-cyan-500` | `from-amber-400 to-yellow-500` |
+| Hover border | `hover:border-blue-500/50` | `hover:border-amber-500/50` |
+| Hover shadow | `rgba(59,130,246,0.15)` (blue) | `rgba(245,158,11,0.15)` (amber) |
 
-### New Card Structure
+### Updated Code
 
 ```tsx
-<button className="group w-full p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm
-  transition-all duration-300 hover:border-blue-500/50 hover:bg-card/80 hover:scale-[1.01]
-  hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] focus:outline-none">
+{/* Guest Card */}
+<button
+  onClick={() => handleRoleSelect("user")}
+  className="group w-full p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm
+    transition-all duration-300 hover:border-amber-500/50 hover:bg-card/80 hover:scale-[1.01]
+    hover:shadow-[0_4px_20px_rgba(245,158,11,0.15)] focus:outline-none"
+>
   <div className="flex items-center gap-4">
-    {/* Smaller icon */}
-    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 
+    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 
       flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
       <Users className="h-6 w-6 text-white" />
     </div>
-    {/* Left-aligned text */}
     <div className="text-left">
       <h3 className="text-lg font-bold text-foreground">Guest</h3>
       <p className="text-sm text-muted-foreground">Discover local experiences</p>
@@ -79,24 +63,21 @@ NEW (Slim & Horizontal):
 </button>
 ```
 
-### Shortened Descriptions
+## Color Reference
 
-| Role | Current | New (Shorter) |
-|------|---------|---------------|
-| Guest | "Discover local experiences and activities curated by your host." | "Discover local experiences" |
-| Host | "List your property and connect with vendors to offer curated experiences to your guests." | "Curate experiences for guests" |
-| Vendor | "Offer your services and experiences to guests through partner hosts." | "Offer services to guests" |
+The mustard/amber colors align with the brand's orange-to-purple gradient palette:
+- **Amber-400**: `#fbbf24` - warm mustard/gold
+- **Yellow-500**: `#eab308` - deeper gold
 
-## Visual Comparison
+This creates visual harmony with:
+- **Host**: Purple-to-pink gradient
+- **Vendor**: Orange-to-pink gradient
+- **Guest**: Amber-to-yellow gradient (warm, inviting)
 
-**Current Height:** ~400px total for 3 cards
-**New Height:** ~200px total for 3 cards (50% reduction)
+## Visual Result
 
-## Benefits
-
-- Faster visual scanning
-- Less scrolling on mobile
-- Cleaner, more modern look
-- Better touch targets (still 48px+ height)
-- Fits more content above the fold
+All three role cards will have distinct, vibrant gradients with matching radiant hover glows:
+- Guest: Warm amber glow
+- Host: Purple/pink glow  
+- Vendor: Orange glow
 
