@@ -58,6 +58,17 @@ const categoryIcons: Record<string, { icon: string; faIcon: React.ReactNode }> =
   'default': { icon: '✨', faIcon: <FaSpa size={20} className="text-white" /> },
 };
 
+// Helper to open external links reliably (bypasses popup blockers)
+const openExternalLink = (url: string) => {
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener noreferrer';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+};
+
 const VendorProfilePreview = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -462,7 +473,7 @@ const VendorProfilePreview = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(profile.instagram_url!, '_blank')}
+                  onClick={() => openExternalLink(profile.instagram_url!)}
                   className="gap-2"
                 >
                   <Instagram className="h-4 w-4" />
@@ -473,7 +484,7 @@ const VendorProfilePreview = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(profile.menu_url!, '_blank')}
+                  onClick={() => openExternalLink(profile.menu_url!)}
                   className="gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -484,7 +495,7 @@ const VendorProfilePreview = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(profile.google_reviews_url!, '_blank')}
+                  onClick={() => openExternalLink(profile.google_reviews_url!)}
                   className="gap-2"
                 >
                   <Star className="h-4 w-4" />

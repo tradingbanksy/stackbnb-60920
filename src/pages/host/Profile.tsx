@@ -126,12 +126,12 @@ const HostProfile = () => {
       gradient: true,
       description: "Share with guests"
     },
-    { 
-      label: "Your Storefront Link", 
-      icon: Store, 
-      action: "/host/storefront",
-      gradient: false
-    },
+  { 
+    label: "Your Storefront Link", 
+    icon: Store, 
+    action: "storefront-link",
+    gradient: false
+  },
     { 
       label: "My Vendors", 
       icon: Handshake, 
@@ -198,6 +198,12 @@ const HostProfile = () => {
   const handleMenuClick = (action: string) => {
     if (action === "share-guide") {
       // Handled by dropdown, do nothing here
+      return;
+    }
+    if (action === "storefront-link") {
+      if (user) {
+        navigate(`/storefront/${user.id}`);
+      }
       return;
     }
     navigate(action);
