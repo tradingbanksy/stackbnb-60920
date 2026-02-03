@@ -7,7 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
   ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
-  Instagram, ExternalLink, Store, Eye, Edit, Globe, Plus, Trash2, Loader2, ImagePlus, GripVertical
+  Instagram, ExternalLink, Store, Eye, Edit, Globe, Plus, Trash2, Loader2, ImagePlus, GripVertical,
+  ShieldCheck, AlertCircle, XCircle, MessageSquare, Send
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -20,6 +21,8 @@ interface PriceTier {
   name: string;
   price: number;
 }
+
+type VerificationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'changes_requested';
 
 interface VendorProfile {
   id: string;
@@ -40,6 +43,9 @@ interface VendorProfile {
   is_published: boolean | null;
   listing_type: string | null;
   commission_percentage: number | null;
+  verification_status: VerificationStatus | null;
+  verification_notes: string | null;
+  stripe_onboarding_complete: boolean | null;
 }
 
 // Category to icon mapping
@@ -76,6 +82,7 @@ const VendorProfilePreview = () => {
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +137,18 @@ const VendorProfilePreview = () => {
   const handlePublish = async () => {
     if (!profile) return;
     
+    // Check verification status before allowing publish
+    if (profile.verification_status !== 'approved') {
+      toast.error('Your profile must be approved before publishing. Submit for review first.');
+      return;
+    }
+
+    if (!profile.stripe_onboarding_complete) {
+      toast.error('Complete your payment setup before publishing.');
+      navigate('/vendor/payment-settings');
+      return;
+    }
+    
     setIsPublishing(true);
     try {
       const { error } = await supabase
@@ -146,6 +165,67 @@ const VendorProfilePreview = () => {
       toast.error('Failed to update profile');
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const validateProfileForReview = (): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    if (!profile) return { valid: false, errors: ['Profile not loaded'] };
+    
+    if ((profile.photos?.length ?? 0) < 3) {
+      errors.push('Add at least 3 photos');
+    }
+    if (!profile.about_experience || profile.about_experience.length < 50) {
+      errors.push('Add a description (at least 50 characters)');
+    }
+    if (!profile.price_per_person && (!profile.price_tiers || profile.price_tiers.length === 0)) {
+      errors.push('Set your pricing');
+    }
+    if (!profile.duration) {
+      errors.push('Specify the duration');
+    }
+    
+    return { valid: errors.length === 0, errors };
+  };
+
+  const handleSubmitForReview = async () => {
+    if (!profile) return;
+    
+    const validation = validateProfileForReview();
+    if (!validation.valid) {
+      toast.error('Complete your profile first: ' + validation.errors.join(', '));
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('vendor_profiles')
+        .update({ 
+          verification_status: 'pending',
+          submitted_for_review_at: new Date().toISOString()
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+      
+      setProfile(prev => prev ? { ...prev, verification_status: 'pending' } : null);
+      toast.success('Profile submitted for review! We\'ll notify you once it\'s approved.');
+      
+      // Notify admin
+      await supabase.functions.invoke('send-admin-notification', {
+        body: {
+          type: 'vendor_submitted_for_review',
+          vendorName: profile.name,
+          vendorId: profile.id,
+        },
+      });
+    } catch (error) {
+      console.error('Error submitting for review:', error);
+      toast.error('Failed to submit for review');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -286,6 +366,70 @@ const VendorProfilePreview = () => {
             {profile.is_published ? 'Live' : 'Draft'}
           </Badge>
         </div>
+
+        {/* Verification Status Banner */}
+        {profile.verification_status && profile.verification_status !== 'approved' && (
+          <div className={`px-4 py-3 ${
+            profile.verification_status === 'pending' 
+              ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200' 
+              : profile.verification_status === 'rejected' 
+              ? 'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-200'
+              : profile.verification_status === 'changes_requested'
+              ? 'bg-orange-100 dark:bg-orange-950/50 text-orange-800 dark:text-orange-200'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
+          }`}>
+            <div className="flex items-start gap-2">
+              {profile.verification_status === 'pending' && (
+                <>
+                  <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Pending Review</p>
+                    <p className="text-xs opacity-80">Your profile is being reviewed by our team. We'll notify you once it's approved.</p>
+                  </div>
+                </>
+              )}
+              {profile.verification_status === 'rejected' && (
+                <>
+                  <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Profile Rejected</p>
+                    <p className="text-xs opacity-80">{profile.verification_notes || 'Please update your profile and resubmit for review.'}</p>
+                  </div>
+                </>
+              )}
+              {profile.verification_status === 'changes_requested' && (
+                <>
+                  <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Changes Requested</p>
+                    <p className="text-xs opacity-80">{profile.verification_notes || 'Please make the requested changes and resubmit.'}</p>
+                  </div>
+                </>
+              )}
+              {profile.verification_status === 'draft' && (
+                <>
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Complete Your Profile</p>
+                    <p className="text-xs opacity-80">Submit for review to start accepting bookings.</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {profile.verification_status === 'approved' && !profile.is_published && (
+          <div className="px-4 py-3 bg-green-100 dark:bg-green-950/50 text-green-800 dark:text-green-200">
+            <div className="flex items-start gap-2">
+              <ShieldCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Approved! Ready to Publish</p>
+                <p className="text-xs opacity-80">Your profile has been verified. Click Publish to go live.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <header className="sticky top-[40px] z-40 bg-card/95 backdrop-blur-sm border-b border-border">
@@ -598,14 +742,36 @@ const VendorProfilePreview = () => {
               <Edit className="h-4 w-4" />
               Edit Profile
             </Button>
-            <Button 
-              className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              onClick={handlePublish}
-              disabled={isPublishing}
-            >
-              <Globe className="h-4 w-4" />
-              {isPublishing ? 'Updating...' : profile.is_published ? 'Unpublish' : 'Publish'}
-            </Button>
+            
+            {/* Show different button based on verification status */}
+            {profile.verification_status === 'approved' ? (
+              <Button 
+                className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                onClick={handlePublish}
+                disabled={isPublishing}
+              >
+                <Globe className="h-4 w-4" />
+                {isPublishing ? 'Updating...' : profile.is_published ? 'Unpublish' : 'Publish'}
+              </Button>
+            ) : profile.verification_status === 'pending' ? (
+              <Button 
+                className="flex-1 gap-2"
+                disabled
+                variant="secondary"
+              >
+                <Clock className="h-4 w-4" />
+                Awaiting Review
+              </Button>
+            ) : (
+              <Button 
+                className="flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                onClick={handleSubmitForReview}
+                disabled={isSubmitting}
+              >
+                <Send className="h-4 w-4" />
+                {isSubmitting ? 'Submitting...' : 'Submit for Review'}
+              </Button>
+            )}
           </div>
         </div>
       </div>

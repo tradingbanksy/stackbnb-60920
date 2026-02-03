@@ -108,6 +108,7 @@ import {
 import {
   PlatformSettings,
   AdminPromoCodes,
+  VendorApprovals,
 } from "./pages/admin";
 
 // Standalone pages
@@ -214,6 +215,7 @@ const AppRoutes = () => (
     {/* Admin Routes */}
     <Route path="/admin/settings" element={<PlatformSettings />} />
     <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
+    <Route path="/admin/vendor-approvals" element={<VendorApprovals />} />
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />

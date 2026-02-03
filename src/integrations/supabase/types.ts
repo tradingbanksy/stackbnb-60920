@@ -581,9 +581,16 @@ export type Database = {
           price_tiers: Json | null
           stripe_account_id: string | null
           stripe_onboarding_complete: boolean | null
+          submitted_for_review_at: string | null
           updated_at: string
           user_id: string
           vendor_id: string | null
+          verification_notes: string | null
+          verification_status:
+            | Database["public"]["Enums"]["vendor_verification_status"]
+            | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           about_experience?: string | null
@@ -614,9 +621,16 @@ export type Database = {
           price_tiers?: Json | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
+          submitted_for_review_at?: string | null
           updated_at?: string
           user_id: string
           vendor_id?: string | null
+          verification_notes?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["vendor_verification_status"]
+            | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           about_experience?: string | null
@@ -647,9 +661,16 @@ export type Database = {
           price_tiers?: Json | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
+          submitted_for_review_at?: string | null
           updated_at?: string
           user_id?: string
           vendor_id?: string | null
+          verification_notes?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["vendor_verification_status"]
+            | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -860,6 +881,12 @@ export type Database = {
     }
     Enums: {
       app_role: "host" | "vendor" | "user" | "admin"
+      vendor_verification_status:
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "changes_requested"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -988,6 +1015,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["host", "vendor", "user", "admin"],
+      vendor_verification_status: [
+        "draft",
+        "pending",
+        "approved",
+        "rejected",
+        "changes_requested",
+      ],
     },
   },
 } as const
