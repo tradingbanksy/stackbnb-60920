@@ -1,57 +1,62 @@
 
+# Plan: Fix Stripe Connect Button in Host Dashboard
 
-# Plan: Update CORS Headers for Remaining Stripe Functions
+## Problem Analysis
+When clicking the "Connect" button on the Host Dashboard, the page navigates to a blank screen with a sad document image. This happens because:
 
-## Summary
-Update the CORS configuration in `create-booking-checkout` and `stripe-webhook` Edge Functions to match the already-fixed functions, ensuring consistent behavior across all Stripe-related endpoints.
+1. The Dashboard uses `window.location.href = data.url` to navigate directly to Stripe
+2. If the Stripe page has any loading issues or session problems, the user is stuck on a blank page
+3. The PaymentSettings page uses `window.open(data.url, '_blank')` which works better by keeping the app open
+
+## Solution
+Update the Dashboard's `handleConnectStripe` function to match the PaymentSettings behavior:
+- Open Stripe in a new tab instead of replacing the current page
+- Show a toast message guiding the user
+- Reset the loading state properly
 
 ## Changes Required
 
-### 1. Update `create-booking-checkout/index.ts`
+### File: `src/pages/host/Dashboard.tsx`
 
-Replace the dynamic CORS configuration (lines 5-17 and 24-26):
-```typescript
-// OLD - remove this
-const allowedOrigins = [...]
-const getCorsHeaders = (origin: string | null) => {...}
-...
-const origin = req.headers.get('origin');
-const corsHeaders = getCorsHeaders(origin);
+**Update the `handleConnectStripe` function (around lines 168-184):**
+
+```text
+Current code:
+  if (data?.url) {
+    window.location.href = data.url;
+  }
+
+New code:
+  if (data?.url) {
+    window.open(data.url, '_blank');
+    toast.success('Stripe setup opened in a new tab. Complete the setup there, then refresh this page.');
+    setIsConnecting(false);
+  }
 ```
 
-With the standardized CORS headers:
-```typescript
-// NEW - use this
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-};
+Also add proper error reset:
+```text
+Current code (catch block):
+  } catch (error) {
+    console.error('Error connecting Stripe:', error);
+    toast.error('Failed to start Stripe onboarding');
+    setIsConnecting(false);
+  }
+
+Stays the same - just ensure setIsConnecting(false) is called in the success case too.
 ```
 
-### 2. Update `stripe-webhook/index.ts`
+## Technical Details
 
-Same change - replace lines 5-17 and 24-26 with the standardized CORS headers.
+| Aspect | Current Behavior | New Behavior |
+|--------|------------------|--------------|
+| Navigation | Replaces current page | Opens new tab |
+| App state | Lost on navigation | Preserved |
+| Error recovery | User stuck on blank page | User can retry from dashboard |
+| Loading state | Never reset on success | Properly reset |
 
-Note: For webhooks, the `stripe-signature` header should still be included in the allowed headers for signature verification.
-
-```typescript
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-};
-```
-
-### 3. Redeploy Functions
-
-After the code changes, both functions will be automatically redeployed.
-
-## Technical Notes
-
-- All 5 Stripe functions already correctly use `Deno.env.get("STRIPE_SECRET_KEY")` - no changes needed for the API key itself
-- The new secret value you just updated will be used automatically by all functions
-- The CORS fix ensures the frontend can successfully call these functions without browser blocking
-
-## Files to Modify
-1. `supabase/functions/create-booking-checkout/index.ts`
-2. `supabase/functions/stripe-webhook/index.ts`
-
+## Why This Works
+- The backend is functioning correctly (confirmed in logs)
+- The PaymentSettings page uses this exact pattern and works
+- Opening in a new tab is more user-friendly for external Stripe onboarding
+- Users can easily return to the dashboard if something goes wrong
