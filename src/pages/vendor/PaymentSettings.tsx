@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CreditCard, CheckCircle2, AlertCircle, ExternalLink, Loader2 } from "lucide-react";
-import HostBottomNav from "@/components/HostBottomNav";
-import { useSmartBack } from "@/hooks/use-smart-back";
+import VendorBottomNav from "@/components/VendorBottomNav";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const PaymentSettings = () => {
-  const goBack = useSmartBack("/host/profile");
+const VendorPaymentSettings = () => {
+  const navigate = useNavigate();
   const { user } = useAuthContext();
   const { toast } = useToast();
 
@@ -33,7 +33,7 @@ const PaymentSettings = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('check-connect-status', {
-        body: { accountType: 'host' }
+        body: { accountType: 'vendor' }
       });
 
       if (error) throw error;
@@ -54,7 +54,7 @@ const PaymentSettings = () => {
     setIsConnecting(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-connect-account', {
-        body: { accountType: 'host' }
+        body: { accountType: 'vendor' }
       });
 
       if (error) throw error;
@@ -82,7 +82,7 @@ const PaymentSettings = () => {
     setIsOpeningDashboard(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-stripe-login-link', {
-        body: { accountType: 'host' }
+        body: { accountType: 'vendor' }
       });
 
       if (error) throw error;
@@ -106,16 +106,16 @@ const PaymentSettings = () => {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
         <button 
-          onClick={goBack}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Profile
+          Back
         </button>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Payment Settings</h1>
-          <p className="text-sm text-muted-foreground">Manage how you receive your commissions</p>
+          <p className="text-sm text-muted-foreground">Manage how you receive payments from bookings</p>
         </div>
 
         {isLoading ? (
@@ -137,14 +137,14 @@ const PaymentSettings = () => {
                 <CardTitle className="text-lg">Payouts Enabled</CardTitle>
               </div>
               <CardDescription>
-                Your bank account is connected and ready to receive commissions from vendor bookings.
+                Your bank account is connected and ready to receive payments from guest bookings.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                 <p className="text-sm font-medium">How payouts work:</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• When guests book through your link, you earn commission</li>
+                  <li>• When guests book your experiences, you receive your portion</li>
                   <li>• Stripe automatically deposits to your bank</li>
                   <li>• Payouts are processed on Stripe's schedule (usually daily)</li>
                 </ul>
@@ -214,7 +214,7 @@ const PaymentSettings = () => {
                 <CardTitle className="text-lg">Set Up Payouts</CardTitle>
               </div>
               <CardDescription>
-                Connect your bank account to start receiving commissions when guests book through your profile.
+                Connect your bank account to start receiving payments when guests book your experiences.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -261,9 +261,9 @@ const PaymentSettings = () => {
         </Button>
       </div>
 
-      <HostBottomNav />
+      <VendorBottomNav />
     </div>
   );
 };
 
-export default PaymentSettings;
+export default VendorPaymentSettings;
