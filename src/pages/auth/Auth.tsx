@@ -148,25 +148,23 @@ const Auth = () => {
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">Choose your role.</h1>
           </div>
 
-          {/* Role Cards - Glass-morphic style */}
-          <div className="space-y-4">
+          {/* Role Cards - Compact horizontal style */}
+          <div className="space-y-3">
             {/* Guest Card */}
             <button
               onClick={() => handleRoleSelect("user")}
-              className="group w-full p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm
-                transition-all duration-300 hover:border-blue-500/50 hover:bg-card/80 hover:scale-[1.02]
-                hover:shadow-[0_8px_30px_rgba(59,130,246,0.15)] focus:outline-none"
+              className="group w-full p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm
+                transition-all duration-300 hover:border-blue-500/50 hover:bg-card/80 hover:scale-[1.01]
+                hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] focus:outline-none"
             >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 
-                  flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Users className="h-8 w-8 text-white" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 
+                  flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <Users className="h-6 w-6 text-white" />
                 </div>
-                <div className="space-y-2 text-center">
-                  <h3 className="text-xl font-bold text-foreground">Guest</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Discover local experiences and activities curated by your host.
-                  </p>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-foreground">Guest</h3>
+                  <p className="text-sm text-muted-foreground">Discover local experiences</p>
                 </div>
               </div>
             </button>
@@ -174,20 +172,18 @@ const Auth = () => {
             {/* Host Card */}
             <button
               onClick={() => handleRoleSelect("host")}
-              className="group w-full p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm
-                transition-all duration-300 hover:border-purple-500/50 hover:bg-card/80 hover:scale-[1.02]
-                hover:shadow-[0_8px_30px_rgba(168,85,247,0.15)] focus:outline-none"
+              className="group w-full p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm
+                transition-all duration-300 hover:border-purple-500/50 hover:bg-card/80 hover:scale-[1.01]
+                hover:shadow-[0_4px_20px_rgba(168,85,247,0.15)] focus:outline-none"
             >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 
-                  flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Building2 className="h-8 w-8 text-white" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 
+                  flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <Building2 className="h-6 w-6 text-white" />
                 </div>
-                <div className="space-y-2 text-center">
-                  <h3 className="text-xl font-bold text-foreground">Host</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    List your property and connect with vendors to offer curated experiences to your guests.
-                  </p>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-foreground">Host</h3>
+                  <p className="text-sm text-muted-foreground">Curate experiences for guests</p>
                 </div>
               </div>
             </button>
@@ -195,20 +191,18 @@ const Auth = () => {
             {/* Vendor Card */}
             <button
               onClick={() => handleRoleSelect("vendor")}
-              className="group w-full p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm
-                transition-all duration-300 hover:border-orange-500/50 hover:bg-card/80 hover:scale-[1.02]
-                hover:shadow-[0_8px_30px_rgba(249,115,22,0.15)] focus:outline-none"
+              className="group w-full p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm
+                transition-all duration-300 hover:border-orange-500/50 hover:bg-card/80 hover:scale-[1.01]
+                hover:shadow-[0_4px_20px_rgba(249,115,22,0.15)] focus:outline-none"
             >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 
-                  flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Store className="h-8 w-8 text-white" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 
+                  flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <Store className="h-6 w-6 text-white" />
                 </div>
-                <div className="space-y-2 text-center">
-                  <h3 className="text-xl font-bold text-foreground">Vendor</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Offer your services and experiences to guests through partner hosts.
-                  </p>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-foreground">Vendor</h3>
+                  <p className="text-sm text-muted-foreground">Offer services to guests</p>
                 </div>
               </div>
             </button>
