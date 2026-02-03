@@ -132,107 +132,97 @@ const Auth = () => {
   // Show role selection if no role is specified and user is signing up
   if (!role && isSignUp) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50/50 to-background">
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-          <div className="w-full max-w-md space-y-8">
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => navigate("/appview")}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </button>
-              <button
-                onClick={() => navigate("/appview")}
-                className="flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="Go to home"
-              >
-                <Home className="h-5 w-5 text-foreground" />
-              </button>
-            </div>
-            {/* Logo */}
-            <div className="flex justify-center">
-              <img 
-                src={stackdLogo}
-                alt="Stackd" 
-                className="h-24 w-24 object-contain"
-              />
-            </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <img 
+              src={stackdLogo}
+              alt="Stackd" 
+              className="h-32 w-32 sm:h-40 sm:w-40 object-contain"
+            />
+          </div>
 
-            {/* Title */}
-            <div className="text-center">
-              <h1 className="text-3xl font-bold tracking-tight">Choose your role.</h1>
-            </div>
+          {/* Title */}
+          <div className="text-center">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">Choose your role.</h1>
+          </div>
 
-            {/* Role Cards */}
-            <div className="space-y-4">
-              {/* Guest Card */}
-              <button
-                onClick={() => handleRoleSelect("user")}
-                className="w-full rounded-2xl border-2 border-border bg-card p-6 text-center transition-all duration-200 hover:border-blue-400 hover:shadow-lg focus:outline-none focus:border-blue-500"
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-cyan-500">
-                    <Users className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold">Guest</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Discover local experiences and activities curated by your host.
-                    </p>
-                  </div>
+          {/* Role Cards - Glass-morphic style */}
+          <div className="space-y-4">
+            {/* Guest Card */}
+            <button
+              onClick={() => handleRoleSelect("user")}
+              className="group w-full p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm
+                transition-all duration-300 hover:border-blue-500/50 hover:bg-card/80 hover:scale-[1.02]
+                hover:shadow-[0_8px_30px_rgba(59,130,246,0.15)] focus:outline-none"
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 
+                  flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Users className="h-8 w-8 text-white" />
                 </div>
-              </button>
-
-              {/* Host Card */}
-              <button
-                onClick={() => handleRoleSelect("host")}
-                className="w-full rounded-2xl border-2 border-border bg-card p-6 text-center transition-all duration-200 hover:border-purple-400 hover:shadow-lg focus:outline-none focus:border-purple-500"
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-pink-500">
-                    <Building2 className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold">Host</h3>
-                    <p className="text-sm text-muted-foreground">
-                      List your property and connect with vendors to offer curated experiences to your guests.
-                    </p>
-                  </div>
+                <div className="space-y-2 text-center">
+                  <h3 className="text-xl font-bold text-foreground">Guest</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Discover local experiences and activities curated by your host.
+                  </p>
                 </div>
-              </button>
+              </div>
+            </button>
 
-              {/* Vendor Card */}
-              <button
-                onClick={() => handleRoleSelect("vendor")}
-                className="w-full rounded-2xl border-2 border-border bg-card p-6 text-center transition-all duration-200 hover:border-orange-400 hover:shadow-lg focus:outline-none focus:border-orange-500"
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500">
-                    <Store className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold">Vendor</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Offer your services and experiences to guests through partner hosts.
-                    </p>
-                  </div>
+            {/* Host Card */}
+            <button
+              onClick={() => handleRoleSelect("host")}
+              className="group w-full p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm
+                transition-all duration-300 hover:border-purple-500/50 hover:bg-card/80 hover:scale-[1.02]
+                hover:shadow-[0_8px_30px_rgba(168,85,247,0.15)] focus:outline-none"
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 
+                  flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Building2 className="h-8 w-8 text-white" />
                 </div>
-              </button>
-            </div>
+                <div className="space-y-2 text-center">
+                  <h3 className="text-xl font-bold text-foreground">Host</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    List your property and connect with vendors to offer curated experiences to your guests.
+                  </p>
+                </div>
+              </div>
+            </button>
 
-            {/* Sign in link */}
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(false)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Already have an account? <span className="text-primary font-medium">Sign in</span>
-              </button>
-            </div>
+            {/* Vendor Card */}
+            <button
+              onClick={() => handleRoleSelect("vendor")}
+              className="group w-full p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm
+                transition-all duration-300 hover:border-orange-500/50 hover:bg-card/80 hover:scale-[1.02]
+                hover:shadow-[0_8px_30px_rgba(249,115,22,0.15)] focus:outline-none"
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 
+                  flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Store className="h-8 w-8 text-white" />
+                </div>
+                <div className="space-y-2 text-center">
+                  <h3 className="text-xl font-bold text-foreground">Vendor</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Offer your services and experiences to guests through partner hosts.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Sign in link */}
+          <div className="text-center pt-4">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(false)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Already have an account? <span className="text-primary font-medium">Sign in</span>
+            </button>
           </div>
         </div>
       </div>
@@ -451,168 +441,190 @@ const Auth = () => {
         onOpenChange={setShowOTPDialog} 
         email={resetEmail} 
       />
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate("/appview")}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
-          <button
-            onClick={() => navigate("/appview")}
-            className="flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-            aria-label="Go to home"
-          >
-            <Home className="h-5 w-5 text-foreground" />
-          </button>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <img 
+              src={stackdLogo}
+              alt="Stackd" 
+              className="h-24 w-24 sm:h-32 sm:w-32 object-contain"
+            />
+          </div>
 
-        <Card className="p-6">
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <h1 className="text-2xl font-bold">{isSignUp ? "Create Account" : "Welcome Back"}</h1>
-              <p className="text-sm text-muted-foreground">
-                {isSignUp ? "Sign up to save your favorite experiences" : "Sign in to access your profile"}
-              </p>
-            </div>
+          {/* Glass-morphic Card */}
+          <div className="p-8 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm">
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl font-semibold text-foreground">
+                  {isSignUp ? "Create your account" : "Welcome back"}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {isSignUp ? "Sign up to get started" : "Sign in to continue"}
+                </p>
+              </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="you@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-muted-foreground">Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="you@example.com" 
+                            className="rounded-xl border-border/50 bg-background/50"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-muted-foreground">Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="rounded-xl border-border/50 bg-background/50"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" variant="gradient" className="w-full" disabled={loading}>
+                    {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+                  </Button>
+
+                  {!isSignUp && (
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        disabled={loading}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                   )}
-                />
+                </form>
+              </Form>
 
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Enter your password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/50" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-transparent px-2 text-muted-foreground">or continue with</span>
+                </div>
+              </div>
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+              <div className="flex justify-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-12 w-12 rounded-full border-border/50 bg-background/50 hover:bg-card/80 hover:scale-105 transition-all"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
                 </Button>
 
-                {!isSignUp && (
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      disabled={loading}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                )}
-              </form>
-            </Form>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-12 w-12 rounded-full border-border/50 bg-background/50 hover:bg-card/80 hover:scale-105 transition-all"
+                  onClick={() =>
+                    toast({
+                      title: "Coming Soon",
+                      description: "Apple Sign-In will be available soon.",
+                    })
+                  }
+                >
+                  <Apple className="h-5 w-5" />
+                </Button>
 
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  form.clearErrors();
-                }}
-                className="text-sm text-primary hover:underline"
-              >
-                {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
-              </button>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-12 w-12 rounded-full border-border/50 bg-background/50 hover:bg-card/80 hover:scale-105 transition-all"
+                  onClick={() =>
+                    toast({
+                      title: "Coming Soon",
+                      description: "Airbnb login will be available soon.",
+                    })
+                  }
+                >
+                  <FaAirbnb className="h-5 w-5 text-[#FF5A5F]" />
+                </Button>
               </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-card px-2 text-muted-foreground">Continue with</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 rounded-full"
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 rounded-full"
-                onClick={() =>
-                  toast({
-                    title: "Coming Soon",
-                    description: "Apple Sign-In will be available soon.",
-                  })
-                }
-              >
-                <Apple className="h-5 w-5" />
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 rounded-full"
-                onClick={() =>
-                  toast({
-                    title: "Coming Soon",
-                    description: "Airbnb login will be available soon.",
-                  })
-                }
-              >
-                <FaAirbnb className="h-5 w-5 text-[#FF5A5F]" />
-              </Button>
             </div>
           </div>
-        </Card>
+
+          {/* Toggle sign-up/sign-in */}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                form.clearErrors();
+                if (!isSignUp) {
+                  setSearchParams({});
+                }
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <span className="text-primary font-medium">{isSignUp ? "Sign in" : "Sign up"}</span>
+            </button>
+          </div>
+
+          {/* Back to role selection (only when signing up with a role) */}
+          {isSignUp && role && (
+            <div className="text-center">
+              <button
+                onClick={() => setSearchParams({})}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back to role selection
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 };
