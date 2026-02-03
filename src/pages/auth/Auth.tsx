@@ -224,6 +224,16 @@ const Auth = () => {
               Already have an account? <span className="text-primary font-medium">Sign in</span>
             </button>
           </div>
+
+          {/* Back to home */}
+          <div className="text-center">
+            <a
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to home
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -623,6 +633,16 @@ const Auth = () => {
               </button>
             </div>
           )}
+
+          {/* Back to home */}
+          <div className="text-center">
+            <a
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to home
+            </a>
+          </div>
         </div>
       </div>
     </>
