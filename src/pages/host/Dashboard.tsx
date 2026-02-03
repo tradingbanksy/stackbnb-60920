@@ -3,12 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight, Handshake, Store, CreditCard, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { DollarSign, CalendarCheck, Users, StarIcon, LogOut, TrendingUp, ArrowUpRight, Handshake, Store, CreditCard, CheckCircle2, AlertCircle, Loader2, Calendar } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import HostBottomNav from "@/components/HostBottomNav";
 import { PageTransition } from "@/components/PageTransition";
-import { dashboardStats, recentBookings } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -31,6 +30,83 @@ const HostDashboard = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const { user } = useAuthContext();
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Fetch real dashboard stats
+  const { data: dashboardStats = [], isLoading: isLoadingStats } = useQuery({
+    queryKey: ['hostDashboardStats', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      // Fetch bookings where this host referred the customer
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('total_amount, host_payout_amount')
+        .eq('host_user_id', user.id)
+        .eq('status', 'completed');
+
+      const totalEarnings = bookings?.reduce((sum, b) => sum + (b.host_payout_amount || 0), 0) || 0;
+      const bookingCount = bookings?.length || 0;
+
+      // Count linked vendors
+      const { count: vendorCount } = await supabase
+        .from('host_vendor_links')
+        .select('*', { count: 'exact', head: true })
+        .eq('host_user_id', user.id);
+
+      // Calculate average rating from reviews on linked vendors
+      const { data: linkedVendors } = await supabase
+        .from('host_vendor_links')
+        .select('vendor_profile_id')
+        .eq('host_user_id', user.id);
+
+      let avgRating = 'N/A';
+      if (linkedVendors && linkedVendors.length > 0) {
+        const vendorIds = linkedVendors.map(v => v.vendor_profile_id);
+        const { data: reviews } = await supabase
+          .from('reviews')
+          .select('rating')
+          .in('vendor_profile_id', vendorIds);
+        
+        if (reviews && reviews.length > 0) {
+          const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+          avgRating = avg.toFixed(1) + '★';
+        }
+      }
+
+      return [
+        { label: "Total Earnings", value: `$${totalEarnings.toLocaleString()}`, icon: "DollarSign" },
+        { label: "Bookings", value: bookingCount.toString(), icon: "Calendar" },
+        { label: "Active Vendors", value: (vendorCount || 0).toString(), icon: "Users" },
+        { label: "Avg Rating", value: avgRating, icon: "Star" },
+      ];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch real recent bookings
+  const { data: recentBookings = [], isLoading: isLoadingBookings } = useQuery({
+    queryKey: ['hostRecentBookings', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data } = await supabase
+        .from('bookings')
+        .select('experience_name, vendor_name, booking_date, host_payout_amount')
+        .eq('host_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      return data?.map(b => ({
+        service: b.experience_name,
+        vendor: b.vendor_name || 'Unknown Vendor',
+        date: new Date(b.booking_date).toLocaleDateString('en-US', { 
+          month: 'short', day: 'numeric', year: 'numeric' 
+        }),
+        amount: `$${(b.host_payout_amount || 0).toFixed(0)}`,
+      })) || [];
+    },
+    enabled: !!user,
+  });
 
   // Check if host profile is complete
   const { data: profileData, refetch: refetchProfile } = useQuery({
@@ -211,57 +287,65 @@ const HostDashboard = () => {
 
         {/* Stats Cards - Overlapping Hero */}
         <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 space-y-3`}>
-          {dashboardStats.map((stat) => {
-            const Icon = iconMap[stat.icon as keyof typeof iconMap];
-            
-            // Define navigation routes for each stat
-            const getNavigationRoute = () => {
-              switch(stat.label) {
-                case "Total Earnings":
-                  return "/host/earnings";
-                case "Bookings":
-                  return "/host/bookings";
-                case "Active Vendors":
-                  return "/host/vendors/active";
-                case "Avg Rating":
-                  return "/host/ratings";
-                default:
-                  return null;
-              }
-            };
-            
-            const route = getNavigationRoute();
-            const CardWrapper = route ? 'button' : 'div';
-            
-            return (
-              <Card 
-                key={stat.label} 
-                className="p-5 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 bg-card/80 backdrop-blur-sm border-2"
-              >
-                <CardWrapper
-                  onClick={route ? () => navigate(route) : undefined}
-                  className={route ? 'w-full text-left' : ''}
+          {isLoadingStats ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-xl" />
+              ))}
+            </>
+          ) : (
+            dashboardStats.map((stat) => {
+              const Icon = iconMap[stat.icon as keyof typeof iconMap];
+              
+              // Define navigation routes for each stat
+              const getNavigationRoute = () => {
+                switch(stat.label) {
+                  case "Total Earnings":
+                    return "/host/earnings";
+                  case "Bookings":
+                    return "/host/bookings";
+                  case "Active Vendors":
+                    return "/host/vendors/active";
+                  case "Avg Rating":
+                    return "/host/ratings";
+                  default:
+                    return null;
+                }
+              };
+              
+              const route = getNavigationRoute();
+              const CardWrapper = route ? 'button' : 'div';
+              
+              return (
+                <Card 
+                  key={stat.label} 
+                  className="p-5 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 bg-card/80 backdrop-blur-sm border-2"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-pink-500/20 ring-1 ring-orange-500/20">
-                        <Icon className="h-6 w-6 text-orange-500" />
+                  <CardWrapper
+                    onClick={route ? () => navigate(route) : undefined}
+                    className={route ? 'w-full text-left' : ''}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-pink-500/20 ring-1 ring-orange-500/20">
+                          <Icon className="h-6 w-6 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                          <p className="text-3xl font-bold mt-1 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                            {stat.value}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
-                        <p className="text-3xl font-bold mt-1 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                          {stat.value}
-                        </p>
-                      </div>
+                      {route && (
+                        <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
-                    {route && (
-                      <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </CardWrapper>
-              </Card>
-            );
-          })}
+                  </CardWrapper>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Recent Activity Section */}
@@ -280,29 +364,45 @@ const HostDashboard = () => {
             </button>
           </div>
           
-          <div className="space-y-3">
-            {recentBookings.map((booking, index) => (
-              <Card
-                key={index}
-                className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 group border-l-4 border-l-transparent hover:border-l-orange-500"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-base truncate group-hover:text-orange-500 transition-colors">
-                      {booking.service}
-                    </p>
-                    <p className="text-sm text-muted-foreground truncate mt-1">{booking.vendor}</p>
-                    <p className="text-xs text-muted-foreground mt-2">{booking.date}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500">
-                      <p className="font-bold text-sm text-white">{booking.amount}</p>
+          {isLoadingBookings ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : recentBookings.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Calendar className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <p className="font-medium text-foreground">No bookings yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your earnings will appear here once guests book through your referrals
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {recentBookings.map((booking, index) => (
+                <Card
+                  key={index}
+                  className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 group border-l-4 border-l-transparent hover:border-l-orange-500"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-base truncate group-hover:text-orange-500 transition-colors">
+                        {booking.service}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate mt-1">{booking.vendor}</p>
+                      <p className="text-xs text-muted-foreground mt-2">{booking.date}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500">
+                        <p className="font-bold text-sm text-white">{booking.amount}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Vendor Commission Rates Section */}

@@ -1,70 +1,64 @@
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Star, ThumbsUp, MessageSquare } from "lucide-react";
 import HostBottomNav from "@/components/HostBottomNav";
 import { useSmartBack } from "@/hooks/use-smart-back";
-
-const ratingsData = [
-  { 
-    id: 1, 
-    service: "Sunset Yoga Session", 
-    vendor: "Ocean Breeze Wellness", 
-    rating: 5, 
-    review: "Amazing experience! The sunset view was breathtaking and the instructor was fantastic.",
-    guestName: "Sarah M.",
-    date: "Dec 15, 2024"
-  },
-  { 
-    id: 2, 
-    service: "Beach Volleyball Tournament", 
-    vendor: "Sandy Courts Sports", 
-    rating: 4.5, 
-    review: "Great facility and well organized. Had a wonderful time with friends!",
-    guestName: "Mike T.",
-    date: "Dec 14, 2024"
-  },
-  { 
-    id: 3, 
-    service: "Surfing Lessons", 
-    vendor: "Wave Riders Academy", 
-    rating: 5, 
-    review: "Best surfing lesson ever! Instructor was patient and encouraging.",
-    guestName: "Emma L.",
-    date: "Dec 13, 2024"
-  },
-  { 
-    id: 4, 
-    service: "Poolside BBQ Experience", 
-    vendor: "Grill Masters Co.", 
-    rating: 4.8, 
-    review: "Delicious food and great atmosphere. Perfect for a family gathering.",
-    guestName: "David K.",
-    date: "Dec 12, 2024"
-  },
-  { 
-    id: 5, 
-    service: "Sunset Cruise", 
-    vendor: "Coastal Adventures", 
-    rating: 5, 
-    review: "Absolutely magical! The crew was professional and the views were stunning.",
-    guestName: "Lisa R.",
-    date: "Dec 11, 2024"
-  },
-  { 
-    id: 6, 
-    service: "Private Chef Dinner", 
-    vendor: "Culinary Delights", 
-    rating: 4.7, 
-    review: "Incredible dining experience. Chef was talented and personable.",
-    guestName: "James P.",
-    date: "Dec 10, 2024"
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const HostRatings = () => {
   const goBack = useSmartBack("/host/dashboard");
-  const avgRating = (ratingsData.reduce((sum, item) => sum + item.rating, 0) / ratingsData.length).toFixed(1);
-  const fiveStarCount = ratingsData.filter(r => r.rating === 5).length;
-  const fiveStarPercentage = Math.round((fiveStarCount / ratingsData.length) * 100);
+  const { user } = useAuthContext();
+
+  const { data: reviewsData, isLoading } = useQuery({
+    queryKey: ['hostVendorReviews', user?.id],
+    queryFn: async () => {
+      if (!user) return { reviews: [], vendorNames: {} };
+
+      // Get linked vendor IDs
+      const { data: links } = await supabase
+        .from('host_vendor_links')
+        .select('vendor_profile_id')
+        .eq('host_user_id', user.id);
+
+      if (!links || links.length === 0) return { reviews: [], vendorNames: {} };
+
+      const vendorIds = links.map(l => l.vendor_profile_id);
+
+      // Fetch vendor names
+      const { data: vendors } = await supabase
+        .from('vendor_profiles')
+        .select('id, name')
+        .in('id', vendorIds);
+
+      const vendorNames: Record<string, string> = {};
+      vendors?.forEach(v => {
+        vendorNames[v.id] = v.name;
+      });
+
+      // Fetch reviews for these vendors
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('id, rating, comment, created_at, vendor_profile_id, booking_id')
+        .in('vendor_profile_id', vendorIds)
+        .order('created_at', { ascending: false });
+
+      return { reviews: reviews || [], vendorNames };
+    },
+    enabled: !!user,
+  });
+
+  const reviews = reviewsData?.reviews || [];
+  const vendorNames = reviewsData?.vendorNames || {};
+
+  const avgRating = reviews.length > 0 
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
+  const fiveStarCount = reviews.filter(r => r.rating === 5).length;
+  const fiveStarPercentage = reviews.length > 0 
+    ? Math.round((fiveStarCount / reviews.length) * 100)
+    : 0;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -90,10 +84,14 @@ const HostRatings = () => {
                 <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                 <p className="text-xs text-muted-foreground">Average Rating</p>
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-3xl font-bold">{avgRating}</p>
-                <p className="text-sm text-muted-foreground">/ 5.0</p>
-              </div>
+              {isLoading ? (
+                <Skeleton className="h-10 w-20" />
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <p className="text-3xl font-bold">{avgRating}</p>
+                  <p className="text-sm text-muted-foreground">/ 5.0</p>
+                </div>
+              )}
             </div>
           </Card>
           <Card className="p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
@@ -101,37 +99,43 @@ const HostRatings = () => {
               <div className="flex items-center gap-1">
                 <ThumbsUp className="h-3.5 w-3.5 text-green-500" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{fiveStarPercentage}%</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">5-star</p>
-              </div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <div>
+                  <p className="text-2xl font-bold">{fiveStarPercentage}%</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">5-star</p>
+                </div>
+              )}
             </div>
           </Card>
         </div>
 
         {/* Rating Distribution */}
-        <Card className="p-4">
-          <h3 className="text-sm font-semibold mb-3">Rating Distribution</h3>
-          <div className="space-y-2">
-            {[5, 4, 3, 2, 1].map((stars) => {
-              const count = ratingsData.filter(r => Math.floor(r.rating) === stars).length;
-              const percentage = (count / ratingsData.length) * 100;
-              
-              return (
-                <div key={stars} className="flex items-center gap-2">
-                  <span className="text-xs w-12">{stars} {stars === 1 ? 'star' : 'stars'}</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
-                      style={{ width: `${percentage}%` }}
-                    />
+        {!isLoading && reviews.length > 0 && (
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold mb-3">Rating Distribution</h3>
+            <div className="space-y-2">
+              {[5, 4, 3, 2, 1].map((stars) => {
+                const count = reviews.filter(r => Math.floor(r.rating) === stars).length;
+                const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                
+                return (
+                  <div key={stars} className="flex items-center gap-2">
+                    <span className="text-xs w-12">{stars} {stars === 1 ? 'star' : 'stars'}</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground w-8 text-right">{count}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground w-8 text-right">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+                );
+              })}
+            </div>
+          </Card>
+        )}
 
         {/* Reviews List */}
         <div className="space-y-3">
@@ -140,34 +144,59 @@ const HostRatings = () => {
             Recent Reviews
           </h2>
           
-          <div className="space-y-3 max-h-[calc(100vh-500px)] overflow-y-auto">
-            {ratingsData.map((item) => (
-              <Card
-                key={item.id}
-                className="p-4 hover:shadow-lg transition-all duration-200"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm leading-tight">{item.service}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">{item.vendor}</p>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : reviews.length === 0 ? (
+            <Card className="p-8 text-center">
+              <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <p className="font-medium text-foreground">No reviews yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Reviews for your linked vendors will appear here
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3 max-h-[calc(100vh-500px)] overflow-y-auto">
+              {reviews.map((review) => (
+                <Card
+                  key={review.id}
+                  className="p-4 hover:shadow-lg transition-all duration-200"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm leading-tight">
+                          {vendorNames[review.vendor_profile_id || ''] || 'Unknown Vendor'}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="font-bold text-sm">{review.rating}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      <span className="font-bold text-sm">{item.rating}</span>
+                    
+                    {review.comment && (
+                      <p className="text-sm text-foreground/80 italic">"{review.comment}"</p>
+                    )}
+                    
+                    <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
+                      <span className="font-medium">Guest Review</span>
+                      <span>
+                        {new Date(review.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
                     </div>
                   </div>
-                  
-                  <p className="text-sm text-foreground/80 italic">"{item.review}"</p>
-                  
-                  <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
-                    <span className="font-medium">{item.guestName}</span>
-                    <span>{item.date}</span>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
