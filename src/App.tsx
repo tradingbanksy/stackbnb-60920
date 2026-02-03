@@ -47,8 +47,6 @@ import {
 // Host pages
 import {
   HostDashboard,
-  HostSignup,
-  HostPropertyInfo,
   HostVendors,
   AddVendor,
   HostProfile,
@@ -66,8 +64,6 @@ import {
 
 // Vendor pages
 import {
-  VendorSignup,
-  VendorBusinessDetails,
   VendorDashboard,
   AddService,
   VendorProfile,
@@ -92,7 +88,6 @@ import {
   ChangePassword,
   SignIn,
   SignOut,
-  RoleSelection,
 } from "./pages/auth";
 
 // Marketing pages
@@ -146,7 +141,7 @@ const ProtectedVendorRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/signup/vendor" replace />;
+    return <Navigate to="/auth?role=vendor" replace />;
   }
   
   // If user has host role, redirect to host dashboard
@@ -175,7 +170,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<SplashPage />} />
-    <Route path="/select-role" element={<RoleSelection />} />
+    {/* Legacy route - redirect to unified auth */}
+    <Route path="/select-role" element={<Navigate to="/auth" replace />} />
     
     <Route path="/appview" element={<AppView />} />
     
@@ -221,8 +217,9 @@ const AppRoutes = () => (
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />
-    <Route path="/signup/host" element={<HostSignup />} />
-    <Route path="/signup/host/property" element={<HostPropertyInfo />} />
+    {/* Legacy signup routes redirect to unified auth */}
+    <Route path="/signup/host" element={<Navigate to="/auth?role=host" replace />} />
+    <Route path="/signup/host/property" element={<Navigate to="/auth?role=host" replace />} />
     
     {/* Host Profile Sub-pages */}
     <Route path="/host/edit-profile" element={<ProtectedHostRoute><EditHostProfile /></ProtectedHostRoute>} />
@@ -269,8 +266,9 @@ const AppRoutes = () => (
     />
     
     {/* Vendor Routes */}
-    <Route path="/signup/vendor" element={<VendorSignup />} />
-    <Route path="/signup/vendor/business" element={<VendorBusinessDetails />} />
+    {/* Legacy signup routes redirect to unified auth */}
+    <Route path="/signup/vendor" element={<Navigate to="/auth?role=vendor" replace />} />
+    <Route path="/signup/vendor/business" element={<Navigate to="/auth?role=vendor" replace />} />
     <Route 
       path="/vendor/dashboard" 
       element={

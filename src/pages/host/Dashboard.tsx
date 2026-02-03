@@ -11,6 +11,8 @@ import { PageTransition } from "@/components/PageTransition";
 import { dashboardStats, recentBookings } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { HostOnboardingCard } from "@/components/onboarding";
 
 interface VendorWithCommission {
   id: string;
@@ -27,6 +29,33 @@ const HostDashboard = () => {
   const [vendors, setVendors] = useState<VendorWithCommission[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const { user } = useAuthContext();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if host profile is complete
+  const { data: profileData, refetch: refetchProfile } = useQuery({
+    queryKey: ['hostProfileComplete', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, city, recommendations')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    // Show onboarding if profile is incomplete (no property name set)
+    if (profileData !== undefined) {
+      const hasPropertyInfo = profileData?.recommendations && 
+        typeof profileData.recommendations === 'object' && 
+        'property' in (profileData.recommendations as object);
+      setShowOnboarding(!hasPropertyInfo && !profileData?.full_name);
+    }
+  }, [profileData]);
 
   // Check Stripe Connect status
   const { data: connectStatus, refetch: refetchConnectStatus } = useQuery({
@@ -170,8 +199,18 @@ const HostDashboard = () => {
           </div>
         </div>
 
+        {/* Host Onboarding Card */}
+        {showOnboarding && (
+          <div className="px-4 -mt-12 relative z-20 mb-3">
+            <HostOnboardingCard onComplete={() => {
+              setShowOnboarding(false);
+              refetchProfile();
+            }} />
+          </div>
+        )}
+
         {/* Stats Cards - Overlapping Hero */}
-        <div className="px-4 -mt-12 relative z-20 space-y-3">
+        <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 space-y-3`}>
           {dashboardStats.map((stat) => {
             const Icon = iconMap[stat.icon as keyof typeof iconMap];
             

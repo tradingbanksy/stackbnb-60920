@@ -10,11 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VendorOnboardingWizard } from "@/components/onboarding";
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const { user } = useAuthContext();
 
   // Fetch real vendor stats from database
@@ -134,6 +136,30 @@ const VendorDashboard = () => {
     }
   }, [searchParams, refetchConnectStatus]);
 
+  // Check if vendor profile exists, if not show onboarding wizard
+  useEffect(() => {
+    const checkVendorProfile = async () => {
+      if (!user) return;
+      
+      const { data: vendorProfile } = await supabase
+        .from('vendor_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      // Show wizard if no vendor profile exists
+      if (!vendorProfile) {
+        // Check if they've previously dismissed
+        const dismissed = sessionStorage.getItem('vendorOnboardingDismissed');
+        if (!dismissed) {
+          setShowOnboardingWizard(true);
+        }
+      }
+    };
+    
+    checkVendorProfile();
+  }, [user]);
+
   const handleConnectStripe = async () => {
     setIsConnecting(true);
     try {
@@ -160,8 +186,18 @@ const VendorDashboard = () => {
   };
 
   return (
-    <PageTransition className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
-      <div className="max-w-[375px] mx-auto">
+    <>
+      <VendorOnboardingWizard 
+        open={showOnboardingWizard} 
+        onOpenChange={(open) => {
+          setShowOnboardingWizard(open);
+          if (!open) {
+            sessionStorage.setItem('vendorOnboardingDismissed', 'true');
+          }
+        }} 
+      />
+      <PageTransition className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
+        <div className="max-w-[375px] mx-auto">
         {/* Hero Header with Gradient */}
         <div className="bg-gradient-to-br from-orange-500 to-pink-500 px-4 pt-6 pb-20 rounded-b-3xl shadow-lg relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]" />
@@ -367,8 +403,9 @@ const VendorDashboard = () => {
         </div>
       </div>
 
-      <VendorBottomNav />
-    </PageTransition>
+        <VendorBottomNav />
+      </PageTransition>
+    </>
   );
 };
 
