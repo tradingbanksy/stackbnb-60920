@@ -1,108 +1,202 @@
 
-
-# Plan: Simplify Signup & Onboarding Flow
+# Plan: Auth Review & Admin Access Improvements
 
 ## Overview
 
-Implement a streamlined signup process that gets users to their dashboard quickly with just email and password, then uses progressive onboarding to collect additional details when needed.
+Review and improve the authentication flow, ensure the admin role works smoothly for `gmunoz512@icloud.com`, and add a back button to the splash page.
 
-## Current Problems
+## Current State Assessment
 
-| Issue | Description |
-|-------|-------------|
-| Duplicate Signup Pages | 3 separate entry points: `/auth`, `/signup/host`, `/signup/vendor` |
-| Too Many Steps | Host: 2 pages, 12+ fields. Vendor: 3-4 pages, 20+ fields |
-| Confusing Role Selection | Role selection appears in multiple places |
-| No Value First | Users fill forms before seeing their dashboard |
+### Password Reset Flow (Working Well)
+The forgot password feature uses a secure OTP-based flow:
+1. User enters email and clicks "Forgot password?"
+2. `send-reset-otp` edge function sends a 6-digit code to email
+3. User enters OTP in a dialog
+4. `verify-reset-otp` validates the code and generates a secure reset link
+5. User is redirected to `/reset-password` to set a new password
 
-## New Simplified Flow
+Security features in place:
+- Rate limiting: 3 OTP sends per minute, 5 verification attempts per minute
+- OTPs expire after 10 minutes
+- Codes are deleted after use
 
-```text
-ALL USERS (2-3 clicks to get started):
-/auth → Select Role (Guest/Host/Vendor) → Email + Password → Dashboard
+### Login Process (Working Well)
+- Email/password authentication via Supabase
+- Google OAuth integration
+- Leaked password detection with user-friendly error messages
+- Role-based redirects after sign-in
+- Users without a role are prompted to select one
 
-POST-SIGNUP PROGRESSIVE ONBOARDING:
-├─ Guest: Optional profile completion via profile page
-├─ Host: Dashboard shows "Complete your profile" card
-└─ Vendor: Dashboard shows "Set up your listing" wizard
-```
+### Admin Access (Already Configured)
+Good news: `gmunoz512@icloud.com` is **already an admin** in the system.
+
+Current admin capabilities:
+- `/admin/settings` - Configure platform fee percentage
+- `/admin/promo-codes` - Create and manage discount codes
 
 ## Changes Required
 
-### Phase 1: Consolidate Authentication
+### 1. Add Back Button to Splash Page on Auth
 
-**Modify `src/pages/auth/Auth.tsx`**
-- Keep existing role selection cards (Guest/Host/Vendor)
-- After role selection, show only Email + Password fields
-- On successful signup, assign role and redirect to dashboard
-- Match the glass-morphic theme from `/select-role`
+The `/auth` page currently has "Back to role selection" when signing up with a role, but there's no way to return to the splash page (`/`) for users who don't want to sign up yet.
 
-### Phase 2: Host Onboarding Card
+**File:** `src/pages/auth/Auth.tsx`
 
-**Create `src/components/onboarding/HostOnboardingCard.tsx`**
-- Shows on Host Dashboard if profile incomplete
-- Collects: Property Name, Airbnb URL, Address
-- Collapsible/dismissable, saves progress automatically
+Add a back link at the bottom of both the role selection view and the sign-in form:
 
-### Phase 3: Vendor Onboarding Wizard
+```text
+Role Selection View:
+┌─────────────────────────────────────┐
+│           [stackd logo]            │
+│                                     │
+│        Choose your role.           │
+│                                     │
+│  [Guest Card]                       │
+│  [Host Card]                        │
+│  [Vendor Card]                      │
+│                                     │
+│  Already have an account? Sign in  │
+│                                     │
+│       ← Back to home               │  ← NEW
+└─────────────────────────────────────┘
 
-**Create `src/components/onboarding/VendorOnboardingWizard.tsx`**
-- Stepped modal/drawer for guided setup
-- Step 1: Basic Info (Name, Category, Type)
-- Step 2: Photos (Upload or Instagram import)
-- Step 3: Pricing & Details
-- Step 4: Description (with AI option)
-- Progress bar, can save and resume
+Sign-In View:
+┌─────────────────────────────────────┐
+│           [stackd logo]            │
+│                                     │
+│     ┌───────────────────────┐      │
+│     │ Email / Password Form │      │
+│     └───────────────────────┘      │
+│                                     │
+│  Don't have an account? Sign up    │
+│                                     │
+│       ← Back to home               │  ← NEW
+└─────────────────────────────────────┘
+```
 
-### Phase 4: Update Dashboards
+### 2. What Admin Should Have Access To (Legal Considerations)
 
-**Modify `src/pages/host/Dashboard.tsx`**
-- Show HostOnboardingCard if property info missing
-- Card disappears once complete
+| Access Type | Should Have? | Reasoning |
+|-------------|--------------|-----------|
+| **Platform Settings** | Yes ✓ | Already implemented. Controls platform fee % |
+| **Promo Codes** | Yes ✓ | Already implemented. Business operations |
+| **Aggregate Analytics** | Yes | Total bookings, revenue trends, user counts. Non-PII |
+| **User Listing** | Carefully | View email, role, status. No passwords or payment details |
+| **Vendor/Host Listings** | Yes | Approval workflows, quality control |
+| **Booking Records** | Carefully | For dispute resolution. Hide full payment details |
+| **Direct Stripe Data** | No | PCI compliance - access through Stripe dashboard |
+| **Private Messages** | No | Privacy violation unless support ticket |
+| **Raw User Passwords** | Never | Technically impossible with proper hashing |
 
-**Modify `src/pages/vendor/Dashboard.tsx`**
-- Show VendorOnboardingWizard on first visit if no vendor_profile
-- Wizard can be minimized and resumed
+The current admin setup is appropriate for a platform owner - it provides control over business settings without exposing sensitive user data.
 
-### Phase 5: Cleanup
+### 3. Ensure Smooth Re-login Flow
 
-**Remove deprecated files:**
-- `src/pages/host/Signup.tsx`
-- `src/pages/host/PropertyInfo.tsx`
-- `src/pages/vendor/Signup.tsx`
-- `src/pages/vendor/BusinessDetails.tsx`
-- `src/pages/auth/RoleSelection.tsx`
+The current flow works correctly:
+1. Sign in → fetch role → redirect to appropriate dashboard
+2. If no role found → prompt role selection
+3. Session persists across browser refreshes
 
-**Update routes in `src/App.tsx`**
-- Remove old signup routes
-- Update redirects
+No changes needed, but worth noting the flow:
 
-**Simplify `src/contexts/SignupContext.tsx`**
-- Remove multi-page form state (no longer needed)
+```text
+Sign In Flow:
+┌─────────────────┐
+│  Enter Email    │
+│  Enter Password │
+│  [Sign In]      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Supabase Auth   │
+│ Validates       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Fetch user_roles│
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+Has Role   No Role
+    │         │
+    │         ▼
+    │  ┌─────────────┐
+    │  │ Show Role   │
+    │  │ Selection   │
+    │  └─────────────┘
+    │
+    ▼
+┌─────────────────┐
+│ Redirect to     │
+│ role-specific   │
+│ dashboard       │
+└─────────────────┘
+```
 
-## Files Summary
+## Implementation Details
 
-| Action | File | Purpose |
+### File Changes
+
+| Action | File | Changes |
 |--------|------|---------|
-| Create | `src/components/onboarding/HostOnboardingCard.tsx` | In-dashboard host setup form |
-| Create | `src/components/onboarding/VendorOnboardingWizard.tsx` | Stepped vendor profile wizard |
-| Modify | `src/pages/auth/Auth.tsx` | Simplify to email/password only |
-| Modify | `src/pages/host/Dashboard.tsx` | Add onboarding card |
-| Modify | `src/pages/vendor/Dashboard.tsx` | Add onboarding wizard trigger |
-| Modify | `src/App.tsx` | Remove old signup routes |
-| Delete | `src/pages/host/Signup.tsx` | No longer needed |
-| Delete | `src/pages/host/PropertyInfo.tsx` | Moved to onboarding card |
-| Delete | `src/pages/vendor/Signup.tsx` | No longer needed |
-| Delete | `src/pages/vendor/BusinessDetails.tsx` | Moved to wizard |
-| Delete | `src/pages/auth/RoleSelection.tsx` | Merged into Auth.tsx |
-| Modify | `src/contexts/SignupContext.tsx` | Simplify or remove |
+| Modify | `src/pages/auth/Auth.tsx` | Add "Back to home" link in both role selection and sign-in views |
+| Modify | `src/pages/marketing/SplashPage.tsx` | Fix Sign Up link to go to `/auth` instead of `/select-role` (which no longer exists) |
 
-## Benefits
+### Code Changes
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Time to dashboard | 3-5 minutes | 30 seconds |
-| Fields before access | 12-20 | 2 |
-| Signup entry points | 3 | 1 |
-| Mobile experience | Long forms | Progressive |
+**1. Auth.tsx - Add back link to role selection view (around line 227)**
 
+After the "Already have an account?" link, add:
+```tsx
+{/* Back to splash page */}
+<div className="text-center">
+  <Link
+    to="/"
+    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+  >
+    ← Back to home
+  </Link>
+</div>
+```
+
+**2. Auth.tsx - Add back link to sign-in form (around line 625)**
+
+Add a back link that shows when NOT in signup mode or after the role selection back link:
+```tsx
+{/* Back to home - always available */}
+<div className="text-center">
+  <Link
+    to="/"
+    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+  >
+    ← Back to home
+  </Link>
+</div>
+```
+
+**3. SplashPage.tsx - Fix Sign Up link (line 62-78)**
+
+The "Sign Up" button currently goes to `/select-role` which redirects to `/auth`. Update to go directly to `/auth`:
+```tsx
+<Link
+  to="/auth"  // Changed from "/select-role"
+  onClick={handleSignupClick}
+  // ... rest of styling
+>
+  Sign Up
+</Link>
+```
+
+## Summary
+
+1. **Password reset works well** - OTP-based, rate-limited, secure
+2. **Login flow works well** - Role-based routing, session persistence
+3. **Admin access is already set up** for `gmunoz512@icloud.com`
+4. **Add back button** to `/auth` page to return to splash page
+5. **Fix splash page** Sign Up link to go directly to `/auth`
+
+The admin currently has appropriate access to business settings without exposing sensitive user data. The existing permissions (platform settings, promo codes) are suitable for a platform owner role.
