@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, MapPin, ArrowLeft, User, Sparkles, LogIn, UserPlus, Star, Store, Plus, Check, Loader2, Settings, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { experiences } from "@/data/mockData";
-import { mockRestaurants } from "@/data/mockRestaurants";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -164,25 +162,24 @@ const Explore = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const filteredExperiences = experiences.filter((exp) => {
-    const matchesCategory = selectedExperienceCategory === "all" || exp.category === selectedExperienceCategory;
+  const filteredVendorRestaurants = vendorRestaurants.filter((vendor) => {
+    const matchesCategory = selectedRestaurantCategory === "all" || 
+      vendor.category.toLowerCase().includes(selectedRestaurantCategory.toLowerCase());
     const matchesSearch = searchQuery === "" || 
-      exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.description.toLowerCase().includes(searchQuery.toLowerCase());
+      vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vendor.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (vendor.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     return matchesCategory && matchesSearch;
   });
 
-  const filteredRestaurants = mockRestaurants.filter((restaurant) => {
-    const matchesCategory = selectedRestaurantCategory === "all" || 
-      restaurant.cuisine.toLowerCase().includes(selectedRestaurantCategory.toLowerCase());
-    const matchesSearch = searchQuery === "" || 
-      restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Split vendors into two rows
+  const experienceMidPoint = Math.ceil(filteredVendorExperiences.length / 2);
+  const experiencesRow1 = filteredVendorExperiences.slice(0, experienceMidPoint);
+  const experiencesRow2 = filteredVendorExperiences.slice(experienceMidPoint);
+
+  const restaurantMidPoint = Math.ceil(filteredVendorRestaurants.length / 2);
+  const restaurantsRow1 = filteredVendorRestaurants.slice(0, restaurantMidPoint);
+  const restaurantsRow2 = filteredVendorRestaurants.slice(restaurantMidPoint);
 
   return (
     <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
@@ -341,11 +338,11 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Real Vendor Profiles - Show First */}
-              {filteredVendorExperiences.length > 0 && (
+              {/* Row 1 - First half of verified vendors */}
+              {experiencesRow1.length > 0 && (
                 <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
                   <div className="flex gap-3 w-max pb-2">
-                    {filteredVendorExperiences.map((vendor) => (
+                    {experiencesRow1.map((vendor) => (
                       <Link
                         key={vendor.id}
                         to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
@@ -365,7 +362,6 @@ const Explore = () => {
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          {/* Add Button for Hosts - Top Left */}
                           {isHostMode && (
                             <button
                               onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
@@ -386,14 +382,12 @@ const Explore = () => {
                             </button>
                           )}
                           
-                          {/* Commission Badge - Top Right (Visible to hosts only) */}
                           {isHostMode && vendor.commission_percentage && (
                             <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
                               {vendor.commission_percentage}%
                             </Badge>
                           )}
                           
-                          {/* Content Overlay */}
                           <div className="absolute bottom-2 left-2 right-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
                             <div className="flex items-center gap-1 text-white/80 text-[10px]">
@@ -417,21 +411,80 @@ const Explore = () => {
                 </div>
               )}
 
-              {/* Mock Experiences - Horizontal Scroll */}
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                <div className="flex gap-3 w-max pb-2">
-                  {filteredExperiences.map((experience) => (
-                    <div key={experience.id} className="flex-shrink-0 w-40">
-                      <ExperienceCard 
-                        experience={experience} 
-                        showAddButton={isHostMode}
-                      />
-                    </div>
-                  ))}
+              {/* Row 2 - Second half of verified vendors */}
+              {experiencesRow2.length > 0 && (
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                  <div className="flex gap-3 w-max pb-2">
+                    {experiencesRow2.map((vendor) => (
+                      <Link
+                        key={vendor.id}
+                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
+                        className="flex-shrink-0 w-40 block"
+                      >
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          {vendor.photos && vendor.photos.length > 0 ? (
+                            <img
+                              src={vendor.photos[0]}
+                              alt={vendor.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          {isHostMode && (
+                            <button
+                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                              disabled={loadingVendors[vendor.id]}
+                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                                hasRecommendation(vendor.id, 'vendor')
+                                  ? 'bg-green-500 text-white' 
+                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
+                              }`}
+                            >
+                              {loadingVendors[vendor.id] ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : hasRecommendation(vendor.id, 'vendor') ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          
+                          {isHostMode && vendor.commission_percentage && (
+                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
+                              {vendor.commission_percentage}%
+                            </Badge>
+                          )}
+                          
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              {vendor.google_rating && (
+                                <>
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{vendor.google_rating}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              <span>${vendor.price_per_person || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-1.5">
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {filteredExperiences.length === 0 && filteredVendorExperiences.length === 0 && (
+              {filteredVendorExperiences.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground text-sm">No experiences found</p>
                 </div>
@@ -461,23 +514,153 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Restaurants - Horizontal Scroll */}
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                <div className="flex gap-3 w-max pb-2">
-                  {filteredRestaurants.map((restaurant) => (
-                    <div key={restaurant.id} className="flex-shrink-0 w-40">
-                      <RestaurantCard
-                        restaurant={restaurant}
-                        variant="grid"
-                        size="small"
-                        showAddButton={isHostMode}
-                      />
-                    </div>
-                  ))}
+              {/* Row 1 - First half of verified restaurants */}
+              {restaurantsRow1.length > 0 && (
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                  <div className="flex gap-3 w-max pb-2">
+                    {restaurantsRow1.map((vendor) => (
+                      <Link
+                        key={vendor.id}
+                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
+                        className="flex-shrink-0 w-40 block"
+                      >
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          {vendor.photos && vendor.photos.length > 0 ? (
+                            <img
+                              src={vendor.photos[0]}
+                              alt={vendor.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          {isHostMode && (
+                            <button
+                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                              disabled={loadingVendors[vendor.id]}
+                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                                hasRecommendation(vendor.id, 'vendor')
+                                  ? 'bg-green-500 text-white' 
+                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
+                              }`}
+                            >
+                              {loadingVendors[vendor.id] ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : hasRecommendation(vendor.id, 'vendor') ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          
+                          {isHostMode && vendor.commission_percentage && (
+                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
+                              {vendor.commission_percentage}%
+                            </Badge>
+                          )}
+                          
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              {vendor.google_rating && (
+                                <>
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{vendor.google_rating}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              <span>${vendor.price_per_person || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-1.5">
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {filteredRestaurants.length === 0 && (
+              {/* Row 2 - Second half of verified restaurants */}
+              {restaurantsRow2.length > 0 && (
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                  <div className="flex gap-3 w-max pb-2">
+                    {restaurantsRow2.map((vendor) => (
+                      <Link
+                        key={vendor.id}
+                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
+                        className="flex-shrink-0 w-40 block"
+                      >
+                        <div className="aspect-square rounded-xl overflow-hidden relative">
+                          {vendor.photos && vendor.photos.length > 0 ? (
+                            <img
+                              src={vendor.photos[0]}
+                              alt={vendor.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
+                              <Store className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          {isHostMode && (
+                            <button
+                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                              disabled={loadingVendors[vendor.id]}
+                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+                                hasRecommendation(vendor.id, 'vendor')
+                                  ? 'bg-green-500 text-white' 
+                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
+                              }`}
+                            >
+                              {loadingVendors[vendor.id] ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : hasRecommendation(vendor.id, 'vendor') ? (
+                                <Check className="h-4 w-4" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          
+                          {isHostMode && vendor.commission_percentage && (
+                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
+                              {vendor.commission_percentage}%
+                            </Badge>
+                          )}
+                          
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                              {vendor.google_rating && (
+                                <>
+                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{vendor.google_rating}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              <span>${vendor.price_per_person || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-1.5">
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {filteredVendorRestaurants.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground text-sm">No restaurants found</p>
                 </div>
