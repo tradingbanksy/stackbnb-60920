@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Settings, Percent, Save, Loader2, AlertTriangle, Tag, ChevronRight } from "lucide-react";
+import { ArrowLeft, Settings, Percent, Save, Loader2, AlertTriangle, Tag, ChevronRight, ShieldCheck } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -209,6 +209,24 @@ const PlatformSettings = () => {
                   <h3 className="font-semibold">Promo Codes</h3>
                   <p className="text-sm text-muted-foreground">
                     Create and manage discount codes
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </Card>
+          </Link>
+
+          {/* Vendor Approvals Link */}
+          <Link to="/admin/vendor-approvals">
+            <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
+                  <ShieldCheck className="h-6 w-6 text-emerald-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Vendor Approvals</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review and approve vendor profiles
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />

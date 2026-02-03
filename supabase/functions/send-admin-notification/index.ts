@@ -10,10 +10,11 @@ const corsHeaders = {
 };
 
 interface BookingNotification {
-  type: "booking" | "promo_used" | "vendor_booking" | "guest_confirmation" | "booking_reminder" | "host_commission" | "guest_cancellation" | "vendor_cancellation";
+  type: "booking" | "promo_used" | "vendor_booking" | "guest_confirmation" | "booking_reminder" | "host_commission" | "guest_cancellation" | "vendor_cancellation" | "vendor_submitted_for_review" | "vendor_approved" | "vendor_rejected" | "vendor_changes_requested";
   experienceName?: string;
   vendorName?: string;
   vendorEmail?: string;
+  vendorId?: string;
   hostEmail?: string;
   guestEmail?: string;
   guestName?: string;
@@ -28,6 +29,7 @@ interface BookingNotification {
   discountAmount?: number;
   originalAmount?: number;
   reason?: string;
+  verificationNotes?: string;
 }
 
 const ADMIN_EMAIL = "admin@stackd.app"; // Change this to actual admin email
@@ -535,6 +537,154 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("[ADMIN-NOTIFICATION] Vendor cancellation email sent:", vendorCancelEmailResponse);
 
       return new Response(JSON.stringify({ success: true, emailResponse: vendorCancelEmailResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } else if (notification.type === "vendor_submitted_for_review") {
+      // Admin notification when vendor submits for review
+      subject = `🔔 New Vendor Awaiting Review: ${notification.vendorName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #f97316; margin-bottom: 20px;">New Vendor Submission</h1>
+          
+          <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h2 style="margin: 0 0 15px 0; color: #1e293b;">${notification.vendorName}</h2>
+            <p style="color: #64748b; margin: 0;">A new vendor has submitted their profile for review.</p>
+          </div>
+          
+          <a href="https://stackbnb.app/admin/vendor-approvals" 
+             style="display: inline-block; background: linear-gradient(135deg, #10b981, #14b8a6); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+            Review Now
+          </a>
+          
+          <p style="color: #64748b; font-size: 14px; margin-top: 20px;">This is an automated notification from Stackd.</p>
+        </div>
+      `;
+      // Send to admin
+    } else if (notification.type === "vendor_approved") {
+      // Vendor approval notification
+      subject = `✅ Your Profile is Approved: ${notification.vendorName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #16a34a; margin-bottom: 10px;">🎉 You're Approved!</h1>
+            <p style="color: #64748b; font-size: 16px; margin: 0;">Great news! Your vendor profile has been verified and approved.</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #86efac;">
+            <h2 style="margin: 0 0 15px 0; color: #1e293b;">${notification.vendorName}</h2>
+            <p style="color: #166534; margin: 0;">You can now publish your profile and start accepting bookings!</p>
+          </div>
+          
+          <div style="text-align: center;">
+            <a href="https://stackbnb.app/vendor/preview" 
+               style="display: inline-block; background: linear-gradient(135deg, #f97316, #ec4899); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Publish Your Profile
+            </a>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; margin-top: 20px; text-align: center;">Welcome to Stackd! We're excited to have you.</p>
+        </div>
+      `;
+
+      const vendorApprovedResponse = await resend.emails.send({
+        from: "Stackd <notifications@resend.dev>",
+        to: [notification.vendorEmail!],
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("[ADMIN-NOTIFICATION] Vendor approved email sent:", vendorApprovedResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: vendorApprovedResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } else if (notification.type === "vendor_rejected") {
+      // Vendor rejection notification
+      subject = `❌ Profile Review Update: ${notification.vendorName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #dc2626; margin-bottom: 10px;">Profile Not Approved</h1>
+            <p style="color: #64748b; font-size: 16px; margin: 0;">Unfortunately, we weren't able to approve your profile at this time.</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #fecaca;">
+            <h2 style="margin: 0 0 15px 0; color: #1e293b;">${notification.vendorName}</h2>
+            ${notification.verificationNotes ? `
+            <div style="background: white; border-radius: 8px; padding: 16px; margin-top: 16px;">
+              <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Feedback:</strong></p>
+              <p style="margin: 8px 0 0 0; color: #1e293b;">${notification.verificationNotes}</p>
+            </div>
+            ` : ''}
+          </div>
+          
+          <div style="text-align: center;">
+            <a href="https://stackbnb.app/vendor/create-profile" 
+               style="display: inline-block; background: linear-gradient(135deg, #f97316, #ec4899); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Update Your Profile
+            </a>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; margin-top: 20px; text-align: center;">You can make changes and resubmit for review.</p>
+        </div>
+      `;
+
+      const vendorRejectedResponse = await resend.emails.send({
+        from: "Stackd <notifications@resend.dev>",
+        to: [notification.vendorEmail!],
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("[ADMIN-NOTIFICATION] Vendor rejected email sent:", vendorRejectedResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: vendorRejectedResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } else if (notification.type === "vendor_changes_requested") {
+      // Changes requested notification
+      subject = `📝 Changes Requested: ${notification.vendorName}`;
+      htmlContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #f97316; margin-bottom: 10px;">Almost There!</h1>
+            <p style="color: #64748b; font-size: 16px; margin: 0;">We need a few changes before we can approve your profile.</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #fed7aa;">
+            <h2 style="margin: 0 0 15px 0; color: #1e293b;">${notification.vendorName}</h2>
+            ${notification.verificationNotes ? `
+            <div style="background: white; border-radius: 8px; padding: 16px; margin-top: 16px;">
+              <p style="margin: 0; color: #64748b; font-size: 14px;"><strong>Requested Changes:</strong></p>
+              <p style="margin: 8px 0 0 0; color: #1e293b;">${notification.verificationNotes}</p>
+            </div>
+            ` : ''}
+          </div>
+          
+          <div style="text-align: center;">
+            <a href="https://stackbnb.app/vendor/create-profile" 
+               style="display: inline-block; background: linear-gradient(135deg, #f97316, #ec4899); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              Make Changes
+            </a>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; margin-top: 20px; text-align: center;">Once you've made the changes, resubmit for review.</p>
+        </div>
+      `;
+
+      const vendorChangesResponse = await resend.emails.send({
+        from: "Stackd <notifications@resend.dev>",
+        to: [notification.vendorEmail!],
+        subject,
+        html: htmlContent,
+      });
+
+      console.log("[ADMIN-NOTIFICATION] Vendor changes requested email sent:", vendorChangesResponse);
+
+      return new Response(JSON.stringify({ success: true, emailResponse: vendorChangesResponse }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
