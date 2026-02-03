@@ -5,6 +5,8 @@ export { default as VendorBookingForm } from './BookingForm';
 export { default as VendorBusinessDetails } from './BusinessDetails';
 export { default as CreateVendorProfile } from './CreateProfile';
 export { default as VendorDashboard } from './Dashboard';
+export { default as VendorPaymentSettings } from './PaymentSettings';
+export { default as VendorPayoutHistory } from './PayoutHistory';
 export { default as VendorProfile } from './Profile';
 export { default as VendorProfilePreview } from './ProfilePreview';
 export { default as VendorPublicProfile } from './PublicProfile';

@@ -72,6 +72,8 @@ import {
   AddService,
   VendorProfile,
   VendorSettings,
+  VendorPaymentSettings,
+  VendorPayoutHistory,
   AllBookings,
   ActiveHosts,
   RevenueBreakdown,
@@ -322,6 +324,22 @@ const AppRoutes = () => (
       element={
         <ProtectedVendorRoute>
           <VendorSettings />
+        </ProtectedVendorRoute>
+      } 
+    />
+    <Route 
+      path="/vendor/payment-settings" 
+      element={
+        <ProtectedVendorRoute>
+          <VendorPaymentSettings />
+        </ProtectedVendorRoute>
+      } 
+    />
+    <Route 
+      path="/vendor/payout-history" 
+      element={
+        <ProtectedVendorRoute>
+          <VendorPayoutHistory />
         </ProtectedVendorRoute>
       } 
     />
