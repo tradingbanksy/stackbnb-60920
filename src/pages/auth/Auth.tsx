@@ -154,11 +154,11 @@ const Auth = () => {
             <button
               onClick={() => handleRoleSelect("user")}
               className="group w-full p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm
-                transition-all duration-300 hover:border-blue-500/50 hover:bg-card/80 hover:scale-[1.01]
-                hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)] focus:outline-none"
+                transition-all duration-300 hover:border-amber-500/50 hover:bg-card/80 hover:scale-[1.01]
+                hover:shadow-[0_4px_20px_rgba(245,158,11,0.15)] focus:outline-none"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 
                   flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-6 w-6 text-white" />
                 </div>
