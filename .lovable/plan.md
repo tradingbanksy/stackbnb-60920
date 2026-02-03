@@ -1,62 +1,67 @@
 
-# Plan: Fix Stripe Connect Button in Host Dashboard
 
-## Problem Analysis
-When clicking the "Connect" button on the Host Dashboard, the page navigates to a blank screen with a sad document image. This happens because:
+# Plan: Remove Mock Data and Split Verified Vendors into Two Rows
 
-1. The Dashboard uses `window.location.href = data.url` to navigate directly to Stripe
-2. If the Stripe page has any loading issues or session problems, the user is stuck on a blank page
-3. The PaymentSettings page uses `window.open(data.url, '_blank')` which works better by keeping the app open
+## Summary
+Remove all mock experience data from the `/explore` page and display only verified vendors from the database. The verified vendors will be split evenly across two horizontal scrolling rows for better visual distribution.
 
-## Solution
-Update the Dashboard's `handleConnectStripe` function to match the PaymentSettings behavior:
-- Open Stripe in a new tab instead of replacing the current page
-- Show a toast message guiding the user
-- Reset the loading state properly
+## Current State
+- **First row**: Shows real vendor profiles fetched from `vendor_profiles` table
+- **Second row**: Shows mock experiences from `mockData.ts` (Hot Air Balloon Ride, Wine Tasting Tour, Snorkeling Adventure, etc.)
+- Both rows use horizontal scrolling
 
 ## Changes Required
 
-### File: `src/pages/host/Dashboard.tsx`
+### File: `src/pages/guest/Explore.tsx`
 
-**Update the `handleConnectStripe` function (around lines 168-184):**
-
-```text
-Current code:
-  if (data?.url) {
-    window.location.href = data.url;
-  }
-
-New code:
-  if (data?.url) {
-    window.open(data.url, '_blank');
-    toast.success('Stripe setup opened in a new tab. Complete the setup there, then refresh this page.');
-    setIsConnecting(false);
-  }
+**1. Remove mock data imports (lines 7-8)**
+```typescript
+// DELETE these lines:
+import { experiences } from "@/data/mockData";
+import { mockRestaurants } from "@/data/mockRestaurants";
 ```
 
-Also add proper error reset:
-```text
-Current code (catch block):
-  } catch (error) {
-    console.error('Error connecting Stripe:', error);
-    toast.error('Failed to start Stripe onboarding');
-    setIsConnecting(false);
-  }
+**2. Remove mock filtering logic (lines 167-185)**
+Delete the `filteredExperiences` and `filteredRestaurants` filter functions that process mock data.
 
-Stays the same - just ensure setIsConnecting(false) is called in the success case too.
+**3. Update Experiences Tab (lines 344-438)**
+Replace the current two-row structure with:
+- Split `filteredVendorExperiences` into two halves using `Math.ceil()`
+- Render first half in row 1
+- Render second half in row 2
+- Keep the same card styling and functionality
+
+**4. Update Restaurants Tab (lines 464-484)**
+- Fetch restaurant vendor profiles from database (those with `listing_type: 'restaurant'`)
+- Split them evenly into two rows similar to experiences
+- Remove mock restaurant rendering
+
+**5. Update empty state checks**
+Update the "No experiences found" and "No restaurants found" conditions to only check database vendors.
+
+## Implementation Details
+
+### Splitting Logic
+```typescript
+// For experiences
+const firstHalf = filteredVendorExperiences.slice(0, Math.ceil(filteredVendorExperiences.length / 2));
+const secondHalf = filteredVendorExperiences.slice(Math.ceil(filteredVendorExperiences.length / 2));
+
+// Render firstHalf in Row 1, secondHalf in Row 2
 ```
 
-## Technical Details
+### Visual Result
+| Before | After |
+|--------|-------|
+| Row 1: Real vendors | Row 1: First half of verified vendors |
+| Row 2: Mock data (balloon, wine, etc.) | Row 2: Second half of verified vendors |
 
-| Aspect | Current Behavior | New Behavior |
-|--------|------------------|--------------|
-| Navigation | Replaces current page | Opens new tab |
-| App state | Lost on navigation | Preserved |
-| Error recovery | User stuck on blank page | User can retry from dashboard |
-| Loading state | Never reset on success | Properly reset |
+## Files to Modify
+1. `src/pages/guest/Explore.tsx`
 
-## Why This Works
-- The backend is functioning correctly (confirmed in logs)
-- The PaymentSettings page uses this exact pattern and works
-- Opening in a new tab is more user-friendly for external Stripe onboarding
-- Users can easily return to the dashboard if something goes wrong
+## Notes
+- The existing Supabase query already filters for `is_published: true`, ensuring only verified vendors appear
+- Restaurant tab will also need updating to use real data instead of mock restaurants
+- If there's only 1 vendor, it will appear in row 1 with row 2 empty
+- If there are 0 vendors, the "No experiences found" message will display
+
