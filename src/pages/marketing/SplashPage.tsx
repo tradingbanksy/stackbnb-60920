@@ -60,7 +60,7 @@ const SplashPage = () => {
       <div className="flex items-center gap-5">
         {/* Sign Up Button */}
         <Link
-          to="/select-role"
+          to="/auth"
           onClick={handleSignupClick}
           className={`
             relative overflow-hidden px-10 py-3.5 rounded-full font-medium text-sm uppercase tracking-widest
