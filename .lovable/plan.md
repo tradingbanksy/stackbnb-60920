@@ -1,202 +1,325 @@
 
-# Plan: Auth Review & Admin Access Improvements
+
+# Plan: Replace Mock Data with Real Database Queries
 
 ## Overview
 
-Review and improve the authentication flow, ensure the admin role works smoothly for `gmunoz512@icloud.com`, and add a back button to the splash page.
+Remove all hardcoded mock data from the Host dashboard and related pages, replacing them with real-time Supabase database queries. The site will display actual data from the `bookings`, `reviews`, `vendor_profiles`, and `host_vendor_links` tables.
 
-## Current State Assessment
+## Current State Analysis
 
-### Password Reset Flow (Working Well)
-The forgot password feature uses a secure OTP-based flow:
-1. User enters email and clicks "Forgot password?"
-2. `send-reset-otp` edge function sends a 6-digit code to email
-3. User enters OTP in a dialog
-4. `verify-reset-otp` validates the code and generates a secure reset link
-5. User is redirected to `/reset-password` to set a new password
+### Database Reality (as of now)
+| Metric | Value |
+|--------|-------|
+| Total Bookings | 0 |
+| Total Reviews | 0 |
+| Published Vendors | 9 |
+| Host-Vendor Links | 3 |
+| Total Profiles | 37 |
 
-Security features in place:
-- Rate limiting: 3 OTP sends per minute, 5 verification attempts per minute
-- OTPs expire after 10 minutes
-- Codes are deleted after use
+The vendor dashboard (`src/pages/vendor/Dashboard.tsx`) is **already using real data** via Supabase queries. The host pages still rely on mock data.
 
-### Login Process (Working Well)
-- Email/password authentication via Supabase
-- Google OAuth integration
-- Leaked password detection with user-friendly error messages
-- Role-based redirects after sign-in
-- Users without a role are prompted to select one
+### Mock Data Usage Found
 
-### Admin Access (Already Configured)
-Good news: `gmunoz512@icloud.com` is **already an admin** in the system.
+| File | Mock Data Used | Needs Real Query |
+|------|----------------|------------------|
+| `src/pages/host/Dashboard.tsx` | `dashboardStats`, `recentBookings` | Yes - earnings, bookings, vendor counts, ratings |
+| `src/pages/host/Bookings.tsx` | `recentBookings` | Yes - host's booking history |
+| `src/pages/host/Earnings.tsx` | Local `earningsData` array | Yes - host's commission earnings |
+| `src/pages/host/ActiveVendors.tsx` | `vendors` | Yes - host's linked vendors |
+| `src/pages/host/Ratings.tsx` | Local `ratingsData` array | Yes - reviews for vendors host referred |
 
-Current admin capabilities:
-- `/admin/settings` - Configure platform fee percentage
-- `/admin/promo-codes` - Create and manage discount codes
-
-## Changes Required
-
-### 1. Add Back Button to Splash Page on Auth
-
-The `/auth` page currently has "Back to role selection" when signing up with a role, but there's no way to return to the splash page (`/`) for users who don't want to sign up yet.
-
-**File:** `src/pages/auth/Auth.tsx`
-
-Add a back link at the bottom of both the role selection view and the sign-in form:
+## Data Flow Architecture
 
 ```text
-Role Selection View:
-┌─────────────────────────────────────┐
-│           [stackd logo]            │
-│                                     │
-│        Choose your role.           │
-│                                     │
-│  [Guest Card]                       │
-│  [Host Card]                        │
-│  [Vendor Card]                      │
-│                                     │
-│  Already have an account? Sign in  │
-│                                     │
-│       ← Back to home               │  ← NEW
-└─────────────────────────────────────┘
-
-Sign-In View:
-┌─────────────────────────────────────┐
-│           [stackd logo]            │
-│                                     │
-│     ┌───────────────────────┐      │
-│     │ Email / Password Form │      │
-│     └───────────────────────┘      │
-│                                     │
-│  Don't have an account? Sign up    │
-│                                     │
-│       ← Back to home               │  ← NEW
-└─────────────────────────────────────┘
-```
-
-### 2. What Admin Should Have Access To (Legal Considerations)
-
-| Access Type | Should Have? | Reasoning |
-|-------------|--------------|-----------|
-| **Platform Settings** | Yes ✓ | Already implemented. Controls platform fee % |
-| **Promo Codes** | Yes ✓ | Already implemented. Business operations |
-| **Aggregate Analytics** | Yes | Total bookings, revenue trends, user counts. Non-PII |
-| **User Listing** | Carefully | View email, role, status. No passwords or payment details |
-| **Vendor/Host Listings** | Yes | Approval workflows, quality control |
-| **Booking Records** | Carefully | For dispute resolution. Hide full payment details |
-| **Direct Stripe Data** | No | PCI compliance - access through Stripe dashboard |
-| **Private Messages** | No | Privacy violation unless support ticket |
-| **Raw User Passwords** | Never | Technically impossible with proper hashing |
-
-The current admin setup is appropriate for a platform owner - it provides control over business settings without exposing sensitive user data.
-
-### 3. Ensure Smooth Re-login Flow
-
-The current flow works correctly:
-1. Sign in → fetch role → redirect to appropriate dashboard
-2. If no role found → prompt role selection
-3. Session persists across browser refreshes
-
-No changes needed, but worth noting the flow:
-
-```text
-Sign In Flow:
-┌─────────────────┐
-│  Enter Email    │
-│  Enter Password │
-│  [Sign In]      │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Supabase Auth   │
-│ Validates       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Fetch user_roles│
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │         │
-    ▼         ▼
-Has Role   No Role
-    │         │
-    │         ▼
-    │  ┌─────────────┐
-    │  │ Show Role   │
-    │  │ Selection   │
-    │  └─────────────┘
-    │
-    ▼
-┌─────────────────┐
-│ Redirect to     │
-│ role-specific   │
-│ dashboard       │
-└─────────────────┘
+HOST DASHBOARD METRICS:
+┌─────────────────────────────────────────────────────────────┐
+│  Total Earnings  │  Bookings  │  Active Vendors  │  Rating  │
+├──────────────────┼────────────┼──────────────────┼──────────┤
+│  SUM of          │  COUNT of  │  COUNT of        │  AVG of  │
+│  host_payout_    │  bookings  │  host_vendor_    │  reviews │
+│  amount from     │  where     │  links where     │  for     │
+│  bookings where  │  host_     │  host_user_id    │  vendors │
+│  host_user_id    │  user_id   │  = current user  │  linked  │
+│  = current user  │  = current │                  │  to host │
+│                  │  user      │                  │          │
+└──────────────────┴────────────┴──────────────────┴──────────┘
 ```
 
 ## Implementation Details
 
-### File Changes
+### Phase 1: Host Dashboard - Real Stats
 
-| Action | File | Changes |
-|--------|------|---------|
-| Modify | `src/pages/auth/Auth.tsx` | Add "Back to home" link in both role selection and sign-in views |
-| Modify | `src/pages/marketing/SplashPage.tsx` | Fix Sign Up link to go to `/auth` instead of `/select-role` (which no longer exists) |
+**File:** `src/pages/host/Dashboard.tsx`
 
-### Code Changes
+Replace the imported `dashboardStats` with a React Query hook:
 
-**1. Auth.tsx - Add back link to role selection view (around line 227)**
+```typescript
+const { data: stats, isLoading: isLoadingStats } = useQuery({
+  queryKey: ['hostDashboardStats', user?.id],
+  queryFn: async () => {
+    if (!user) return [];
 
-After the "Already have an account?" link, add:
-```tsx
-{/* Back to splash page */}
-<div className="text-center">
-  <Link
-    to="/"
-    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-  >
-    ← Back to home
-  </Link>
-</div>
+    // Fetch bookings where this host referred the customer
+    const { data: bookings } = await supabase
+      .from('bookings')
+      .select('total_amount, host_payout_amount')
+      .eq('host_user_id', user.id)
+      .eq('status', 'completed');
+
+    const totalEarnings = bookings?.reduce((sum, b) => sum + (b.host_payout_amount || 0), 0) || 0;
+    const bookingCount = bookings?.length || 0;
+
+    // Count linked vendors
+    const { count: vendorCount } = await supabase
+      .from('host_vendor_links')
+      .select('*', { count: 'exact', head: true })
+      .eq('host_user_id', user.id);
+
+    // Calculate average rating from reviews on linked vendors
+    const { data: linkedVendors } = await supabase
+      .from('host_vendor_links')
+      .select('vendor_profile_id')
+      .eq('host_user_id', user.id);
+
+    let avgRating = 'N/A';
+    if (linkedVendors && linkedVendors.length > 0) {
+      const vendorIds = linkedVendors.map(v => v.vendor_profile_id);
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('rating')
+        .in('vendor_profile_id', vendorIds);
+      
+      if (reviews && reviews.length > 0) {
+        const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+        avgRating = avg.toFixed(1) + '★';
+      }
+    }
+
+    return [
+      { label: "Total Earnings", value: `$${totalEarnings.toLocaleString()}`, icon: "DollarSign" },
+      { label: "Bookings", value: bookingCount.toString(), icon: "Calendar" },
+      { label: "Active Vendors", value: (vendorCount || 0).toString(), icon: "Users" },
+      { label: "Avg Rating", value: avgRating, icon: "Star" },
+    ];
+  },
+  enabled: !!user,
+});
 ```
 
-**2. Auth.tsx - Add back link to sign-in form (around line 625)**
+Replace the imported `recentBookings` with real data:
 
-Add a back link that shows when NOT in signup mode or after the role selection back link:
-```tsx
-{/* Back to home - always available */}
-<div className="text-center">
-  <Link
-    to="/"
-    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-  >
-    ← Back to home
-  </Link>
-</div>
+```typescript
+const { data: recentBookings = [], isLoading: isLoadingBookings } = useQuery({
+  queryKey: ['hostRecentBookings', user?.id],
+  queryFn: async () => {
+    if (!user) return [];
+
+    const { data } = await supabase
+      .from('bookings')
+      .select('experience_name, vendor_name, booking_date, host_payout_amount')
+      .eq('host_user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    return data?.map(b => ({
+      service: b.experience_name,
+      vendor: b.vendor_name || 'Unknown Vendor',
+      date: new Date(b.booking_date).toLocaleDateString('en-US', { 
+        month: 'short', day: 'numeric', year: 'numeric' 
+      }),
+      amount: `$${(b.host_payout_amount || 0).toFixed(0)}`,
+    })) || [];
+  },
+  enabled: !!user,
+});
 ```
 
-**3. SplashPage.tsx - Fix Sign Up link (line 62-78)**
+### Phase 2: Host Bookings Page
 
-The "Sign Up" button currently goes to `/select-role` which redirects to `/auth`. Update to go directly to `/auth`:
-```tsx
-<Link
-  to="/auth"  // Changed from "/select-role"
-  onClick={handleSignupClick}
-  // ... rest of styling
->
-  Sign Up
-</Link>
+**File:** `src/pages/host/Bookings.tsx`
+
+Replace mock data with real query:
+
+```typescript
+const { data: bookings = [], isLoading } = useQuery({
+  queryKey: ['hostAllBookings', user?.id],
+  queryFn: async () => {
+    if (!user) return [];
+
+    const { data } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('host_user_id', user.id)
+      .order('booking_date', { ascending: false });
+
+    return data || [];
+  },
+  enabled: !!user,
+});
+
+const totalRevenue = bookings.reduce((sum, b) => sum + (b.host_payout_amount || 0), 0);
 ```
 
-## Summary
+### Phase 3: Host Earnings Page
 
-1. **Password reset works well** - OTP-based, rate-limited, secure
-2. **Login flow works well** - Role-based routing, session persistence
-3. **Admin access is already set up** for `gmunoz512@icloud.com`
-4. **Add back button** to `/auth` page to return to splash page
-5. **Fix splash page** Sign Up link to go directly to `/auth`
+**File:** `src/pages/host/Earnings.tsx`
 
-The admin currently has appropriate access to business settings without exposing sensitive user data. The existing permissions (platform settings, promo codes) are suitable for a platform owner role.
+Replace local `earningsData` array:
+
+```typescript
+const { data: earnings = [], isLoading } = useQuery({
+  queryKey: ['hostEarnings', user?.id],
+  queryFn: async () => {
+    if (!user) return [];
+
+    const { data } = await supabase
+      .from('bookings')
+      .select('experience_name, vendor_name, host_payout_amount, booking_date')
+      .eq('host_user_id', user.id)
+      .eq('status', 'completed')
+      .order('booking_date', { ascending: false });
+
+    return data?.map((b, i) => ({
+      id: i + 1,
+      service: b.experience_name,
+      vendor: b.vendor_name || 'Unknown',
+      amount: b.host_payout_amount || 0,
+      date: new Date(b.booking_date).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      }),
+    })) || [];
+  },
+  enabled: !!user,
+});
+```
+
+### Phase 4: Host Active Vendors Page
+
+**File:** `src/pages/host/ActiveVendors.tsx`
+
+Replace mock `vendors` import:
+
+```typescript
+const { data: vendors = [], isLoading } = useQuery({
+  queryKey: ['hostLinkedVendors', user?.id],
+  queryFn: async () => {
+    if (!user) return [];
+
+    // Get linked vendor IDs
+    const { data: links } = await supabase
+      .from('host_vendor_links')
+      .select('vendor_profile_id')
+      .eq('host_user_id', user.id);
+
+    if (!links || links.length === 0) return [];
+
+    const vendorIds = links.map(l => l.vendor_profile_id);
+
+    // Fetch vendor profiles
+    const { data: profiles } = await supabase
+      .from('vendor_profiles')
+      .select('id, name, category, description, commission_percentage')
+      .in('id', vendorIds);
+
+    return profiles || [];
+  },
+  enabled: !!user,
+});
+```
+
+### Phase 5: Host Ratings Page
+
+**File:** `src/pages/host/Ratings.tsx`
+
+Replace local `ratingsData` array:
+
+```typescript
+const { data: reviews = [], isLoading } = useQuery({
+  queryKey: ['hostVendorReviews', user?.id],
+  queryFn: async () => {
+    if (!user) return [];
+
+    // Get linked vendor IDs
+    const { data: links } = await supabase
+      .from('host_vendor_links')
+      .select('vendor_profile_id')
+      .eq('host_user_id', user.id);
+
+    if (!links || links.length === 0) return [];
+
+    const vendorIds = links.map(l => l.vendor_profile_id);
+
+    // Fetch reviews for these vendors
+    const { data: reviewsData } = await supabase
+      .from('reviews')
+      .select(`
+        id,
+        rating,
+        comment,
+        created_at,
+        vendor_profile_id,
+        booking_id,
+        vendor_profiles!inner (name)
+      `)
+      .in('vendor_profile_id', vendorIds)
+      .order('created_at', { ascending: false });
+
+    return reviewsData || [];
+  },
+  enabled: !!user,
+});
+```
+
+## Empty State Handling
+
+Since the database currently has 0 bookings and 0 reviews, we need proper empty states:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    EMPTY STATE DESIGN                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│                     [Calendar Icon]                         │
+│                                                             │
+│              No bookings yet                                │
+│                                                             │
+│    Your earnings will appear here once guests              │
+│    book experiences through your referrals                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/host/Dashboard.tsx` | Remove mock imports, add useQuery for stats and recent bookings |
+| `src/pages/host/Bookings.tsx` | Remove mock import, add useQuery for all bookings |
+| `src/pages/host/Earnings.tsx` | Remove local array, add useQuery for earnings |
+| `src/pages/host/ActiveVendors.tsx` | Remove mock import, add useQuery for linked vendors |
+| `src/pages/host/Ratings.tsx` | Remove local array, add useQuery for reviews |
+
+## Metric Accuracy Verification
+
+| Metric | Source | Calculation |
+|--------|--------|-------------|
+| Total Earnings | `bookings.host_payout_amount` | SUM where `host_user_id` = current user AND `status` = 'completed' |
+| Bookings | `bookings` table | COUNT where `host_user_id` = current user |
+| Active Vendors | `host_vendor_links` | COUNT where `host_user_id` = current user |
+| Avg Rating | `reviews` via `host_vendor_links` | AVG of reviews on vendors linked to this host |
+| Recent Activity | `bookings` | Latest 5 bookings where `host_user_id` = current user |
+
+## Benefits
+
+| Aspect | Before (Mock) | After (Real) |
+|--------|---------------|--------------|
+| Data accuracy | Static fake numbers | Live database values |
+| User trust | Shows fake earnings | Shows actual $0 (honest) |
+| Actionable | No | Yes - users see real progress |
+| Scalability | None | Automatic as data grows |
+
+## Note on Guest Pages
+
+The guest-facing pages (`AppView.tsx`, `Explore.tsx`, etc.) use `experiences` and `mockRestaurants` for discovery. These should remain as-is for now since they represent curated marketplace listings, not user-specific data. The vendor_profiles table already populates the real vendor discovery, and restaurant data comes from TripAdvisor API.
+
