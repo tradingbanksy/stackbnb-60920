@@ -1,342 +1,239 @@
 
-# Plan: Security Remediation
+# Plan: Complete Payment & Payout System
 
 ## Overview
 
-Address all active security findings from the security scan. The application has a solid security foundation but needs improvements in three key areas: data exposure protection, rate limiting for Edge Functions, and authentication hardening.
+Implement a complete payment flow where guests can purchase bookings through the website, with funds automatically split between the platform owner (you), hosts, and vendors based on the existing commission logic. This plan also makes the "Payment Settings" page functional so users can add/manage their debit cards for withdrawals.
 
-## Current Security Status
+## Current System Analysis
 
-| Severity | Finding | Category |
-|----------|---------|----------|
-| **ERROR** | Vendor Contact Information Exposure | Data Protection |
-| **ERROR** | Customer Personal Information Exposure | Data Protection |
-| **ERROR** | Edge Functions Lack Rate Limiting | API Protection |
-| **WARN** | Leaked Password Protection Disabled | Authentication |
-| **WARN** | Vendor Business Data Access | Data Protection |
+### Existing Payment Flow (Already Working)
+The system already has most of the infrastructure built:
 
-## Remediation Plan
+1. **Stripe Connect Express** is set up for both hosts and vendors
+2. **Checkout Flow** (`create-booking-checkout`) correctly calculates splits:
+   - If guest books via host's link: Host gets commission, Platform gets 3%, Vendor gets remainder
+   - If guest books directly (no referral): Platform gets (3% + host commission %), Vendor gets remainder
+3. **Webhook** (`stripe-webhook`) records bookings with payout amounts
+4. **Host/Vendor Dashboards** have "Connect Stripe" buttons that work
 
-### Phase 1: Database Security (RLS Policies)
+### What's Missing
 
-**1.1 Fix Vendor Profiles Data Exposure**
+| Component | Status | Action Needed |
+|-----------|--------|---------------|
+| Stripe Connect Onboarding | Working | None |
+| Payment Settings Page | Placeholder only | Make functional |
+| View Connected Account Info | Not implemented | Add to Payment Settings |
+| Access Stripe Dashboard (for withdrawals) | Not implemented | Add dashboard link |
+| Payout History | Placeholder only | Show real booking payouts |
+| Platform Owner Payouts | Partially working | Clarify flow |
 
-The `vendor_profiles` table exposes sensitive fields (email via user_id lookup, stripe_account_id, commission rates) to anyone viewing published profiles.
-
-**Solution:** Create a secure view for public access:
-
-```sql
--- Create a view that only exposes public fields
-CREATE VIEW public.vendor_profiles_public AS
-SELECT 
-  id,
-  name,
-  category,
-  description,
-  about_experience,
-  photos,
-  menu_url,
-  instagram_url,
-  price_per_person,
-  price_tiers,
-  duration,
-  max_guests,
-  google_rating,
-  google_place_id,
-  google_reviews_url,
-  airbnb_experience_url,
-  airbnb_reviews,
-  included_items,
-  age_restriction,
-  listing_type,
-  is_published,
-  created_at
-FROM vendor_profiles
-WHERE is_published = true;
-
--- Grant SELECT to anon and authenticated
-GRANT SELECT ON public.vendor_profiles_public TO anon, authenticated;
-```
-
-Then update client code to query the view for public access while keeping direct table access for owners.
-
-**1.2 Protect Profiles Table**
-
-Current RLS only allows users to view their own profile, which is correct. However, we should add an explicit deny for hosts viewing other profiles via recommendations field:
-
-```sql
--- Add policy to allow hosts to view limited profile data for their linked vendors
-CREATE POLICY "Hosts can view basic vendor owner profiles"
-ON public.profiles
-FOR SELECT
-USING (
-  auth.uid() = user_id
-  OR 
-  EXISTS (
-    SELECT 1 FROM host_vendor_links hvl
-    JOIN vendor_profiles vp ON vp.id = hvl.vendor_profile_id
-    WHERE hvl.host_user_id = auth.uid()
-    AND vp.user_id = profiles.user_id
-  )
-);
-```
-
-**1.3 Protect Vendors Table**
-
-Add explicit public deny:
-
-```sql
--- Ensure only authenticated owners can access
-CREATE POLICY "Deny public access to vendors"
-ON public.vendors
-FOR SELECT
-TO anon
-USING (false);
-```
-
-### Phase 2: Rate Limiting for Edge Functions
-
-**2.1 Create Rate Limiting Infrastructure**
-
-```sql
--- Rate limiting table
-CREATE TABLE public.rate_limits (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  identifier TEXT NOT NULL,
-  endpoint TEXT NOT NULL,
-  request_count INTEGER NOT NULL DEFAULT 1,
-  window_start TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Index for fast lookups
-CREATE INDEX idx_rate_limits_lookup 
-ON public.rate_limits(identifier, endpoint, window_start);
-
--- Enable RLS (only service role should access)
-ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
-
--- No policies = deny all direct access
-
--- Cleanup function for expired windows
-CREATE OR REPLACE FUNCTION public.cleanup_rate_limits()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  DELETE FROM rate_limits 
-  WHERE window_start < now() - interval '1 hour';
-END;
-$$;
-```
-
-**2.2 Create Shared Rate Limit Helper**
-
-Create file `supabase/functions/_shared/rateLimit.ts`:
-
-```typescript
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-interface RateLimitConfig {
-  windowMinutes: number;
-  maxRequests: number;
-}
-
-interface RateLimitResult {
-  allowed: boolean;
-  remaining: number;
-  resetAt: Date;
-}
-
-export async function checkRateLimit(
-  supabase: SupabaseClient,
-  identifier: string,
-  endpoint: string,
-  config: RateLimitConfig
-): Promise<RateLimitResult> {
-  const windowStart = new Date(
-    Date.now() - config.windowMinutes * 60 * 1000
-  );
-
-  const { data: existing } = await supabase
-    .from('rate_limits')
-    .select('request_count, window_start')
-    .eq('identifier', identifier)
-    .eq('endpoint', endpoint)
-    .gte('window_start', windowStart.toISOString())
-    .maybeSingle();
-
-  if (existing) {
-    if (existing.request_count >= config.maxRequests) {
-      return { 
-        allowed: false, 
-        remaining: 0, 
-        resetAt: new Date(
-          new Date(existing.window_start).getTime() + 
-          config.windowMinutes * 60 * 1000
-        )
-      };
-    }
-
-    await supabase
-      .from('rate_limits')
-      .update({ request_count: existing.request_count + 1 })
-      .eq('identifier', identifier)
-      .eq('endpoint', endpoint)
-      .gte('window_start', windowStart.toISOString());
-
-    return { 
-      allowed: true, 
-      remaining: config.maxRequests - existing.request_count - 1,
-      resetAt: new Date(
-        new Date(existing.window_start).getTime() + 
-        config.windowMinutes * 60 * 1000
-      )
-    };
-  }
-
-  await supabase
-    .from('rate_limits')
-    .insert({
-      identifier,
-      endpoint,
-      request_count: 1,
-      window_start: new Date().toISOString()
-    });
-
-  return { 
-    allowed: true, 
-    remaining: config.maxRequests - 1,
-    resetAt: new Date(Date.now() + config.windowMinutes * 60 * 1000)
-  };
-}
-```
-
-**2.3 Apply Rate Limiting to Critical Functions**
-
-| Function | Limit | Reason |
-|----------|-------|--------|
-| `trip-planner-chat` | 10/min | AI API costs ~$0.01-0.10/message |
-| `send-reset-otp` | 3/min | Email bombing prevention |
-| `verify-reset-otp` | 5/min | Brute force protection |
-| `google-reviews` | 20/min | API quota protection |
-| `tripadvisor-search` | 20/min | API quota protection |
-| `scrape-instagram` | 5/min | Abuse prevention |
-
-**Example implementation for trip-planner-chat:**
-
-```typescript
-import { checkRateLimit } from "../_shared/rateLimit.ts";
-
-// After CORS check, before processing
-const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
-const { allowed, remaining, resetAt } = await checkRateLimit(
-  supabaseAdmin,
-  `chat:${ip}`,
-  'trip-planner-chat',
-  { windowMinutes: 1, maxRequests: 10 }
-);
-
-if (!allowed) {
-  return new Response(
-    JSON.stringify({ 
-      error: 'Too many requests. Please wait a moment before trying again.',
-      resetAt: resetAt.toISOString()
-    }),
-    { 
-      status: 429, 
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json',
-        'Retry-After': String(Math.ceil((resetAt.getTime() - Date.now()) / 1000))
-      } 
-    }
-  );
-}
-```
-
-### Phase 3: Authentication Hardening
-
-**3.1 Enable Leaked Password Protection**
-
-This requires a manual step in the backend dashboard:
-
-1. Open Lovable Cloud Dashboard
-2. Navigate to Users → Authentication Settings
-3. Enable "Leaked Password Protection"
-
-**3.2 Update Error Handling for Leaked Passwords**
-
-Update `src/pages/auth/Auth.tsx` to handle leaked password errors gracefully:
-
-```typescript
-// Add to error handling section
-if (error?.message?.includes('data breach') || 
-    error?.message?.includes('leaked password')) {
-  toast.error(
-    "This password has been found in a data breach. Please choose a different, more secure password.",
-    { duration: 6000 }
-  );
-  return;
-}
-```
-
-## Files Changed
-
-| Action | File | Purpose |
-|--------|------|---------|
-| Create | Database migration | RLS policies + rate_limits table |
-| Create | `supabase/functions/_shared/rateLimit.ts` | Shared rate limiting helper |
-| Modify | `supabase/functions/trip-planner-chat/index.ts` | Add rate limiting |
-| Modify | `supabase/functions/send-reset-otp/index.ts` | Add rate limiting |
-| Modify | `supabase/functions/verify-reset-otp/index.ts` | Add rate limiting |
-| Modify | `supabase/functions/google-reviews/index.ts` | Add rate limiting |
-| Modify | `supabase/functions/tripadvisor-search/index.ts` | Add rate limiting |
-| Modify | `supabase/functions/scrape-instagram/index.ts` | Add rate limiting |
-| Modify | `src/pages/auth/Auth.tsx` | Leaked password error handling |
-
-## Implementation Priority
+## Commission Logic Summary (Already Implemented)
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 1: Data Protection (Database)                        │
-│  ├── Fix vendor_profiles exposure                           │
-│  ├── Add profiles table protection                          │
-│  └── Add vendors table deny policy                          │
-├─────────────────────────────────────────────────────────────┤
-│  Phase 2: Rate Limiting (Edge Functions)                    │
-│  ├── Create rate_limits table                               │
-│  ├── Create shared rateLimit helper                         │
-│  ├── Add to trip-planner-chat (highest priority)            │
-│  ├── Add to send-reset-otp                                  │
-│  └── Add to remaining functions                             │
-├─────────────────────────────────────────────────────────────┤
-│  Phase 3: Auth Hardening                                    │
-│  ├── Enable Leaked Password Protection (manual)             │
-│  └── Add error handling for leaked passwords                │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                     BOOKING WITH HOST REFERRAL                   │
+├──────────────────────────────────────────────────────────────────┤
+│  Guest pays $100 for experience                                  │
+│                                                                  │
+│  Platform Fee (3%)     →  $3.00   (stays with you)              │
+│  Host Commission (10%) →  $10.00  (transferred to host)         │
+│  Vendor Payout         →  $87.00  (transferred to vendor)       │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│                   BOOKING WITHOUT HOST (DIRECT)                  │
+├──────────────────────────────────────────────────────────────────┤
+│  Guest pays $100 for experience                                  │
+│                                                                  │
+│  Platform Fee (3% + 10%) →  $13.00  (stays with you)            │
+│  Host Commission         →  $0.00   (no host)                    │
+│  Vendor Payout           →  $87.00  (transferred to vendor)      │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-## Security Impact
+The platform owner (you) receives the "application fee" which is:
+- Platform fee % (from `platform_settings` table, default 3%)
+- Plus host commission % when there's no host referral
 
-| Before | After |
-|--------|-------|
-| Vendor emails/Stripe IDs exposed | Only public marketing data visible |
-| Unlimited API requests | Rate-limited to prevent abuse |
-| Weak passwords allowed | Compromised passwords blocked |
-| No protection against email bombing | OTP requests limited per IP |
+## Changes Required
 
-## Manual Steps Required
+### Phase 1: Functional Payment Settings Page
 
-After implementation, you'll need to:
+Replace the placeholder "Coming Soon" card with a functional page showing:
+- Stripe Connect status (connected/not connected)
+- Button to set up or update payment method
+- Link to Stripe Express Dashboard (for managing payouts)
+- Account details (last 4 of bank, payout schedule)
 
-1. **Enable Leaked Password Protection** in the Lovable Cloud dashboard (Users → Authentication Settings)
+**File:** `src/pages/host/PaymentSettings.tsx`
+
+```tsx
+// Key features:
+// 1. Check Stripe Connect status using existing check-connect-status function
+// 2. Show "Set Up Payouts" or "Manage Account" based on status
+// 3. Link to Stripe Express Dashboard for withdrawal management
+```
+
+### Phase 2: Create Stripe Dashboard Link Function
+
+Create a new Edge Function that generates a link to the Stripe Express Dashboard where users can:
+- View their balance
+- Manage payout schedule
+- Add/update bank accounts (debit cards)
+- View payout history
+
+**New File:** `supabase/functions/create-stripe-login-link/index.ts`
+
+```typescript
+// Uses stripe.accounts.createLoginLink() to generate
+// a one-time link to the Stripe Express Dashboard
+// where users manage their bank/card for withdrawals
+```
+
+### Phase 3: Functional Payout History Page
+
+Replace placeholder with real data from the `bookings` table, showing:
+- Booking date
+- Experience name
+- Commission earned
+- Payout status
+
+**File:** `src/pages/host/PayoutHistory.tsx`
+
+Query the bookings table for entries where `host_user_id` = current user and display `host_payout_amount`.
+
+### Phase 4: Vendor Payment Settings & Payout Pages
+
+Apply the same changes to vendor pages:
+- `src/pages/vendor/Settings.tsx` (or create PaymentSettings equivalent)
+
+## Detailed Implementation
+
+### 1. Create Stripe Login Link Edge Function
+
+**New File:** `supabase/functions/create-stripe-login-link/index.ts`
+
+```typescript
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+// CORS and auth handling...
+
+serve(async (req) => {
+  // Authenticate user
+  // Get accountType from body (host or vendor)
+  // Fetch stripe_account_id from profiles or vendor_profiles
+  // Create login link: stripe.accounts.createLoginLink(stripeAccountId)
+  // Return the URL
+});
+```
+
+### 2. Update Host Payment Settings Page
+
+**File:** `src/pages/host/PaymentSettings.tsx`
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  Payment Settings                                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │  ✓ Stripe Connected                                       │ │
+│  │  Payouts are enabled to your bank account                 │ │
+│  │                                                           │ │
+│  │  [Manage Payout Settings →]                               │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  Or if not connected:                                           │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │  ⚠ Set Up Payouts                                         │ │
+│  │  Connect your bank account to receive commissions         │ │
+│  │                                                           │ │
+│  │  [Connect Bank Account]                                   │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+Key features:
+- Check connect status on load
+- "Connect Bank Account" → calls `create-connect-account`
+- "Manage Payout Settings" → calls `create-stripe-login-link` and redirects
+
+### 3. Update Payout History Page
+
+**File:** `src/pages/host/PayoutHistory.tsx`
+
+```tsx
+// Fetch from bookings table:
+const { data: payouts } = await supabase
+  .from('bookings')
+  .select('*')
+  .eq('host_user_id', user.id)
+  .order('created_at', { ascending: false });
+
+// Display each booking with:
+// - Date
+// - Experience name
+// - Total booking amount
+// - Your commission (host_payout_amount)
+// - Status (payout_status)
+```
+
+### 4. Vendor Payment Settings
+
+Create or update vendor payment settings to match the host flow.
+
+## Files to Create/Modify
+
+| Action | File | Description |
+|--------|------|-------------|
+| Create | `supabase/functions/create-stripe-login-link/index.ts` | Generate Stripe Dashboard link |
+| Modify | `src/pages/host/PaymentSettings.tsx` | Functional payment settings |
+| Modify | `src/pages/host/PayoutHistory.tsx` | Real payout history from DB |
+| Modify | `src/pages/vendor/Settings.tsx` | Add payment settings section |
+
+## How Withdrawals Work (User Flow)
+
+1. **Host/Vendor sets up Stripe Connect** (already working)
+   - Clicks "Connect" on Dashboard
+   - Completes Stripe Express onboarding
+   - Adds their bank account/debit card in Stripe's interface
+
+2. **Guest makes a booking** (already working)
+   - Pays via Stripe Checkout
+   - Funds are automatically split per the commission logic
+   - Vendor receives their portion directly
+   - Host receives their commission via transfer
+   - Platform keeps the application fee
+
+3. **Host/Vendor views earnings** (to be implemented)
+   - Goes to Payment Settings
+   - Clicks "Manage Payout Settings"
+   - Opens Stripe Express Dashboard
+   - Views balance, payout schedule, bank details
+
+4. **Payouts happen automatically**
+   - Stripe handles payouts on a schedule (daily/weekly)
+   - Users can configure this in their Stripe Dashboard
+   - No action needed from platform
+
+## Platform Owner (You) Receiving Funds
+
+As the platform owner, your earnings (the application_fee) are automatically kept in your main Stripe account. You don't need to set up anything special - the funds from each transaction that don't get transferred to vendors/hosts stay with you.
+
+To view your platform earnings:
+1. Log into your Stripe Dashboard (stripe.com)
+2. View the "Application fees" section
+3. Set up your own payout schedule to your bank
 
 ## Technical Notes
 
-- Rate limiting uses database storage instead of Redis for simplicity
-- Rate limit windows are 1-minute sliding windows
-- Expired rate limit records are cleaned up via a scheduled cleanup function
-- All sensitive fields (stripe_account_id, commission rates, emails) are excluded from public views
+- Stripe Express handles all bank/debit card management
+- We don't store any card numbers - Stripe handles everything
+- The `stripe.accounts.createLoginLink()` creates a secure one-time link
+- Payouts happen automatically based on Stripe's schedule
+- The existing webhook already handles host transfers correctly
