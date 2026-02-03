@@ -174,7 +174,9 @@ const HostDashboard = () => {
 
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
+        toast.success('Stripe setup opened in a new tab. Complete the setup there, then refresh this page.');
+        setIsConnecting(false);
       }
     } catch (error) {
       console.error('Error connecting Stripe:', error);
