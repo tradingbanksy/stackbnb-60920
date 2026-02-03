@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 
-// SECURITY: Password fields removed from stored data - only used during form submission
+// Legacy types - kept for backwards compatibility with existing components
+// New components should use the database profile directly
 export interface HostSignupData {
   firstName: string;
   lastName: string;
@@ -17,7 +18,6 @@ export interface PropertyData {
   zip: string;
 }
 
-// SECURITY: Password fields removed from stored data - only used during form submission
 export interface VendorSignupData {
   businessName: string;
   businessType: string;
@@ -26,7 +26,6 @@ export interface VendorSignupData {
   phone: string;
 }
 
-// SECURITY: taxId removed - should only be submitted directly to server
 export interface BusinessData {
   address: string;
   city: string;
@@ -82,8 +81,8 @@ const initialBusinessData: BusinessData = {
 const SignupContext = createContext<SignupContextType | undefined>(undefined);
 
 export const SignupProvider = ({ children }: { children: ReactNode }) => {
-  // Signup flow data - stored in sessionStorage for multi-step form persistence
-  // SECURITY: Using sessionStorage instead of localStorage (clears on browser close)
+  // Legacy signup flow data - kept for backwards compatibility
+  // New signup uses progressive onboarding, this context is largely unused now
   const [hostSignupData, setHostSignupData] = useState<HostSignupData>(() => {
     const stored = sessionStorage.getItem('hostSignupData');
     return stored ? JSON.parse(stored) : initialHostSignupData;
