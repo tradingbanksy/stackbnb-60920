@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MapPin, Sparkles, Save } from "lucide-react";
+import { lovable } from "@/integrations/lovable";
+import { Loader2, MapPin, Sparkles, Save, Apple } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 const authSchema = z.object({
@@ -111,11 +112,27 @@ export function AuthPromptDialog({ open, onOpenChange, onSkip }: AuthPromptDialo
     try {
       localStorage.setItem("pending_role", "user");
 
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/trip-planner`,
-        },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    try {
+      localStorage.setItem("pending_role", "user");
+
+      const { error } = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: window.location.origin,
       });
       if (error) throw error;
     } catch (error) {
@@ -168,16 +185,27 @@ export function AuthPromptDialog({ open, onOpenChange, onSkip }: AuthPromptDialo
           </div>
         </div>
 
-        {/* Google Sign In */}
-        <Button
-          variant="outline"
-          className="w-full h-11"
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-        >
-          <FcGoogle className="h-5 w-5 mr-2" />
-          Continue with Google
-        </Button>
+        {/* OAuth Sign In Buttons */}
+        <div className="space-y-2">
+          <Button
+            variant="outline"
+            className="w-full h-11"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+          >
+            <FcGoogle className="h-5 w-5 mr-2" />
+            Continue with Google
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full h-11"
+            onClick={handleAppleSignIn}
+            disabled={loading}
+          >
+            <Apple className="h-5 w-5 mr-2" />
+            Continue with Apple
+          </Button>
+        </div>
 
         <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">
