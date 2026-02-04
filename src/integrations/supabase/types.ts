@@ -559,6 +559,7 @@ export type Database = {
           airbnb_reviews: Json | null
           cancellation_hours: number
           category: string
+          city: string | null
           commission_percentage: number | null
           created_at: string
           description: string | null
@@ -599,6 +600,7 @@ export type Database = {
           airbnb_reviews?: Json | null
           cancellation_hours?: number
           category: string
+          city?: string | null
           commission_percentage?: number | null
           created_at?: string
           description?: string | null
@@ -639,6 +641,7 @@ export type Database = {
           airbnb_reviews?: Json | null
           cancellation_hours?: number
           category?: string
+          city?: string | null
           commission_percentage?: number | null
           created_at?: string
           description?: string | null
