@@ -328,10 +328,10 @@ const AppView = () => {
                     <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
                     
                     {/* Center: City Dropdown - takes flex space and centers */}
-                    <div className="flex-1 flex justify-center">
+                    <div className="flex-1 flex items-center">
                       <Popover open={cityDropdownOpen} onOpenChange={setCityDropdownOpen}>
                         <PopoverTrigger asChild>
-                          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                          <button className="flex-1 flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors px-2">
                             <span>{destination}</span>
                             <ChevronDown className="h-3 w-3" />
                           </button>
