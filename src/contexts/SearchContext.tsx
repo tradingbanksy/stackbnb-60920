@@ -1,9 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { SUPPORTED_CITIES, DEFAULT_CITY, getCityByName, type SupportedCity } from '@/lib/supportedCities';
 
 interface SearchContextType {
   selectedDate: Date | undefined;
   setSelectedDate: (date: Date | undefined) => void;
   destination: string;
+  setDestination: (destination: string) => void;
+  selectedCity: SupportedCity;
+  supportedCities: SupportedCity[];
 }
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -13,6 +17,18 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
     const stored = sessionStorage.getItem('searchSelectedDate');
     return stored ? new Date(stored) : undefined;
   });
+
+  const [destination, setDestinationState] = useState<string>(() => {
+    const stored = sessionStorage.getItem('searchDestination');
+    return stored || DEFAULT_CITY.name;
+  });
+
+  const setDestination = (newDestination: string) => {
+    setDestinationState(newDestination);
+    sessionStorage.setItem('searchDestination', newDestination);
+  };
+
+  const selectedCity = getCityByName(destination) || DEFAULT_CITY;
 
   useEffect(() => {
     if (selectedDate) {
@@ -26,7 +42,10 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
     <SearchContext.Provider value={{ 
       selectedDate, 
       setSelectedDate, 
-      destination: 'Tulum' 
+      destination,
+      setDestination,
+      selectedCity,
+      supportedCities: SUPPORTED_CITIES,
     }}>
       {children}
     </SearchContext.Provider>

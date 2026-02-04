@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap, Home, Settings, LogOut } from "lucide-react";
+import { Heart, User, Search, Star, Sparkles, Store, ChevronRight, ChevronDown, Megaphone, Monitor, MapPin, CalendarDays, LogIn, UserPlus, CheckCircle, DollarSign, Zap, Home, Settings, LogOut, Check } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useSearch } from "@/contexts/SearchContext";
 import { Card } from "@/components/ui/card";
@@ -33,8 +33,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
-// Real data only - mock imports removed
+// Real data + curated restaurants
 import { supabase } from "@/integrations/supabase/client";
+import { mockRestaurants } from "@/data/mockRestaurants";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import heroImage from "@/assets/hero-beach.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -61,11 +62,13 @@ interface VendorProfile {
   google_rating: number | null;
   is_published: boolean | null;
   listing_type: 'restaurant' | 'experience';
+  city: string | null;
 }
 
 const AppView = () => {
   const { isAuthenticated, signOut, role } = useAuthContext();
-  const { selectedDate, setSelectedDate, destination } = useSearch();
+  const { selectedDate, setSelectedDate, destination, setDestination, selectedCity, supportedCities } = useSearch();
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   
   // Get profile route based on user role
   const profileRoute = useMemo(() => {
@@ -98,8 +101,12 @@ const AppView = () => {
 
   useEffect(() => {
     fetchMyBusinesses();
-    fetchPublishedVendors();
   }, []);
+
+  // Re-fetch vendors when city changes
+  useEffect(() => {
+    fetchPublishedVendors();
+  }, [destination]);
 
   const fetchMyBusinesses = async () => {
     try {
@@ -123,8 +130,9 @@ const AppView = () => {
       setIsLoadingVendors(true);
       const { data, error } = await supabase
         .from('vendor_profiles')
-        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
-        .eq('is_published', true);
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type, city')
+        .eq('is_published', true)
+        .eq('city', destination);
 
       if (error) throw error;
       
@@ -137,6 +145,13 @@ const AppView = () => {
       setIsLoadingVendors(false);
     }
   };
+
+  // Get curated restaurants for the selected city
+  const curatedRestaurants = useMemo(() => {
+    return mockRestaurants.filter(r => 
+      r.city.toLowerCase() === destination.toLowerCase()
+    );
+  }, [destination]);
 
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.preventDefault();
@@ -310,7 +325,39 @@ const AppView = () => {
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
                   <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
                     <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="text-xs text-muted-foreground flex-1 min-w-0">{destination}</span>
+                    {/* City Dropdown Selector */}
+                    <Popover open={cityDropdownOpen} onOpenChange={setCityDropdownOpen}>
+                      <PopoverTrigger asChild>
+                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors flex-1 min-w-0 text-left">
+                          <span className="truncate">{destination}</span>
+                          <ChevronDown className="h-3 w-3 flex-shrink-0" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-1" align="start">
+                        <div className="space-y-0.5">
+                          {supportedCities.map((city) => (
+                            <button
+                              key={city.id}
+                              onClick={() => {
+                                setDestination(city.name);
+                                setCityDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors",
+                                destination === city.name
+                                  ? "bg-primary/10 text-primary"
+                                  : "hover:bg-muted"
+                              )}
+                            >
+                              <span>{city.name}</span>
+                              {destination === city.name && (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <div className="h-4 w-px bg-border/50 flex-shrink-0" />
                     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
@@ -373,10 +420,10 @@ const AppView = () => {
                 </section>
               )}
 
-              {/* Restaurants Near You */}
+              {/* Restaurants in {destination} */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">Restaurants Near You</h2>
+                  <h2 className="text-sm font-semibold">Restaurants in {destination}</h2>
                   <Link to="/restaurants" className="flex items-center text-muted-foreground">
                     <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -394,7 +441,7 @@ const AppView = () => {
                       </>
                     ) : (
                       <>
-                        {/* Vendor restaurants first */}
+                        {/* Vendor restaurants from database */}
                         {vendorRestaurants.map((vendor, index) => (
                           <Link
                             key={vendor.id}
@@ -442,10 +489,42 @@ const AppView = () => {
                             </div>
                           </Link>
                         ))}
-                        {/* Empty state when no restaurants */}
-                        {vendorRestaurants.length === 0 && (
+                        
+                        {/* Curated restaurants for the selected city */}
+                        {curatedRestaurants.map((restaurant, index) => (
+                          <Link
+                            key={restaurant.id}
+                            to={`/restaurants/${restaurant.id}`}
+                            className="flex-shrink-0 w-36 animate-fade-in group"
+                            style={{ animationDelay: `${(vendorRestaurants.length + index) * 50}ms` }}
+                          >
+                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
+                              <BlurImage
+                                src={restaurant.photos[0]}
+                                alt={restaurant.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
+                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                  {restaurant.rating && (
+                                    <>
+                                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                      <span>{restaurant.rating}</span>
+                                      <span>•</span>
+                                    </>
+                                  )}
+                                  <span>{restaurant.cuisine}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+
+                        {/* Empty state when no restaurants at all */}
+                        {vendorRestaurants.length === 0 && curatedRestaurants.length === 0 && (
                           <div className="flex-shrink-0 w-full py-4 text-center">
-                            <p className="text-xs text-muted-foreground">No restaurants available yet</p>
+                            <p className="text-xs text-muted-foreground">No restaurants available in {destination} yet</p>
                           </div>
                         )}
                       </>
@@ -454,10 +533,10 @@ const AppView = () => {
                 </div>
               </section>
 
-              {/* Popular Experiences */}
+              {/* Popular Experiences in {destination} */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">Popular Experiences</h2>
+                  <h2 className="text-sm font-semibold">Experiences in {destination}</h2>
                   <Link to="/experiences" className="flex items-center text-muted-foreground">
                     <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -526,7 +605,7 @@ const AppView = () => {
                         {/* Empty state when no experiences */}
                         {vendorExperiences.length === 0 && (
                           <div className="flex-shrink-0 w-full py-4 text-center">
-                            <p className="text-xs text-muted-foreground">No experiences available yet</p>
+                            <p className="text-xs text-muted-foreground">No experiences available in {destination} yet</p>
                           </div>
                         )}
                       </>
