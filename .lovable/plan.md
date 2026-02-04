@@ -1,144 +1,166 @@
 
-# Plan: City-Based Restaurant & Vendor Filtering
+# Plan: Fix City Dropdown Centering, Add Curated Restaurants for All Cities, and Enable Reservations
 
-## Overview
+## Issues Identified
 
-This plan will ensure AppView consistently displays Tulum content (curated restaurants + verified vendors) when Tulum is selected, and dynamically updates all content when a user switches to a different city.
+1. **City Dropdown Not Centered**: The current search bar layout has the city dropdown left-aligned after the MapPin icon, not centered between the GPS icon and calendar
+2. **No Restaurants for Cancun/Playa del Carmen**: The `mockRestaurants.ts` file only contains Tulum restaurants - switching cities shows "No restaurants available"
+3. **Reservation Flow**: Curated restaurants already have reservation platform data (Resy, OpenTable) but many don't have `reservationUrl` populated - the system falls back to "Call to Book"
 
-## Current State Analysis
+## Solution Overview
 
-Your **mockRestaurants.ts** contains real, top-rated Tulum restaurants (ARCA, Hartwood, Burrito Amor, etc.) - these are not fake data, just locally curated. However, they're currently only used on the `/restaurants` page as a fallback.
+### Phase 1: Center City Dropdown in Search Bar
 
-The **AppView** page only shows verified `vendor_profiles` from the database, but these vendors don't have a `city` field, so there's no way to filter them by location.
-
-## Implementation Strategy
-
-### Phase 1: Database Changes
-
-Add a `city` column to the `vendor_profiles` table to associate vendors with specific locations:
-
+Current layout:
 ```text
-vendor_profiles
-├── id (uuid)
-├── name (text)
-├── category (text)
-├── city (text) ← NEW: "Tulum", "Cancun", "Playa del Carmen", etc.
-├── ...existing columns
+[MapPin] [City ▼] | [Calendar] [Date] [Search]
 ```
 
-### Phase 2: Supported Cities Configuration
-
-Create a cities configuration file that stores:
-- City name
-- Coordinates (for TripAdvisor API searches)
-- Display name
-- Default/active status
-
+Updated layout to center the city:
 ```text
-src/lib/supportedCities.ts
-
-SUPPORTED_CITIES = [
-  { id: "tulum", name: "Tulum", lat: 20.2114, lng: -87.4654 },
-  { id: "cancun", name: "Cancún", lat: 21.1619, lng: -86.8515 },
-  { id: "playa-del-carmen", name: "Playa del Carmen", lat: 20.6296, lng: -87.0739 },
-]
+[MapPin] ─────── [City ▼] ─────── [Calendar] [Date] [Search]
 ```
 
-### Phase 3: Enhanced SearchContext
+**Changes to `AppView.tsx`:**
+- Restructure the search bar flex container
+- Use `justify-center` and proper spacing to center the city dropdown
+- Keep MapPin and CalendarDays as bookends with the city selector in the middle
 
-Update `SearchContext` to make destination selectable instead of hardcoded:
+### Phase 2: Add Curated Restaurants for Cancun and Playa del Carmen
 
-- Add `setDestination` function
-- Store selected city in sessionStorage for persistence
-- Provide city coordinates for API calls
+Add 4-6 top-rated restaurants for each new city to `mockRestaurants.ts`:
 
-### Phase 4: AppView UI Updates
+**Cancun Restaurants:**
+- Lorenzillo's (Seafood, $$$$)
+- Harry's Prime Steakhouse (Steakhouse, $$$$)
+- Puerto Madero (Seafood/Steakhouse, $$$)
+- La Habichuela Sunset (Yucatecan, $$$)
+- Thai Lounge (Thai/Asian Fusion, $$)
+- Tacos Rigo (Mexican, $)
 
-**Search Bar Changes:**
-- Convert the static "Tulum" text to a dropdown selector
-- Populate dropdown with supported cities
-- When a city is selected, filter all content accordingly
+**Playa del Carmen Restaurants:**
+- Alux Restaurant (Mexican/Cenote, $$$$)
+- Catch Playa (Seafood, $$$)
+- La Cueva del Chango (Mexican Breakfast, $$)
+- Carboncitos (Mexican/Tacos, $)
+- El Fogon (Authentic Tacos, $)
+- Oh La La (French, $$$)
 
-**Restaurant Section:**
-- Show curated Tulum restaurants (from `mockRestaurants.ts`) when Tulum is selected
-- Filter curated restaurants by city for other locations (will need to expand the curated data later)
-- Also display vendor restaurants filtered by the selected city
+Each restaurant will include:
+- Full address, coordinates
+- Hours, phone, features
+- Reservation platform (Resy/OpenTable/Yelp) where applicable
+- Working `reservationUrl` for online booking
 
-**Experience Section:**
-- Filter vendor experiences by the selected city
+### Phase 3: Add Reservation URLs
 
-### Phase 5: Data Flow
+Update existing Tulum restaurants and new city restaurants with actual reservation URLs:
 
-```text
-User selects city in search bar
-         ↓
-SearchContext updates destination + coordinates
-         ↓
-AppView re-fetches/filters:
-  ├── Curated restaurants (filtered by city)
-  ├── Vendor restaurants (filtered by city from DB)
-  └── Vendor experiences (filtered by city from DB)
-```
+| Restaurant | Platform | URL Pattern |
+|------------|----------|-------------|
+| ARCA | Resy | `https://resy.com/cities/tulum/arca` |
+| Hartwood | OpenTable | `https://www.opentable.com/r/hartwood-tulum` |
+| Kitchen Table | Resy | `https://resy.com/cities/tulum/kitchen-table` |
+| Lorenzillo's | OpenTable | `https://www.opentable.com/r/lorenzillos-cancun` |
 
-## Files to Create/Modify
+Note: Some casual restaurants (taquerias, beach bars) will remain "Call to Book" as they don't take online reservations.
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `supabase/migrations/...` | Create | Add `city` column to `vendor_profiles` |
-| `src/lib/supportedCities.ts` | Create | Cities configuration with coordinates |
-| `src/contexts/SearchContext.tsx` | Modify | Make destination selectable, add coordinates |
-| `src/pages/guest/AppView.tsx` | Modify | Add city dropdown, filter vendors by city, show curated restaurants |
-| `src/data/mockRestaurants.ts` | Rename (optional) | Rename to `curatedRestaurants.ts` for clarity |
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/guest/AppView.tsx` | Restructure search bar to center city dropdown between icons |
+| `src/data/mockRestaurants.ts` | Add 10-12 new restaurants for Cancun and Playa del Carmen, add reservationUrls to existing entries |
 
 ## Technical Details
 
-### Database Migration
+### Search Bar Layout Update
 
-```sql
-ALTER TABLE vendor_profiles 
-ADD COLUMN city text DEFAULT 'Tulum';
-
--- Update existing vendors to default city
-UPDATE vendor_profiles SET city = 'Tulum' WHERE city IS NULL;
+```tsx
+// Updated search bar structure
+<div className="relative bg-card/90 rounded-full border flex items-center px-3 py-2">
+  {/* Left: Location icon */}
+  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+  
+  {/* Center: City Dropdown - takes available space and centers */}
+  <div className="flex-1 flex justify-center">
+    <Popover>
+      <PopoverTrigger>
+        <button className="flex items-center gap-1 text-xs">
+          <span>{destination}</span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      ...
+    </Popover>
+  </div>
+  
+  <div className="h-4 w-px bg-border/50" />
+  
+  {/* Right: Date picker */}
+  <Popover>
+    <PopoverTrigger>
+      <button className="flex items-center gap-1.5">
+        <CalendarDays className="h-4 w-4 text-primary" />
+        <span>{selectedDate ? format(...) : "When?"}</span>
+      </button>
+    </PopoverTrigger>
+    ...
+  </Popover>
+  
+  <button className="bg-gradient-to-r ...">
+    <Search className="h-3 w-3" />
+  </button>
+</div>
 ```
 
-### City Dropdown Component
+### New Restaurant Data Structure
 
-The search bar will include a city selector that:
-1. Shows current city with a dropdown chevron
-2. Opens a popover/dropdown with all supported cities
-3. Updates SearchContext when a city is selected
-4. Triggers content refresh
-
-### Content Filtering Logic
-
-```text
-// Curated restaurants
-filteredCuratedRestaurants = curatedRestaurants.filter(r => 
-  r.city.toLowerCase() === selectedCity.toLowerCase()
-);
-
-// Vendor restaurants (from database)
-fetchPublishedVendors = supabase
-  .from('vendor_profiles')
-  .select('...')
-  .eq('is_published', true)
-  .eq('city', selectedCity);  // NEW filter
+```typescript
+// Example Cancun restaurant
+{
+  id: 'c1',
+  name: "Lorenzillo's",
+  cuisine: "Seafood",
+  rating: 4.6,
+  reviewCount: 4521,
+  priceRange: '$$$$',
+  address: "Blvd. Kukulcan Km 10.5, Zona Hotelera",
+  neighborhood: "Hotel Zone",
+  city: "Cancún",
+  zipCode: "77500",
+  phone: "+52 998 883 1254",
+  hours: { ... },
+  description: "World-famous lobster house since 1983...",
+  photos: [lorenzillosCancun],
+  features: ["Waterfront", "Live Lobster Tank", "Fine Dining"],
+  hasOutdoorSeating: true,
+  reservationPlatform: 'opentable',
+  reservationUrl: 'https://www.opentable.com/r/lorenzillos-cancun',
+  coordinates: { lat: 21.1021, lng: -86.7709 },
+}
 ```
 
-## Future Scalability
+## Reservation Flow
 
-When adding a new city (e.g., "Cancún"):
+When a guest clicks "Reserve Table":
+1. If `reservationUrl` exists: Opens in-app webview with the booking page
+2. The selected date from SearchContext is automatically appended to the URL
+3. Guest completes booking on Resy/OpenTable within the app
+4. If no `reservationUrl`: Falls back to phone call
 
-1. Add city to `supportedCities.ts` with coordinates
-2. Add curated restaurants for that city to the data file
-3. Vendors who sign up can select their city during onboarding
-4. AppView automatically shows correct content when user selects that city
+## Image Assets
+
+For the new cities, I'll use existing restaurant images from `src/assets/restaurants/` that match the cuisine types:
+- Fine dining images for upscale restaurants
+- Seafood images for seafood restaurants
+- Mexican images for local taquerias
+- Mediterranean/French images where appropriate
 
 ## Summary
 
-This approach gives you:
-- Consistent Tulum content display (curated + verified vendors)
-- Easy multi-city expansion
-- Single source of truth for city configuration
-- Seamless user experience with instant filtering
+This plan will:
+1. Center the city dropdown properly in the search bar for better visual balance
+2. Populate Cancun and Playa del Carmen with real, curated restaurant data
+3. Add functional reservation URLs so guests can book directly through the app
+4. Maintain the existing "Call to Book" fallback for casual spots that don't take online reservations
