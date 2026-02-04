@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { ArrowLeft, Apple, Building2, Home, Store, Users } from "lucide-react";
 import { FaAirbnb } from "react-icons/fa";
 import { authSchema, type AuthFormData } from "@/lib/validations";
@@ -407,11 +408,30 @@ const Auth = () => {
         localStorage.setItem('pending_role', role);
       }
       
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth`,
-        },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    try {
+      // Store the selected role in localStorage so we can save it after OAuth redirect
+      if (role) {
+        localStorage.setItem('pending_role', role);
+      }
+      
+      const { error } = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: window.location.origin,
       });
       if (error) throw error;
     } catch (error) {
@@ -570,12 +590,8 @@ const Auth = () => {
                   variant="outline"
                   size="icon"
                   className="h-12 w-12 rounded-full border-border/50 bg-background/50 hover:bg-card/80 hover:scale-105 transition-all"
-                  onClick={() =>
-                    toast({
-                      title: "Coming Soon",
-                      description: "Apple Sign-In will be available soon.",
-                    })
-                  }
+                  onClick={handleAppleSignIn}
+                  disabled={loading}
                 >
                   <Apple className="h-5 w-5" />
                 </Button>
