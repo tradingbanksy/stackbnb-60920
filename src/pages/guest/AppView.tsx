@@ -33,34 +33,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
-import { experiences } from "@/data/mockData";
+// Real data only - mock imports removed
 import { supabase } from "@/integrations/supabase/client";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import heroImage from "@/assets/hero-beach.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import kayakingImg from "@/assets/experiences/kayaking.jpg";
-import bikesImg from "@/assets/experiences/bikes.jpg";
-import snorkelingImg from "@/assets/experiences/snorkeling.jpg";
-import photographyImg from "@/assets/experiences/photography.jpg";
-import spaImg from "@/assets/experiences/spa.jpg";
-import diningImg from "@/assets/experiences/dining.jpg";
-import atvImg from "@/assets/experiences/atv.jpg";
-import boatImg from "@/assets/experiences/boat.jpg";
-import ziplineImg from "@/assets/experiences/zipline.jpg";
-import horsebackImg from "@/assets/experiences/horseback.jpg";
-import scubaImg from "@/assets/experiences/scuba.jpg";
-import hikingImg from "@/assets/experiences/hiking.jpg";
-import parasailingImg from "@/assets/experiences/parasailing.jpg";
-import yogaImg from "@/assets/experiences/yoga.jpg";
-import fishingImg from "@/assets/experiences/fishing.jpg";
-import cookingImg from "@/assets/experiences/cooking.jpg";
-import balloonImg from "@/assets/experiences/balloon.jpg";
-import wineImg from "@/assets/experiences/wine.jpg";
 
-// Restaurant components
-import RestaurantCard from "@/components/RestaurantCard";
-import { RestaurantCardWithGoogleRating } from "@/components/RestaurantCardWithGoogleRating";
-import { mockRestaurants, type Restaurant } from "@/data/mockRestaurants";
 import { BlurImage } from "@/components/BlurImage";
 
 const categories = [
@@ -72,30 +50,6 @@ const categories = [
   { id: "Wellness", name: "Wellness", icon: "💆" },
   { id: "Photography", name: "Photo", icon: "📸" },
 ];
-
-const getExperienceImage = (experience: { id: number }) => {
-  const imageMap: Record<number, string> = {
-    1: kayakingImg,
-    2: bikesImg,
-    3: snorkelingImg,
-    4: photographyImg,
-    5: spaImg,
-    6: diningImg,
-    7: atvImg,
-    8: boatImg,
-    9: ziplineImg,
-    10: horsebackImg,
-    11: scubaImg,
-    12: hikingImg,
-    13: parasailingImg,
-    14: yogaImg,
-    15: fishingImg,
-    16: cookingImg,
-    17: balloonImg,
-    18: wineImg,
-  };
-  return imageMap[experience.id] || kayakingImg;
-};
 
 interface VendorProfile {
   id: string;
@@ -222,25 +176,15 @@ const AppView = () => {
     });
   };
 
-  // Filter experiences
-  const filteredExperiences = experiences.filter((exp) => {
-    const matchesCategory = selectedCategory === "all" || exp.category === selectedCategory;
+  // Filter vendor experiences by category and search
+  const filteredVendorExperiences = vendorExperiences.filter((vendor) => {
+    const matchesCategory = selectedCategory === "all" || vendor.category === selectedCategory;
     const matchesSearch = searchQuery === "" || 
-      exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.description.toLowerCase().includes(searchQuery.toLowerCase());
+      vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vendor.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (vendor.description && vendor.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
-
-  // Get restaurants
-  const restaurants = mockRestaurants.slice(0, 8);
-
-  // Get popular experiences (non-dining)
-  const popularExperiences = experiences.filter((exp: any) => 
-    !exp.category.toLowerCase().includes('dining') && 
-    !exp.category.toLowerCase().includes('food')
-  ).slice(0, 10);
 
   return (
     <PageTransition className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
@@ -498,14 +442,12 @@ const AppView = () => {
                             </div>
                           </Link>
                         ))}
-                        {/* Mock restaurants only as fallback when no real vendors */}
-                        {vendorRestaurants.length === 0 && restaurants.map((restaurant, index) => (
-                          <RestaurantCardWithGoogleRating
-                            key={restaurant.id}
-                            restaurant={restaurant}
-                            index={index}
-                          />
-                        ))}
+                        {/* Empty state when no restaurants */}
+                        {vendorRestaurants.length === 0 && (
+                          <div className="flex-shrink-0 w-full py-4 text-center">
+                            <p className="text-xs text-muted-foreground">No restaurants available yet</p>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -581,44 +523,12 @@ const AppView = () => {
                             </div>
                           </Link>
                         ))}
-                        {/* Mock experiences only as fallback when no real vendors */}
-                        {vendorExperiences.length === 0 && popularExperiences.map((experience: any, index: number) => (
-                          <Link
-                            key={experience.id}
-                            to={`/experience/${experience.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                          >
-                            <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
-                              <BlurImage
-                                src={getExperienceImage(experience)}
-                                alt={experience.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                              <button
-                                onClick={(e) => toggleFavorite(experience.id, e)}
-                                className="absolute top-2 right-2 z-10"
-                              >
-                                <Heart
-                                  className={`h-5 w-5 drop-shadow-md ${
-                                    favorites.includes(experience.id)
-                                      ? "fill-red-500 text-red-500"
-                                      : "fill-black/40 text-white"
-                                  }`}
-                                />
-                              </button>
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                                <p className="text-white text-xs font-medium line-clamp-1">{experience.name}</p>
-                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{experience.rating}</span>
-                                  <span>•</span>
-                                  <span>${experience.price}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
+                        {/* Empty state when no experiences */}
+                        {vendorExperiences.length === 0 && (
+                          <div className="flex-shrink-0 w-full py-4 text-center">
+                            <p className="text-xs text-muted-foreground">No experiences available yet</p>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -675,34 +585,7 @@ const AppView = () => {
                           </div>
                         </Link>
                       ))}
-                    {/* Experience favorites */}
-                    {experiences.filter(exp => favorites.includes(exp.id)).map((experience) => (
-                      <Link key={experience.id} to={`/experience/${experience.id}`} className="block group">
-                        <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
-                          <BlurImage
-                            src={getExperienceImage(experience)}
-                            alt={experience.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                          <button
-                            onClick={(e) => toggleFavorite(experience.id, e)}
-                            className="absolute top-2 right-2 z-10"
-                          >
-                            <Heart className="h-4 w-4 drop-shadow-md fill-red-500 text-red-500" />
-                          </button>
-                        </div>
-                        <div className="mt-1.5">
-                          <p className="text-xs font-medium line-clamp-1">{experience.name}</p>
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{experience.vendor}</p>
-                          <div className="flex items-center gap-1 text-[10px]">
-                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                            <span>{experience.rating}</span>
-                            <span className="text-muted-foreground">•</span>
-                            <span className="font-medium">${experience.price}</span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                    {/* Only show vendor favorites - mock experiences removed */}
                   </div>
                 )}
               </section>
