@@ -1,98 +1,159 @@
 
 
-# Plan: Fix Restaurant Detail Page & Enable Google Images
+# Plan: Fix Vendor Contact Info and Travel Plans Security Issues
 
-## Issues Found
+## Summary
 
-1. **404 Error (Root Cause)**: In `AppView.tsx` line 505, curated restaurants link to `/restaurants/${restaurant.id}` (plural) but the route defined in `App.tsx` is `/restaurant/:id` (singular). This is why clicking any restaurant shows a 404 page instead of the detail view with reviews.
+The security scan identified 4 critical/warning-level vulnerabilities related to data exposure. This plan addresses all of them to protect vendor contact information, business data, and guest travel plans.
 
-2. **Restaurant Images**: Currently using local assets from `src/assets/restaurants/`. To pull images from Google, we need to enhance the `google-reviews` edge function to also return photos.
+## Issues to Fix
 
-## Solution
+| Issue | Severity | Description |
+|-------|----------|-------------|
+| Vendor profiles exposure | ERROR | Sensitive fields (stripe_account_id, commission rates, user_id) exposed via public RLS policy |
+| Itinerary userId in public data | ERROR | The `itinerary_data` JSONB stores `userId` which is visible in public shared itineraries |
+| Promo codes discoverable | WARN | All active promo codes can be listed by anyone, allowing discovery of unlisted codes |
+| Leaked password protection | WARN | Users can set passwords from known data breaches |
 
-### Phase 1: Fix the Routing Bug (Critical)
+## Solution Overview
 
-Change the link path in `AppView.tsx` from plural to singular:
+### Phase 1: Protect Vendor Business Data
 
-```text
-Line 505: /restaurants/${restaurant.id}  →  /restaurant/${restaurant.id}
+The `vendor_profiles_public` view already exists and excludes sensitive fields. However, the application code queries the base table directly.
+
+**Changes:**
+1. Update guest-facing pages to query `vendor_profiles_public` view instead of `vendor_profiles` table
+2. Add RLS policy to deny direct SELECT on `vendor_profiles` base table for anonymous users
+3. Keep authenticated owner access to their own full vendor profile
+
+**Files to modify:**
+- `src/pages/guest/Explore.tsx` - Change to use `vendor_profiles_public`
+- `src/pages/guest/AppView.tsx` - Change to use `vendor_profiles_public`
+- `src/pages/vendor/PublicProfile.tsx` - Change to use `vendor_profiles_public`
+- Database migration - Add deny policy for anon users on base table
+
+### Phase 2: Sanitize Public Itinerary Data
+
+When itineraries are shared publicly, the `itinerary_data` JSONB includes the owner's `userId`. This should be stripped before public display.
+
+**Changes:**
+1. Create a `sanitize_itinerary_for_public` database function that removes `userId` from JSONB
+2. Update the itinerary sync hook to strip `userId` when loading shared itineraries
+3. Alternatively, update the save function to never include `userId` in the stored `itinerary_data`
+
+**Files to modify:**
+- `src/features/trip-planner/hooks/useItinerarySync.ts` - Strip userId on public load
+- `src/pages/guest/SharedItinerary.tsx` - Ensure userId not exposed in UI
+
+### Phase 3: Secure Promo Code Validation
+
+Currently, anyone can SELECT all active promo codes. This allows discovering unlisted promotional codes.
+
+**Changes:**
+1. Create an Edge Function `validate-promo-code` that validates a single code without exposing the full list
+2. Update RLS policy to deny direct SELECT on `promo_codes` for non-admins
+3. Update frontend to call Edge Function instead of querying directly
+
+**Files to modify:**
+- Create `supabase/functions/validate-promo-code/index.ts`
+- Database migration - Update RLS policy
+- Find and update any frontend promo code validation logic
+
+### Phase 4: Enable Leaked Password Protection
+
+This is a dashboard configuration change, not a code change.
+
+**Action:** Enable "Leaked Password Protection" in the backend authentication settings.
+
+**Code change:** Add error handling for leaked password errors in signup/password change flows.
+
+**Files to modify:**
+- `src/pages/auth/Auth.tsx` - Handle leaked password error message
+- `src/pages/auth/ChangePassword.tsx` - Handle leaked password error message
+
+## Technical Details
+
+### Vendor Profiles Query Changes
+
+Current (vulnerable):
+```typescript
+// src/pages/vendor/PublicProfile.tsx
+const { data } = await supabase
+  .from('vendor_profiles')
+  .select('*')  // Includes stripe_account_id, commission, etc.
+  .eq('id', id)
+  .eq('is_published', true)
 ```
 
-This single character fix will restore the full restaurant detail page with all the reviews, hours, location, and reservation UI that was already built.
+Fixed:
+```typescript
+const { data } = await supabase
+  .from('vendor_profiles_public')  // Uses restricted view
+  .select('*')  // Only returns public-safe fields
+  .eq('id', id)
+  .eq('is_published', true)
+```
 
-### Phase 2: Add Google Photos to Edge Function
+### Itinerary Data Sanitization
 
-Enhance the `google-reviews` edge function to also fetch place photos from Google Places API:
+When loading a public itinerary, strip sensitive fields:
+```typescript
+function sanitizeItineraryForPublic(itinerary: Itinerary): Itinerary {
+  return {
+    ...itinerary,
+    userId: undefined,  // Remove owner identification
+  };
+}
+```
 
-**Current Response:**
-- placeId, name, rating, totalReviews, reviews, googleMapsUrl
+### Promo Code Edge Function
 
-**Enhanced Response:**
-- placeId, name, rating, totalReviews, reviews, googleMapsUrl
-- **photos** (array of Google photo URLs)
+```typescript
+// supabase/functions/validate-promo-code/index.ts
+// Validates a single code server-side without exposing the full list
+const result = await supabase.rpc('validate_promo_code', {
+  p_code: code,
+  p_order_amount: orderAmount
+});
+```
 
-The Google Places API returns photo references that need to be converted to URLs using the Place Photos endpoint.
+### Database Migration
 
-### Phase 3: Display Google Photos in Restaurant Detail
+```sql
+-- Deny anonymous users from directly querying vendor_profiles
+CREATE POLICY "Deny anon access to vendor_profiles"
+  ON public.vendor_profiles
+  FOR SELECT
+  TO anon
+  USING (false);
 
-Update `RestaurantDetail.tsx` to use Google photos when available:
-
-1. Store photos from Google API response
-2. Replace local `restaurant.photos` with Google photos when available
-3. Fall back to local photos if Google API fails
-
-### Phase 4: Cache Google Photos in Restaurant Cards
-
-Update `RestaurantCardWithGoogleRating.tsx` to also fetch and display the Google photo for the card thumbnail, with 24-hour caching.
+-- Update promo_codes policy to only allow validation via RPC
+DROP POLICY "Anyone can validate promo codes" ON public.promo_codes;
+CREATE POLICY "Only admins can view promo codes"
+  ON public.promo_codes
+  FOR SELECT
+  USING (has_role(auth.uid(), 'admin'));
+```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/guest/AppView.tsx` | Fix route: `/restaurants/` → `/restaurant/` |
-| `supabase/functions/google-reviews/index.ts` | Add photo fetching from Google Places API |
-| `src/pages/guest/RestaurantDetail.tsx` | Use Google photos when available |
-| `src/components/RestaurantCardWithGoogleRating.tsx` | Display Google photo in card thumbnail |
+| `src/pages/guest/Explore.tsx` | Query `vendor_profiles_public` instead of `vendor_profiles` |
+| `src/pages/guest/AppView.tsx` | Query `vendor_profiles_public` instead of `vendor_profiles` |
+| `src/pages/vendor/PublicProfile.tsx` | Query `vendor_profiles_public` instead of `vendor_profiles` |
+| `src/features/trip-planner/hooks/useItinerarySync.ts` | Strip userId when loading public itineraries |
+| `src/pages/guest/SharedItinerary.tsx` | Ensure userId not displayed |
+| `src/pages/auth/Auth.tsx` | Handle leaked password error gracefully |
+| `src/pages/auth/ChangePassword.tsx` | Handle leaked password error gracefully |
+| New: `supabase/functions/validate-promo-code/index.ts` | Server-side promo validation |
+| Database migration | Add deny policies, update promo code access |
 
-## Technical Details
+## Security Improvements
 
-### Google Places Photo API
-
-The Google Places API returns photo references in the place details response. To get actual photo URLs:
-
-```text
-https://maps.googleapis.com/maps/api/place/photo
-  ?maxwidth=800
-  &photo_reference={photo_reference}
-  &key={API_KEY}
-```
-
-The edge function will convert these references to full URLs before returning to the client.
-
-### Photo Data Structure
-
-```typescript
-interface GoogleReviewsResponse {
-  placeId: string;
-  name: string;
-  rating: number;
-  totalReviews: number;
-  reviews: GoogleReview[];
-  googleMapsUrl: string;
-  photos: string[];  // NEW: Array of photo URLs
-}
-```
-
-### Fallback Strategy
-
-1. Try to fetch Google photos via edge function
-2. If photos exist in response, use them for the image gallery
-3. If no photos or API fails, fall back to local curated images
-
-## Summary
-
-This plan will:
-1. **Immediately fix the 404 bug** so restaurant detail pages work again with all the reviews and UI you built
-2. **Pull restaurant photos from Google** to show authentic, up-to-date images
-3. **Maintain fallbacks** so restaurants without Google data still display correctly
+After implementation:
+- Anonymous users cannot access vendor Stripe IDs, commissions, or user IDs
+- Public itineraries won't expose owner identity
+- Promo codes cannot be enumerated/discovered
+- Users protected from using known breached passwords
 
