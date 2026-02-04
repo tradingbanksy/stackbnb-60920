@@ -40,6 +40,7 @@ interface GoogleReviewsData {
   rating?: number;
   totalReviews?: number;
   reviews: GoogleReview[];
+  photos?: string[];
   googleMapsUrl?: string;
   error?: string;
 }
@@ -93,6 +94,7 @@ const RestaurantDetail = () => {
   const [googleReviews, setGoogleReviews] = useState<GoogleReviewsData | null>(null);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [reservationUrl, setReservationUrl] = useState<string | null>(null);
+  const [displayPhotos, setDisplayPhotos] = useState<string[]>([]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -115,6 +117,11 @@ const RestaurantDetail = () => {
     }
     
     setRestaurant(found || null);
+    
+    // Set initial photos from restaurant data
+    if (found) {
+      setDisplayPhotos(found.photos);
+    }
 
     // Check if favorited
     const favorites = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
@@ -125,6 +132,10 @@ const RestaurantDetail = () => {
       const cached = getCachedReviews(id);
       if (cached) {
         setGoogleReviews(cached);
+        // Use Google photos if available in cache
+        if (cached.photos && cached.photos.length > 0) {
+          setDisplayPhotos(cached.photos);
+        }
       }
     }
   }, [id]);
@@ -158,6 +169,11 @@ const RestaurantDetail = () => {
 
         setGoogleReviews(data);
         setCachedReviews(id, data);
+        
+        // Use Google photos if available
+        if (data.photos && data.photos.length > 0) {
+          setDisplayPhotos(data.photos);
+        }
       } catch (error) {
         console.error('Error fetching Google reviews:', error);
       } finally {
@@ -327,8 +343,10 @@ const RestaurantDetail = () => {
         </div>
 
         <InteractiveSelector 
-          photos={restaurant.photos} 
-          titles={restaurant.photos.map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
+          photos={displayPhotos.length > 0 ? displayPhotos : restaurant.photos} 
+          titles={displayPhotos.length > 0 
+            ? displayPhotos.map((_, i) => `Photo ${i + 1}`)
+            : restaurant.photos.map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
         />
       </div>
 

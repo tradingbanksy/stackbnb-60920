@@ -502,7 +502,7 @@ const AppView = () => {
                         {curatedRestaurants.map((restaurant, index) => (
                           <Link
                             key={restaurant.id}
-                            to={`/restaurants/${restaurant.id}`}
+                            to={`/restaurant/${restaurant.id}`}
                             className="flex-shrink-0 w-36 animate-fade-in group"
                             style={{ animationDelay: `${(vendorRestaurants.length + index) * 50}ms` }}
                           >
