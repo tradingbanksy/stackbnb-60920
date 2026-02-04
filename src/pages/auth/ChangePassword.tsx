@@ -54,7 +54,13 @@ const ChangePassword = () => {
       setDirectConfirm('');
       setDialogOpen(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to update password");
+      const message = error.message || "Failed to update password";
+      // Handle leaked password detection
+      if (message.includes("data breach") || message.includes("leaked password") || message.includes("Password has been found")) {
+        toast.error("This password has been found in a data breach. Please choose a different, more secure password.");
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsDirectLoading(false);
     }
@@ -109,7 +115,13 @@ const ChangePassword = () => {
         confirmPassword: '',
       });
     } catch (error: any) {
-      toast.error(error.message || "Failed to update password");
+      const message = error.message || "Failed to update password";
+      // Handle leaked password detection
+      if (message.includes("data breach") || message.includes("leaked password") || message.includes("Password has been found")) {
+        toast.error("This password has been found in a data breach. Please choose a different, more secure password.");
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }

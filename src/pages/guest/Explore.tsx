@@ -32,7 +32,6 @@ interface VendorProfile {
   google_rating: number | null;
   is_published: boolean | null;
   listing_type: string;
-  commission_percentage: number | null;
 }
 
 const experienceCategories = [
@@ -77,9 +76,10 @@ const Explore = () => {
 
   const fetchVendorProfiles = async () => {
     try {
+      // Use the public view to avoid exposing sensitive fields
       const { data, error } = await supabase
-        .from('vendor_profiles')
-        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type, commission_percentage')
+        .from('vendor_profiles_public')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
         .eq('is_published', true);
 
       if (error) throw error;
@@ -382,11 +382,7 @@ const Explore = () => {
                             </button>
                           )}
                           
-                          {isHostMode && vendor.commission_percentage && (
-                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
-                              {vendor.commission_percentage}%
-                            </Badge>
-                          )}
+                          {/* Commission badge removed - sensitive data not exposed in public listing */}
                           
                           <div className="absolute bottom-2 left-2 right-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
@@ -455,11 +451,7 @@ const Explore = () => {
                             </button>
                           )}
                           
-                          {isHostMode && vendor.commission_percentage && (
-                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
-                              {vendor.commission_percentage}%
-                            </Badge>
-                          )}
+                          {/* Commission badge removed - sensitive data not exposed in public listing */}
                           
                           <div className="absolute bottom-2 left-2 right-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
@@ -558,11 +550,7 @@ const Explore = () => {
                             </button>
                           )}
                           
-                          {isHostMode && vendor.commission_percentage && (
-                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
-                              {vendor.commission_percentage}%
-                            </Badge>
-                          )}
+                          {/* Commission badge removed - sensitive data not exposed in public listing */}
                           
                           <div className="absolute bottom-2 left-2 right-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
@@ -631,11 +619,7 @@ const Explore = () => {
                             </button>
                           )}
                           
-                          {isHostMode && vendor.commission_percentage && (
-                            <Badge className="absolute top-2 right-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0.5 font-semibold">
-                              {vendor.commission_percentage}%
-                            </Badge>
-                          )}
+                          {/* Commission badge removed - sensitive data not exposed in public listing */}
                           
                           <div className="absolute bottom-2 left-2 right-2">
                             <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
