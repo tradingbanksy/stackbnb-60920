@@ -323,52 +323,59 @@ const AppView = () => {
                 {/* Search Section - Single Bar */}
                 <div className="relative">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
-                  <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
+                  <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2">
+                    {/* Left: Location icon */}
                     <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                    {/* City Dropdown Selector */}
-                    <Popover open={cityDropdownOpen} onOpenChange={setCityDropdownOpen}>
-                      <PopoverTrigger asChild>
-                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors flex-1 min-w-0 text-left">
-                          <span className="truncate">{destination}</span>
-                          <ChevronDown className="h-3 w-3 flex-shrink-0" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-48 p-1" align="start">
-                        <div className="space-y-0.5">
-                          {supportedCities.map((city) => (
-                            <button
-                              key={city.id}
-                              onClick={() => {
-                                setDestination(city.name);
-                                setCityDropdownOpen(false);
-                              }}
-                              className={cn(
-                                "w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors",
-                                destination === city.name
-                                  ? "bg-primary/10 text-primary"
-                                  : "hover:bg-muted"
-                              )}
-                            >
-                              <span>{city.name}</span>
-                              {destination === city.name && (
-                                <Check className="h-4 w-4" />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    
+                    {/* Center: City Dropdown - takes flex space and centers */}
+                    <div className="flex-1 flex justify-center">
+                      <Popover open={cityDropdownOpen} onOpenChange={setCityDropdownOpen}>
+                        <PopoverTrigger asChild>
+                          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                            <span>{destination}</span>
+                            <ChevronDown className="h-3 w-3" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-1 z-50 bg-popover" align="center">
+                          <div className="space-y-0.5">
+                            {supportedCities.map((city) => (
+                              <button
+                                key={city.id}
+                                onClick={() => {
+                                  setDestination(city.name);
+                                  setCityDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors",
+                                  destination === city.name
+                                    ? "bg-primary/10 text-primary"
+                                    : "hover:bg-muted"
+                                )}
+                              >
+                                <span>{city.name}</span>
+                                {destination === city.name && (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
                     <div className="h-4 w-px bg-border/50 flex-shrink-0" />
+                    
+                    {/* Right: Date picker */}
                     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
-                        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 min-w-[100px]">
+                        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                           <CalendarDays className="h-4 w-4 text-primary" />
                           <span className="text-xs whitespace-nowrap">
                             {selectedDate ? format(selectedDate, "MMM d, yyyy") : "When?"}
                           </span>
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="end">
+                      <PopoverContent className="w-auto p-0 z-50 bg-popover" align="end">
                         <Calendar
                           mode="single"
                           selected={selectedDate}
@@ -381,7 +388,8 @@ const AppView = () => {
                         />
                       </PopoverContent>
                     </Popover>
-                    <button className="bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
+                    
+                    <button className="ml-2 bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
                       <Search className="h-3 w-3" />
                     </button>
                   </div>
