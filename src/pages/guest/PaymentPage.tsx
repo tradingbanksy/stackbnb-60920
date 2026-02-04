@@ -38,17 +38,19 @@ const PaymentPage = () => {
     setPromoError('');
 
     try {
-      const { data, error } = await supabase.rpc('validate_promo_code', {
-        p_code: promoCode.trim(),
-        p_order_amount: bookingData.totalPrice
+      // Use edge function for secure promo validation (doesn't expose promo code list)
+      const { data, error } = await supabase.functions.invoke('validate-promo-code', {
+        body: { 
+          code: promoCode.trim(),
+          orderAmount: bookingData.totalPrice
+        }
       });
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        const result = data[0];
-        if (result.valid) {
-          const discountAmount = Number(result.discount_amount);
+      if (data) {
+        if (data.valid) {
+          const discountAmount = Number(data.discount_amount);
           const finalPrice = Math.max(0, bookingData.totalPrice - discountAmount);
           
           updateBookingData({
@@ -60,10 +62,10 @@ const PaymentPage = () => {
           setPromoApplied(true);
           toast({
             title: "Promo code applied!",
-            description: result.message,
+            description: data.message,
           });
         } else {
-          setPromoError(result.message || 'Invalid promo code');
+          setPromoError(data.message || 'Invalid promo code');
         }
       }
     } catch (error) {

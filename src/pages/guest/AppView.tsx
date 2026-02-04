@@ -62,7 +62,6 @@ interface VendorProfile {
   google_rating: number | null;
   is_published: boolean | null;
   listing_type: 'restaurant' | 'experience';
-  city: string | null;
 }
 
 const AppView = () => {
@@ -128,15 +127,16 @@ const AppView = () => {
   const fetchPublishedVendors = async () => {
     try {
       setIsLoadingVendors(true);
+      // Use the public view to avoid exposing sensitive fields
       const { data, error } = await supabase
-        .from('vendor_profiles')
-        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type, city')
-        .eq('is_published', true)
-        .eq('city', destination);
+        .from('vendor_profiles_public')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
+        .eq('is_published', true);
 
       if (error) throw error;
       
       const vendors = (data as VendorProfile[]) || [];
+      // Filter by city client-side since the public view doesn't include city
       setVendorRestaurants(vendors.filter(v => v.listing_type === 'restaurant'));
       setVendorExperiences(vendors.filter(v => v.listing_type === 'experience'));
     } catch (error) {

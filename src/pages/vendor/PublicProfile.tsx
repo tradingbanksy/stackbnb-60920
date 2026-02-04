@@ -103,8 +103,9 @@ const VendorPublicProfile = () => {
 
   const fetchProfile = async () => {
     try {
+      // Use the public view to avoid exposing sensitive fields (stripe_account_id, user_id, commissions)
       const { data, error } = await supabase
-        .from('vendor_profiles')
+        .from('vendor_profiles_public')
         .select('*')
         .eq('id', id)
         .eq('is_published', true)
@@ -142,6 +143,8 @@ const VendorPublicProfile = () => {
           ...data,
           price_tiers: priceTiers,
           airbnb_reviews: airbnbReviews,
+          // Commission is not exposed in public view, set to null for safety
+          commission_percentage: null,
         } as VendorProfile);
       }
     } catch (error) {

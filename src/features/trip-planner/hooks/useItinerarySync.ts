@@ -170,6 +170,15 @@ export function useItinerarySync({
 }
 
 /**
+ * Sanitize itinerary data for public viewing by removing sensitive fields.
+ */
+function sanitizeItineraryForPublic(itinerary: Itinerary): Itinerary {
+  // Remove userId to prevent exposing the owner's identity in public views
+  const { userId, ...sanitized } = itinerary;
+  return sanitized as Itinerary;
+}
+
+/**
  * Load an itinerary from the database by ID or share token.
  */
 export async function loadItineraryFromDatabase(
@@ -203,8 +212,9 @@ export async function loadItineraryFromDatabase(
 
     // Determine permission
     let permission: "owner" | CollaboratorPermission | null = null;
+    const isOwner = user?.id === data.user_id;
 
-    if (user?.id === data.user_id) {
+    if (isOwner) {
       permission = "owner";
     } else if (data.is_public) {
       // Check if user is a collaborator
@@ -224,7 +234,7 @@ export async function loadItineraryFromDatabase(
 
     // Build itinerary object from database row
     const itineraryData = data.itinerary_data || { days: [] };
-    const itinerary: Itinerary = {
+    let itinerary: Itinerary = {
       ...itineraryData,
       id: data.id,
       destination: data.destination,
@@ -236,6 +246,11 @@ export async function loadItineraryFromDatabase(
       userId: data.user_id,
       shareUrl: `${window.location.origin}/shared/${data.share_token}`,
     };
+
+    // Sanitize for non-owners to prevent exposing the owner's userId
+    if (!isOwner) {
+      itinerary = sanitizeItineraryForPublic(itinerary);
+    }
 
     return { itinerary, permission, error: null };
   } catch {
