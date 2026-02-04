@@ -8,6 +8,7 @@ import type { Restaurant } from "@/data/mockRestaurants";
 interface GoogleReviewsData {
   rating?: number;
   totalReviews?: number;
+  photos?: string[];
 }
 
 interface CachedGoogleData extends GoogleReviewsData {
@@ -29,7 +30,7 @@ const getCachedData = (restaurantId: string): GoogleReviewsData | null => {
       return null;
     }
     
-    return { rating: parsed.rating, totalReviews: parsed.totalReviews };
+    return { rating: parsed.rating, totalReviews: parsed.totalReviews, photos: parsed.photos };
   } catch {
     return null;
   }
@@ -82,9 +83,10 @@ export const RestaurantCardWithGoogleRating = ({
         });
 
         if (!error && data?.rating) {
-          const reviewData = {
+          const reviewData: GoogleReviewsData = {
             rating: data.rating,
-            totalReviews: data.totalReviews
+            totalReviews: data.totalReviews,
+            photos: data.photos
           };
           setGoogleData(reviewData);
           setCachedData(restaurant.id, reviewData);
@@ -98,6 +100,7 @@ export const RestaurantCardWithGoogleRating = ({
   }, [restaurant, googleData]);
 
   const displayRating = googleData?.rating ?? restaurant.rating;
+  const displayPhoto = googleData?.photos?.[0] ?? restaurant.photos[0];
 
   return (
     <Link
@@ -107,7 +110,7 @@ export const RestaurantCardWithGoogleRating = ({
     >
       <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
         <BlurImage
-          src={restaurant.photos[0]}
+          src={displayPhoto}
           alt={restaurant.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
