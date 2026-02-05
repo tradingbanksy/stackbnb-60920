@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { mockRestaurants, isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { formatDistance } from "@/services/googleMapsService";
-import InteractiveSelector from "@/components/ui/interactive-selector";
+ import ImageCarousel from "@/components/ImageCarousel";
 import { supabase } from "@/integrations/supabase/client";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
 import { useSearch } from "@/contexts/SearchContext";
@@ -342,12 +342,11 @@ const RestaurantDetail = () => {
           </button>
         </div>
 
-        <InteractiveSelector 
-          photos={displayPhotos.length > 0 ? displayPhotos : restaurant.photos} 
-          titles={displayPhotos.length > 0 
-            ? displayPhotos.map((_, i) => `Photo ${i + 1}`)
-            : restaurant.photos.map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
-        />
+         <ImageCarousel 
+           images={displayPhotos.length > 0 ? displayPhotos : restaurant.photos}
+           alt={restaurant.name}
+           aspectRatio="4/3"
+         />
       </div>
 
       {/* Content */}
