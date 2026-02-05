@@ -1,19 +1,30 @@
- import React, { useRef, useState, useEffect, useCallback } from 'react';
+ import React, { useRef, useState, useEffect, useCallback, ReactNode } from 'react';
  import { Dialog, DialogContent } from '@/components/ui/dialog';
  import { cn } from '@/lib/utils';
+ import { FaUtensils, FaStar, FaCamera, FaGlassCheers, FaLeaf } from 'react-icons/fa';
  
  interface ImageCarouselProps {
    images: string[];
+   titles?: string[];
+   icons?: ReactNode[];
    alt?: string;
-   aspectRatio?: "4/3" | "16/9" | "1/1";
    showFullScreenOnTap?: boolean;
    className?: string;
  }
  
+ const defaultIcons = [
+   <FaUtensils size={20} className="text-white" />,
+   <FaStar size={20} className="text-white" />,
+   <FaCamera size={20} className="text-white" />,
+   <FaGlassCheers size={20} className="text-white" />,
+   <FaLeaf size={20} className="text-white" />,
+ ];
+ 
  const ImageCarousel: React.FC<ImageCarouselProps> = ({
    images,
+   titles,
+   icons,
    alt = "Image",
-   aspectRatio = "4/3",
    showFullScreenOnTap = true,
    className
  }) => {
@@ -21,12 +32,6 @@
    const [activeIndex, setActiveIndex] = useState(0);
    const [fullScreenOpen, setFullScreenOpen] = useState(false);
    const [fullScreenIndex, setFullScreenIndex] = useState(0);
- 
-   const aspectRatioClass = {
-     "4/3": "aspect-[4/3]",
-     "16/9": "aspect-video",
-     "1/1": "aspect-square"
-   }[aspectRatio];
  
    // Track which image is visible using Intersection Observer
    useEffect(() => {
@@ -77,11 +82,11 @@
  
    return (
      <>
-       <div className={cn("relative bg-muted", className)}>
+       <div className={cn("relative flex flex-col items-center justify-center py-4 bg-background", className)}>
          {/* Scrollable container */}
          <div
            ref={scrollContainerRef}
-           className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+           className="flex w-full max-w-[450px] h-[280px] mx-auto overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-xl"
            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
          >
            {images.map((image, index) => (
@@ -89,10 +94,7 @@
                key={index}
                data-carousel-image
                data-index={index}
-               className={cn(
-                 "flex-shrink-0 w-full snap-center cursor-pointer",
-                 aspectRatioClass
-               )}
+               className="relative flex-shrink-0 w-full h-full snap-center cursor-pointer"
                onClick={() => handleImageClick(index)}
              >
                <img
@@ -101,13 +103,34 @@
                  className="w-full h-full object-cover"
                  loading={index === 0 ? "eager" : "lazy"}
                />
+               
+               {/* Gradient overlay */}
+               <div 
+                 className="absolute left-0 right-0 bottom-0 h-[120px] pointer-events-none"
+                 style={{
+                   background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)'
+                 }}
+               />
+               
+               {/* Label with icon and title */}
+               <div className="absolute left-0 right-0 bottom-3 flex items-center justify-start h-10 z-10 pointer-events-none px-3 gap-2">
+                 <div 
+                   className="min-w-[36px] max-w-[36px] h-[36px] flex items-center justify-center rounded-full backdrop-blur-sm shadow-md border border-white/20 flex-shrink-0"
+                   style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+                 >
+                   {icons?.[index] || defaultIcons[index % defaultIcons.length]}
+                 </div>
+                 <div className="text-white font-semibold text-sm drop-shadow-lg">
+                   {titles?.[index] || `Photo ${index + 1}`}
+                 </div>
+               </div>
              </div>
            ))}
          </div>
  
          {/* Dot indicators */}
          {images.length > 1 && (
-           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+           <div className="flex gap-1.5 mt-3">
              {images.map((_, index) => (
                <button
                  key={index}
@@ -118,8 +141,8 @@
                  className={cn(
                    "w-2 h-2 rounded-full transition-all duration-300",
                    activeIndex === index
-                     ? "bg-white w-6"
-                     : "bg-white/50 hover:bg-white/70"
+                     ? "bg-primary w-6"
+                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                  )}
                  aria-label={`Go to image ${index + 1}`}
                />
