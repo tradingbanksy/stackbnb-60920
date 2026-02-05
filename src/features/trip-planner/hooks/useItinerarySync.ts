@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Itinerary, CollaboratorPermission } from "../types";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { Json } from "@/integrations/supabase/types";
+
 interface UseItinerarySyncOptions {
   /** The itinerary ID to sync */
   itineraryId: string | null;
@@ -170,16 +171,8 @@ export function useItinerarySync({
 }
 
 /**
- * Sanitize itinerary data for public viewing by removing sensitive fields.
- */
-function sanitizeItineraryForPublic(itinerary: Itinerary): Itinerary {
-  // Remove userId to prevent exposing the owner's identity in public views
-  const { userId, ...sanitized } = itinerary;
-  return sanitized as Itinerary;
-}
-
-/**
  * Load an itinerary from the database by ID or share token.
+  * Uses itineraries_public view for anonymous/unauthenticated access.
  */
 export async function loadItineraryFromDatabase(
   idOrToken: string,
@@ -187,8 +180,50 @@ export async function loadItineraryFromDatabase(
 ): Promise<{ itinerary: Itinerary | null; permission: "owner" | CollaboratorPermission | null; error: string | null }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
-    // Build query
+
+    // For unauthenticated users, use the public view (no user_id exposed)
+    if (!user) {
+      // Query the public view that strips sensitive fields
+      let query = supabase
+        .from("itineraries_public")
+        .select("*");
+      
+      if (isShareToken) {
+        query = query.eq("share_token", idOrToken);
+      } else {
+        query = query.eq("id", idOrToken);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await query.maybeSingle() as any;
+
+      if (error) {
+        return { itinerary: null, permission: null, error: error.message };
+      }
+
+      if (!data) {
+        return { itinerary: null, permission: null, error: "Itinerary not found" };
+      }
+
+      // Build itinerary from public view (no user_id field)
+      const itineraryData = data.itinerary_data || { days: [] };
+      const itinerary: Itinerary = {
+        ...itineraryData,
+        id: data.id,
+        destination: data.destination,
+        startDate: data.start_date,
+        endDate: data.end_date,
+        isConfirmed: data.is_confirmed,
+        shareToken: data.share_token,
+        isPublic: data.is_public,
+        // userId intentionally not set - not exposed in public view
+        shareUrl: `${window.location.origin}/shared/${data.share_token}`,
+      };
+
+      return { itinerary, permission: "viewer", error: null };
+    }
+
+    // Authenticated user: query the base table (RLS applies)
     let query = supabase
       .from("itineraries")
       .select("*");
@@ -210,31 +245,31 @@ export async function loadItineraryFromDatabase(
       return { itinerary: null, permission: null, error: "Itinerary not found" };
     }
 
-    // Determine permission
+    // Determine permission for authenticated user
     let permission: "owner" | CollaboratorPermission | null = null;
-    const isOwner = user?.id === data.user_id;
+    const isOwner = user.id === data.user_id;
 
     if (isOwner) {
       permission = "owner";
-    } else if (data.is_public) {
+    } else {
       // Check if user is a collaborator
-      if (user) {
-        const { data: collab } = await supabase
-          .from("itinerary_collaborators")
-          .select("permission")
-          .eq("itinerary_id", data.id)
-          .or(`user_id.eq.${user.id},email.eq.${user.email}`)
-          .maybeSingle();
-        
-        permission = (collab?.permission as CollaboratorPermission) || "viewer";
-      } else {
+      const { data: collab } = await supabase
+        .from("itinerary_collaborators")
+        .select("permission")
+        .eq("itinerary_id", data.id)
+        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+        .maybeSingle();
+      
+      if (collab) {
+        permission = collab.permission as CollaboratorPermission;
+      } else if (data.is_public) {
         permission = "viewer";
       }
     }
 
     // Build itinerary object from database row
     const itineraryData = data.itinerary_data || { days: [] };
-    let itinerary: Itinerary = {
+    const itinerary: Itinerary = {
       ...itineraryData,
       id: data.id,
       destination: data.destination,
@@ -243,14 +278,9 @@ export async function loadItineraryFromDatabase(
       isConfirmed: data.is_confirmed,
       shareToken: data.share_token,
       isPublic: data.is_public,
-      userId: data.user_id,
+      userId: isOwner ? data.user_id : undefined, // Only expose userId to owner
       shareUrl: `${window.location.origin}/shared/${data.share_token}`,
     };
-
-    // Sanitize for non-owners to prevent exposing the owner's userId
-    if (!isOwner) {
-      itinerary = sanitizeItineraryForPublic(itinerary);
-    }
 
     return { itinerary, permission, error: null };
   } catch {

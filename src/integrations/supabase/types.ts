@@ -215,6 +215,13 @@ export type Database = {
             referencedRelation: "itineraries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "itinerary_collaborators_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       itinerary_items: {
@@ -773,6 +780,45 @@ export type Database = {
       }
     }
     Views: {
+      itineraries_public: {
+        Row: {
+          created_at: string | null
+          destination: string | null
+          end_date: string | null
+          id: string | null
+          is_confirmed: boolean | null
+          is_public: boolean | null
+          itinerary_data: Json | null
+          share_token: string | null
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          destination?: string | null
+          end_date?: string | null
+          id?: string | null
+          is_confirmed?: boolean | null
+          is_public?: boolean | null
+          itinerary_data?: never
+          share_token?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          destination?: string | null
+          end_date?: string | null
+          id?: string | null
+          is_confirmed?: boolean | null
+          is_public?: boolean | null
+          itinerary_data?: never
+          share_token?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       vendor_profiles_public: {
         Row: {
           about_experience: string | null
@@ -781,6 +827,7 @@ export type Database = {
           airbnb_reviews: Json | null
           cancellation_hours: number | null
           category: string | null
+          city: string | null
           created_at: string | null
           description: string | null
           duration: string | null
@@ -806,6 +853,7 @@ export type Database = {
           airbnb_reviews?: Json | null
           cancellation_hours?: number | null
           category?: string | null
+          city?: string | null
           created_at?: string | null
           description?: string | null
           duration?: string | null
@@ -831,6 +879,7 @@ export type Database = {
           airbnb_reviews?: Json | null
           cancellation_hours?: number | null
           category?: string | null
+          city?: string | null
           created_at?: string | null
           description?: string | null
           duration?: string | null
