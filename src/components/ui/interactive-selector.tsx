@@ -88,7 +88,7 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
       {/* Options Container */}
       <div 
          ref={containerRef}
-        className="flex w-full max-w-[450px] h-[280px] mx-auto items-stretch overflow-hidden relative rounded-xl"
+        className="flex w-full max-w-[375px] h-[280px] mx-auto items-stretch overflow-hidden relative rounded-xl"
          style={{ minWidth: '300px', touchAction: 'pan-y' }}
          onTouchStart={handleTouchStart}
          onTouchMove={handleTouchMove}
