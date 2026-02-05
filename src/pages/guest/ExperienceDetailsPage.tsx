@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Star, Clock, Users, CheckCircle } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
-import InteractiveSelector from "@/components/ui/interactive-selector";
+ import ImageCarousel from "@/components/ImageCarousel";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
 import { VendorListButton } from "@/components/VendorListButton";
 import { FaWater, FaBicycle, FaSwimmer, FaCamera, FaSpa, FaWineGlass, FaMotorcycle, FaShip, FaTree, FaHorse, FaMask, FaMountain, FaParachuteBox, FaPray, FaFish, FaUtensils, FaCloudSun, FaGlassCheers } from 'react-icons/fa';
@@ -190,16 +190,11 @@ const ExperienceDetails = () => {
 
         {/* Interactive Photo Selector */}
         <div className="mb-4">
-          {(() => {
-            const config = getExperienceConfig(experience.id);
-            return (
-              <InteractiveSelector 
-                photos={config.images} 
-                titles={config.titles}
-                icons={config.icons}
-              />
-            );
-          })()}
+           <ImageCarousel 
+             images={getExperienceConfig(experience.id).images}
+             alt={experience.name}
+             aspectRatio="4/3"
+           />
         </div>
 
         <div className="px-4 py-6 space-y-6">
