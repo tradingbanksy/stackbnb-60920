@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+ import React, { useState, useEffect, ReactNode, useRef } from 'react';
 import { FaUtensils, FaStar, FaCamera, FaGlassCheers, FaLeaf } from 'react-icons/fa';
 
 interface PhotoOption {
@@ -24,6 +24,9 @@ const defaultIcons = [
 const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [animatedOptions, setAnimatedOptions] = useState<number[]>([]);
+   const containerRef = useRef<HTMLDivElement>(null);
+   const touchStartX = useRef<number>(0);
+   const touchEndX = useRef<number>(0);
   
   const options: PhotoOption[] = photos.map((photo, index) => ({
     title: titles?.[index] || `Photo ${index + 1}`,
@@ -36,6 +39,33 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
     }
   };
 
+   const handleTouchStart = (e: React.TouchEvent) => {
+     touchStartX.current = e.touches[0].clientX;
+   };
+ 
+   const handleTouchMove = (e: React.TouchEvent) => {
+     touchEndX.current = e.touches[0].clientX;
+   };
+ 
+   const handleTouchEnd = () => {
+     const diff = touchStartX.current - touchEndX.current;
+     const threshold = 50; // minimum swipe distance
+ 
+     if (Math.abs(diff) > threshold) {
+       if (diff > 0 && activeIndex < options.length - 1) {
+         // Swipe left - go to next
+         setActiveIndex(prev => prev + 1);
+       } else if (diff < 0 && activeIndex > 0) {
+         // Swipe right - go to previous
+         setActiveIndex(prev => prev - 1);
+       }
+     }
+     
+     // Reset
+     touchStartX.current = 0;
+     touchEndX.current = 0;
+   };
+ 
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
     
@@ -57,8 +87,12 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
     <div className="relative flex flex-col items-center justify-center py-4 bg-background">
       {/* Options Container */}
       <div 
+         ref={containerRef}
         className="flex w-full max-w-[450px] h-[280px] mx-auto items-stretch overflow-hidden relative rounded-xl"
-        style={{ minWidth: '300px' }}
+         style={{ minWidth: '300px', touchAction: 'pan-y' }}
+         onTouchStart={handleTouchStart}
+         onTouchMove={handleTouchMove}
+         onTouchEnd={handleTouchEnd}
       >
         {options.map((option, index) => (
           <div
