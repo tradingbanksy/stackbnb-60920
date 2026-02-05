@@ -190,11 +190,17 @@ const ExperienceDetails = () => {
 
         {/* Interactive Photo Selector */}
         <div className="mb-4">
-           <ImageCarousel 
-             images={getExperienceConfig(experience.id).images}
-             alt={experience.name}
-             aspectRatio="4/3"
-           />
+           {(() => {
+             const config = getExperienceConfig(experience.id);
+             return (
+               <ImageCarousel 
+                 images={config.images}
+                 titles={config.titles}
+                 icons={config.icons}
+                 alt={experience.name}
+               />
+             );
+           })()}
         </div>
 
         <div className="px-4 py-6 space-y-6">

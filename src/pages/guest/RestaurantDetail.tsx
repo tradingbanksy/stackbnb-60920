@@ -345,7 +345,9 @@ const RestaurantDetail = () => {
          <ImageCarousel 
            images={displayPhotos.length > 0 ? displayPhotos : restaurant.photos}
            alt={restaurant.name}
-           aspectRatio="4/3"
+           titles={displayPhotos.length > 0 
+             ? displayPhotos.map((_, i) => `Photo ${i + 1}`)
+             : restaurant.photos.map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
          />
       </div>
 
