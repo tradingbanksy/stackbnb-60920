@@ -36,8 +36,8 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
   // When there are many photos (common on restaurants via Google), the fixed strip width
   // can crowd out the expanded photo. Make the inactive strips slimmer and give the
   // active image more flex so the first photo is clearly visible.
-  const inactiveMinWidth = options.length > 8 ? 18 : options.length > 6 ? 22 : options.length > 4 ? 28 : 40;
-  const activeFlexGrow = options.length > 6 ? 10 : 7;
+  const inactiveMinWidth = options.length > 8 ? 8 : options.length > 6 ? 10 : options.length > 4 ? 14 : 20;
+  const activeFlexGrow = options.length > 6 ? 15 : 10;
 
   const handleOptionClick = (index: number) => {
     if (index !== activeIndex) {
