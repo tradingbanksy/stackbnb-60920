@@ -33,6 +33,12 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
     image: photo,
   }));
 
+  // When there are many photos (common on restaurants via Google), the fixed strip width
+  // can crowd out the expanded photo. Make the inactive strips slimmer and give the
+  // active image more flex so the first photo is clearly visible.
+  const inactiveMinWidth = options.length > 8 ? 18 : options.length > 6 ? 22 : options.length > 4 ? 28 : 40;
+  const activeFlexGrow = options.length > 6 ? 10 : 7;
+
   const handleOptionClick = (index: number) => {
     if (index !== activeIndex) {
       setActiveIndex(index);
@@ -105,7 +111,7 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
               backfaceVisibility: 'hidden',
               opacity: animatedOptions.includes(index) ? 1 : 0,
               transform: animatedOptions.includes(index) ? 'translateX(0)' : 'translateX(-60px)',
-              minWidth: '40px',
+              minWidth: activeIndex === index ? 0 : inactiveMinWidth,
               borderWidth: '1px',
               borderStyle: 'solid',
               borderColor: activeIndex === index ? 'hsl(var(--primary))' : 'hsl(var(--border))',
@@ -113,7 +119,7 @@ const InteractiveSelector = ({ photos, titles, icons }: InteractiveSelectorProps
               boxShadow: activeIndex === index 
                 ? '0 20px 60px rgba(0,0,0,0.50)' 
                 : '0 10px 30px rgba(0,0,0,0.30)',
-              flex: activeIndex === index ? '7 1 0%' : '1 1 0%',
+              flex: activeIndex === index ? `${activeFlexGrow} 1 0%` : '1 1 0%',
               zIndex: activeIndex === index ? 10 : 1,
               willChange: 'flex-grow, box-shadow, background-size'
             }}
