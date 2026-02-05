@@ -345,10 +345,10 @@ const RestaurantDetail = () => {
         </div>
 
         <InteractiveSelector 
-          photos={displayPhotos.length > 0 ? displayPhotos : restaurant.photos} 
+          photos={(displayPhotos.length > 0 ? displayPhotos : restaurant.photos).slice(0, 6)} 
           titles={displayPhotos.length > 0 
-            ? displayPhotos.map((_, i) => `Photo ${i + 1}`)
-            : restaurant.photos.map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
+            ? displayPhotos.slice(0, 6).map((_, i) => `Photo ${i + 1}`)
+            : restaurant.photos.slice(0, 6).map((_, i) => `${restaurant.cuisine} Dish ${i + 1}`)}
         />
       </div>
 
