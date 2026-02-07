@@ -1,84 +1,36 @@
 
 
-# Fix: Restore Experiences Visibility
+# Update OG Image to Branded Stackd Image
 
-## What Happened
+## What's Changing
 
-The security migration we just applied accidentally broke the guest-facing experience and vendor displays. Here's why:
+The `index.html` file currently points to a generic Lovable placeholder image for social media previews (the image that shows up when you share your link on Twitter, Facebook, LinkedIn, iMessage, etc.). We'll replace it with your own Stackd branding.
 
-- We created public views with `security_invoker=on`, which forces the database to check the **calling user's** permissions on the base table
-- We also restricted the base table to only allow owners and linked hosts to read it
-- Result: when a guest queries the public view, they have no permission on the base table, so the view returns **zero rows**
+## Approach
 
-## The Fix
+Since the OG image needs to be a publicly accessible URL (not a bundled asset), we'll move your existing `stackd-logo-new.png` into the `public/` folder so it's served at a fixed URL. Then we'll update the two meta tags in `index.html` to point to it.
 
-Recreate both views **without** `security_invoker=on`. This way:
-- The view runs with the privileges of the view creator (which can read the base table)
-- Guests can read the safe, filtered columns through the view
-- The base table remains locked down -- direct queries to `vendor_profiles` or `itineraries` are still blocked by RLS
-- Sensitive fields (`user_id`, `stripe_account_id`, commissions) are never exposed because the view simply doesn't include them
+If you'd prefer a custom OG banner image (typically 1200x630px) instead of just the logo, you can upload one and we'll use that instead. For now, we'll use your existing logo.
 
-This is the standard Postgres pattern for security views -- the view acts as a controlled "window" into the data.
+## Changes
 
-## Database Migration
+### 1. Copy logo to public folder
+- Place `stackd-logo-new.png` into `public/` so it's available at `/stackd-logo-new.png`
 
-A single migration that drops and recreates both views without `security_invoker`:
+### 2. Update `index.html` (2 lines)
+- **Line 38**: Change `og:image` from `https://lovable.dev/opengraph-image-p98pqg.png` to `/stackd-logo-new.png`
+- **Line 42**: Change `twitter:image` from `https://lovable.dev/opengraph-image-p98pqg.png` to `/stackd-logo-new.png`
 
-```text
-1. DROP VIEW vendor_profiles_public
-2. CREATE VIEW vendor_profiles_public (same columns, no security_invoker)
-3. DROP VIEW itineraries_public
-4. CREATE VIEW itineraries_public (same columns, no security_invoker)
-```
-
-## Code Changes
-
-No frontend code changes are needed -- the queries already target the public views. Once the views return data again, the experiences will reappear.
+We'll use an absolute URL based on your published domain (`https://stackbnb-60920.lovable.app/stackd-logo-new.png`) so the image resolves correctly when shared on social platforms (relative paths don't work for OG tags).
 
 ## Technical Details
 
-### SQL Migration
-
-```sql
--- Fix vendor_profiles_public: remove security_invoker so guests can read
-DROP VIEW IF EXISTS public.vendor_profiles_public;
-CREATE VIEW public.vendor_profiles_public AS
-SELECT
-  id, name, category, description, about_experience,
-  photos, menu_url, instagram_url, price_per_person,
-  price_tiers, duration, max_guests, google_rating,
-  google_place_id, google_reviews_url, airbnb_experience_url,
-  airbnb_reviews, included_items, age_restriction,
-  listing_type, is_published, cancellation_hours, created_at, city
-FROM public.vendor_profiles
-WHERE is_published = true;
-
--- Fix itineraries_public: remove security_invoker so anon can read shared trips
-DROP VIEW IF EXISTS public.itineraries_public;
-CREATE VIEW public.itineraries_public AS
-SELECT
-  id, destination, start_date, end_date,
-  itinerary_data #- '{userId}' as itinerary_data,
-  is_confirmed, share_token, is_public,
-  created_at, updated_at
-FROM public.itineraries
-WHERE is_public = true;
-```
-
-### Why This Is Still Secure
-
-| Access Path | What Happens |
-|-------------|--------------|
-| Guest queries `vendor_profiles_public` | View returns only safe columns for published vendors -- no `user_id`, no Stripe ID, no commissions |
-| Guest queries `vendor_profiles` directly | RLS blocks them -- only owners and linked hosts can SELECT |
-| Guest queries `itineraries_public` | View returns itinerary data with `userId` stripped from JSON |
-| Guest queries `itineraries` directly | RLS blocks them -- only owners and collaborators can SELECT |
-
-### Files Affected
-
 | File | Change |
 |------|--------|
-| New SQL migration | Recreate both views without `security_invoker=on` |
+| `public/stackd-logo-new.png` | Copy of your branded logo for use as OG image |
+| `index.html` (line 38) | `og:image` updated to `https://stackbnb-60920.lovable.app/stackd-logo-new.png` |
+| `index.html` (line 42) | `twitter:image` updated to `https://stackbnb-60920.lovable.app/stackd-logo-new.png` |
 
-No frontend files need changes.
+### Note on Image Size
+Social platforms recommend OG images be **1200x630 pixels**. Your current logo may appear small or oddly cropped in previews. If you have (or want to create) a proper banner-sized image, we can use that instead.
 
