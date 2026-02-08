@@ -1,22 +1,28 @@
 
-
-## Center and Enlarge the stackd Verified Badge
+## Rename "Google Reviews" to "Airbnb Reviews" and Add a Real Google Reviews Link
 
 ### What Changes
 
-The `StackdVerifiedBadge` component will be updated so the content is centered and the seal image matches the host avatar size (64px instead of 48px).
+The current "Google Reviews" button in the External Links section actually links to Airbnb for some vendors (using the `google_reviews_url` field). We will:
 
-### File to Modify
+1. **Rename** the existing `google_reviews_url` button from "Google Reviews" to "Airbnb Reviews" (with a matching icon swap)
+2. **Add a new "Google Reviews" button** that links to the vendor's actual Google profile using their `google_place_id`
 
-**`src/components/StackdVerifiedBadge.tsx`**:
+The Google profile URL will be constructed as:
+`https://www.google.com/maps/place/?q=place_id:{google_place_id}`
 
-1. Add `text-center items-center` to the container div so all content (image, heading, description, link) is centered
-2. Center the seal image using `mx-auto`
-3. Change the seal size from `h-12 w-12` (48px) to `h-16 w-16` (64px) to match the host avatar in "Meet your host"
+### Files to Modify
+
+**1. `src/pages/vendor/PublicProfile.tsx`** (External Links section, lines ~466-505):
+- Rename the `google_reviews_url` button label from "Google Reviews" to "Airbnb Reviews"
+- Change its icon from `Star` to `ExternalLink` (to differentiate from the real Google link)
+- Add a new "Google Reviews" button that uses `google_place_id` to link to the Google Maps profile, shown only when `google_place_id` exists
+- The new button keeps the `Star` icon
+
+**2. `src/pages/vendor/ProfilePreview.tsx`** (External Links section, lines ~576-613):
+- Same changes: rename existing button to "Airbnb Reviews", add new Google Reviews button using `google_place_id`
 
 ### What Stays the Same
-
-- The text content (heading, description, "Learn more" link) remains identical
-- The placement on both `PublicProfile.tsx` and `ProfilePreview.tsx` stays the same
-- No other files need changes
-
+- All other sections on both pages remain untouched
+- The `google_reviews_url` field continues to be used as-is (just relabeled)
+- No database changes needed
