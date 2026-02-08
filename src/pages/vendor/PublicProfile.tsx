@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { 
   ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
-  Instagram, ExternalLink, Store, MessageSquare, Quote
+  Instagram, ExternalLink, Store, MessageSquare, Quote, Share
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
-import InteractiveSelector from '@/components/ui/interactive-selector';
+import StackedPhotoGrid from '@/components/ui/stacked-photo-grid';
 import PriceComparison from '@/components/PriceComparison';
 import { VendorReviews } from '@/components/VendorReviews';
-import { FaUtensils, FaSpa, FaCamera, FaWineGlass, FaShip, FaBicycle, FaSwimmer, FaMountain } from 'react-icons/fa';
+
+// --- Types ---
 
 interface PriceTier {
   name: string;
@@ -49,23 +50,8 @@ interface VendorProfile {
   airbnb_reviews: AirbnbReview[] | null;
 }
 
-// Category to icon mapping
-const categoryIcons: Record<string, { icon: string; faIcon: React.ReactNode }> = {
-  'Private Chef': { icon: '👨‍🍳', faIcon: <FaUtensils size={20} className="text-white" /> },
-  'Massage & Spa': { icon: '💆', faIcon: <FaSpa size={20} className="text-white" /> },
-  'Yacht Charter': { icon: '🛥️', faIcon: <FaShip size={20} className="text-white" /> },
-  'Photography': { icon: '📸', faIcon: <FaCamera size={20} className="text-white" /> },
-  'Tour Guide': { icon: '🗺️', faIcon: <FaMountain size={20} className="text-white" /> },
-  'Fitness & Yoga': { icon: '🧘', faIcon: <FaSpa size={20} className="text-white" /> },
-  'Wine Tasting': { icon: '🍷', faIcon: <FaWineGlass size={20} className="text-white" /> },
-  'Fishing Charter': { icon: '🎣', faIcon: <FaShip size={20} className="text-white" /> },
-  'Water Sports': { icon: '🌊', faIcon: <FaSwimmer size={20} className="text-white" /> },
-  'Cooking Class': { icon: '👩‍🍳', faIcon: <FaUtensils size={20} className="text-white" /> },
-  'Transportation': { icon: '🚗', faIcon: <FaBicycle size={20} className="text-white" /> },
-  'default': { icon: '✨', faIcon: <FaSpa size={20} className="text-white" /> },
-};
+// --- Helpers ---
 
-// Helper to open external links reliably (bypasses popup blockers)
 const openExternalLink = (url: string) => {
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -76,6 +62,8 @@ const openExternalLink = (url: string) => {
   document.body.removeChild(anchor);
 };
 
+// --- Component ---
+
 const VendorPublicProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -85,13 +73,10 @@ const VendorPublicProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedTierIndex, setSelectedTierIndex] = useState<number>(0);
-  
-  // Commission is host-only AND only when explicitly in host context.
-  // This prevents it from appearing while casually exploring the public vendor page.
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+
   const isHostContext = searchParams.get('mode') === 'host';
   const canSeeCommission = isAuthenticated && role === 'host' && isHostContext;
-  
-  // Get hostId from URL if guest came from a host's guide
   const hostId = searchParams.get('host');
 
   useEffect(() => {
@@ -103,7 +88,6 @@ const VendorPublicProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      // Use the public view to avoid exposing sensitive fields (stripe_account_id, user_id, commissions)
       const { data, error } = await supabase
         .from('vendor_profiles_public')
         .select('*')
@@ -114,28 +98,19 @@ const VendorPublicProfile = () => {
       if (error) throw error;
       
       if (data) {
-        // Parse price_tiers from JSON safely
         let priceTiers: PriceTier[] = [];
         if (Array.isArray(data.price_tiers)) {
           priceTiers = data.price_tiers.map((tier: unknown) => {
             const t = tier as { name?: string; price?: number };
-            return {
-              name: t.name || '',
-              price: t.price || 0,
-            };
+            return { name: t.name || '', price: t.price || 0 };
           });
         }
         
-        // Parse airbnb_reviews from JSON safely
         let airbnbReviews: AirbnbReview[] = [];
         if (Array.isArray(data.airbnb_reviews)) {
           airbnbReviews = data.airbnb_reviews.map((review: unknown) => {
             const r = review as { reviewerName?: string; date?: string; comment?: string };
-            return {
-              reviewerName: r.reviewerName || '',
-              date: r.date || '',
-              comment: r.comment || '',
-            };
+            return { reviewerName: r.reviewerName || '', date: r.date || '', comment: r.comment || '' };
           });
         }
         
@@ -143,7 +118,6 @@ const VendorPublicProfile = () => {
           ...data,
           price_tiers: priceTiers,
           airbnb_reviews: airbnbReviews,
-          // Commission is not exposed in public view, set to null for safety
           commission_percentage: null,
         } as VendorProfile);
       }
@@ -182,12 +156,28 @@ const VendorPublicProfile = () => {
     }
   };
 
+  const handleBook = () => {
+    const params = new URLSearchParams();
+    if (profile?.price_tiers && profile.price_tiers.length > 0) {
+      params.set('tier', selectedTierIndex.toString());
+    }
+    if (hostId) {
+      params.set('host', hostId);
+    }
+    navigate(`/vendor/${id}/book${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  const currentPrice = profile?.price_tiers && profile.price_tiers.length > 0
+    ? profile.price_tiers[selectedTierIndex]?.price || 0
+    : profile?.price_per_person || 0;
+
+  // --- Loading state ---
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="max-w-[375px] mx-auto">
           <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-[280px] w-full mt-4" />
+          <Skeleton className="h-[280px] w-full" />
           <div className="p-4 space-y-4">
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
@@ -198,93 +188,148 @@ const VendorPublicProfile = () => {
     );
   }
 
+  // --- Not found ---
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pb-24">
-        <Card className="p-8 text-center">
+        <div className="text-center space-y-4">
           <p className="text-muted-foreground">Profile not found or not published</p>
-          <Button variant="link" className="mt-4" onClick={handleBack}>
+          <Button variant="link" onClick={handleBack}>
             Back to Explore
           </Button>
-        </Card>
+        </div>
       </div>
     );
   }
 
-  const photos = (profile.photos || []).slice(0, 3); // Limit to 3 photos for uniform display
-  const categoryConfig = categoryIcons[profile.category] || categoryIcons['default'];
-  
-  // Generate titles and icons for the selector
-  const photoTitles = photos.map((_, idx) => 
-    idx === 0 ? 'Featured' : idx === 1 ? 'In Action' : `View ${idx + 1}`
-  );
-  const photoIcons = photos.map(() => categoryConfig.faIcon);
+  const photos = profile.photos || [];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[100px]">
       <div className="max-w-[375px] mx-auto">
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+
+        {/* Floating header bar */}
+        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
           <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleBack}
-                className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <span className="font-semibold">{profile.category}</span>
-            </div>
             <button
-              onClick={toggleFavorite}
-              className="p-2 rounded-full hover:bg-muted transition-colors"
+              onClick={handleBack}
+              className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
             >
-              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+              <ArrowLeft className="h-5 w-5" />
             </button>
+            <div className="flex items-center gap-1">
+              <button className="p-2 rounded-full hover:bg-muted transition-colors">
+                <Share className="h-5 w-5" />
+              </button>
+              <button
+                onClick={toggleFavorite}
+                className="p-2 rounded-full hover:bg-muted transition-colors"
+              >
+                <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Interactive Photo Selector */}
-        <div className="mb-4">
+        {/* Photo Grid */}
+        <div className="px-4">
           {photos.length > 0 ? (
-            <InteractiveSelector 
-              photos={photos}
-              titles={photoTitles}
-              icons={photoIcons}
-            />
+            <StackedPhotoGrid photos={photos} alt={profile.name} />
           ) : (
-            <div className="flex items-center justify-center py-4">
-              <div className="w-full max-w-[450px] h-[280px] mx-auto rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-                <Store className="h-16 w-16 text-white/60" />
-              </div>
+            <div className="w-full h-[280px] rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+              <Store className="h-16 w-16 text-white/60" />
             </div>
           )}
         </div>
 
-        <div className="px-4 py-6 space-y-6">
-          {/* Experience Header */}
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-medium leading-tight">{profile.name}</h1>
-              <p className="text-muted-foreground">{profile.category}</p>
-            </div>
+        {/* Content sections */}
+        <div className="px-4">
 
-            <div className="flex items-center gap-4 text-sm">
-              {profile.google_rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{profile.google_rating}</span>
-                  <span className="text-muted-foreground">(Google Reviews)</span>
+          {/* Section: Title + Rating */}
+          <div className="py-6 space-y-2">
+            <h1 className="text-2xl font-semibold leading-tight">{profile.name}</h1>
+            <p className="text-[15px] text-muted-foreground">{profile.category}</p>
+
+            {profile.google_rating && (
+              <div className="flex items-center gap-1.5 pt-1">
+                <Star className="h-4 w-4 fill-foreground text-foreground" />
+                <span className="font-semibold text-[15px]">{profile.google_rating}</span>
+                <span className="text-muted-foreground text-[15px]">·</span>
+                <span className="text-[15px] text-muted-foreground underline underline-offset-2">Google Reviews</span>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Section: Quick Info */}
+          <div className="py-6">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-[15px] font-medium">{profile.duration || 'Varies'}</p>
+                  <p className="text-[13px] text-muted-foreground">Duration</p>
                 </div>
-              )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-[15px] font-medium">Up to {profile.max_guests || 'N/A'}</p>
+                  <p className="text-[13px] text-muted-foreground">Guests</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Price Tier Selector */}
-          {profile.price_tiers && profile.price_tiers.length > 0 ? (
-            <Card className="p-4">
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Select Service Type</label>
+          <Separator />
+
+          {/* Section: About This Experience */}
+          {profile.about_experience && (
+            <>
+              <div className="py-6 space-y-3">
+                <h2 className="text-[22px] font-semibold">About this experience</h2>
+                <div className="relative">
+                  <p className={`text-[15px] leading-relaxed text-foreground whitespace-pre-wrap ${!descriptionExpanded ? 'line-clamp-4' : ''}`}>
+                    {profile.about_experience}
+                  </p>
+                  {profile.about_experience.length > 200 && (
+                    <button
+                      onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                      className="text-[15px] font-semibold underline underline-offset-4 mt-2 hover:text-foreground/80 transition-colors"
+                    >
+                      {descriptionExpanded ? 'Show less' : 'Read more'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Section: What's Included */}
+          {profile.included_items && profile.included_items.length > 0 && (
+            <>
+              <div className="py-6 space-y-4">
+                <h2 className="text-[22px] font-semibold">What's included</h2>
+                <ul className="space-y-3">
+                  {profile.included_items.map((item, index) => (
+                    <li key={index} className="flex items-start gap-3 text-[15px]">
+                      <CheckCircle className="h-5 w-5 text-foreground flex-shrink-0 mt-0.5" />
+                      <span className="text-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Section: Price Tier Selector */}
+          {profile.price_tiers && profile.price_tiers.length > 0 && (
+            <>
+              <div className="py-6 space-y-4">
+                <h2 className="text-[22px] font-semibold">Choose your experience</h2>
                 <Select
                   value={selectedTierIndex.toString()}
                   onValueChange={(val) => setSelectedTierIndex(parseInt(val))}
@@ -295,222 +340,165 @@ const VendorPublicProfile = () => {
                   <SelectContent className="bg-card z-50">
                     {profile.price_tiers.map((tier, idx) => (
                       <SelectItem key={idx} value={idx.toString()}>
-                        {tier.name} - ${tier.price}/person
+                        {tier.name} — ${tier.price}/person
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="text-sm text-muted-foreground">Your quote:</span>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                    ${profile.price_tiers[selectedTierIndex]?.price || 0}/person
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[15px] text-muted-foreground">Selected:</span>
+                  <span className="text-xl font-semibold">
+                    ${profile.price_tiers[selectedTierIndex]?.price || 0}
+                    <span className="text-[15px] font-normal text-muted-foreground"> /person</span>
                   </span>
                 </div>
               </div>
-            </Card>
-          ) : profile.price_per_person ? (
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Price per person:</span>
-                <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-lg px-3 py-1">
-                  ${profile.price_per_person}
-                </Badge>
-              </div>
-            </Card>
-          ) : null}
+              <Separator />
+            </>
+          )}
 
-          {/* Price Comparison */}
+          {/* Section: Price Comparison */}
           {(profile.price_per_person || (profile.price_tiers && profile.price_tiers.length > 0)) && (
-            <PriceComparison
-              category={profile.category}
-              experienceName={profile.name}
-              currentPrice={
-                profile.price_tiers && profile.price_tiers.length > 0
-                  ? profile.price_tiers[selectedTierIndex]?.price || 0
-                  : profile.price_per_person || 0
-              }
-              duration={profile.duration || undefined}
-            />
-          )}
-
-          {/* Quick Info */}
-          <Card className="p-4">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="space-y-1">
-                <Clock className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">{profile.duration || 'Varies'}</p>
-                <p className="text-xs text-muted-foreground">duration</p>
+            <>
+              <div className="py-6">
+                <PriceComparison
+                  category={profile.category}
+                  experienceName={profile.name}
+                  currentPrice={currentPrice}
+                  duration={profile.duration || undefined}
+                />
               </div>
-              <div className="space-y-1">
-                <Users className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">Up to {profile.max_guests || 'N/A'}</p>
-                <p className="text-xs text-muted-foreground">guests</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Affiliate Commission - Hosts & Vendors Only */}
-          {canSeeCommission && profile.commission_percentage && (
-            <Card className="p-4 border-amber-500/50 bg-amber-500/5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    💰 Affiliate Commission
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Partner with this vendor
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {profile.commission_percentage}%
-                  </p>
-                </div>
-              </div>
-            </Card>
+              <Separator />
+            </>
           )}
 
-          {/* Description */}
-          {profile.about_experience && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold">About This Experience</h2>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {profile.about_experience}
-                </p>
-              </Card>
-            </div>
-          )}
+          {/* Section: Guest Reviews (Airbnb-style horizontal scroll) */}
+          <div className="py-6">
+            <VendorReviews vendorProfileId={profile.id} />
+          </div>
 
-          {/* What's Included */}
-          {profile.included_items && profile.included_items.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold">What's Included</h2>
-              <Card className="p-4">
-                <ul className="space-y-2">
-                  {profile.included_items.map((item, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </div>
-          )}
-
-          {/* Stackd Guest Reviews */}
-          <VendorReviews vendorProfileId={profile.id} />
-
-          {/* Airbnb Guest Reviews */}
+          {/* Section: Airbnb Reviews */}
           {profile.airbnb_reviews && profile.airbnb_reviews.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Airbnb Reviews
-              </h2>
-              <div className="space-y-3">
-                {profile.airbnb_reviews.map((review, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="space-y-2">
+            <>
+              <Separator />
+              <div className="py-6 space-y-4">
+                <h2 className="text-[22px] font-semibold flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Airbnb Reviews
+                </h2>
+                <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+                  {profile.airbnb_reviews.map((review, index) => (
+                    <div key={index} className="flex-shrink-0 w-[260px] snap-start rounded-xl border border-border p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">{review.reviewerName}</span>
+                        <span className="font-medium text-[14px]">{review.reviewerName}</span>
                         <span className="text-xs text-muted-foreground">{review.date}</span>
                       </div>
                       <div className="flex gap-2">
-                        <Quote className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-                        <p className="text-sm text-muted-foreground italic">{review.comment}</p>
+                        <Quote className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                        <p className="text-[14px] text-foreground leading-relaxed line-clamp-4">{review.comment}</p>
                       </div>
                     </div>
-                  </Card>
-                ))}
+                  ))}
+                </div>
+                {profile.airbnb_experience_url && (
+                  <button
+                    onClick={() => openExternalLink(profile.airbnb_experience_url!)}
+                    className="text-[15px] font-semibold underline underline-offset-4 hover:text-foreground/80 transition-colors"
+                  >
+                    View all on Airbnb
+                  </button>
+                )}
               </div>
-              {profile.airbnb_experience_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openExternalLink(profile.airbnb_experience_url!)}
-                  className="gap-2 w-full"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View All Reviews on Airbnb
-                </Button>
-              )}
-            </div>
+            </>
           )}
 
-          {/* Links */}
+          {/* Section: External Links */}
           {(profile.instagram_url || profile.menu_url || profile.google_reviews_url) && (
-            <div className="flex flex-wrap gap-2">
-              {profile.instagram_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openExternalLink(profile.instagram_url!)}
-                  className="gap-2"
-                >
-                  <Instagram className="h-4 w-4" />
-                  Instagram
-                </Button>
-              )}
-              {profile.menu_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openExternalLink(profile.menu_url!)}
-                  className="gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View Menu
-                </Button>
-              )}
-              {profile.google_reviews_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openExternalLink(profile.google_reviews_url!)}
-                  className="gap-2"
-                >
-                  <Star className="h-4 w-4" />
-                  Google Reviews
-                </Button>
-              )}
-            </div>
+            <>
+              <Separator />
+              <div className="py-6 flex flex-wrap gap-2">
+                {profile.instagram_url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openExternalLink(profile.instagram_url!)}
+                    className="gap-2 rounded-full"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    Instagram
+                  </Button>
+                )}
+                {profile.menu_url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openExternalLink(profile.menu_url!)}
+                    className="gap-2 rounded-full"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Menu
+                  </Button>
+                )}
+                {profile.google_reviews_url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openExternalLink(profile.google_reviews_url!)}
+                    className="gap-2 rounded-full"
+                  >
+                    <Star className="h-4 w-4" />
+                    Google Reviews
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Affiliate Commission — host only */}
+          {canSeeCommission && profile.commission_percentage && (
+            <>
+              <Separator />
+              <div className="py-6">
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-[15px] font-medium flex items-center gap-2">
+                        💰 Affiliate Commission
+                      </p>
+                      <p className="text-[13px] text-muted-foreground">
+                        Partner with this vendor
+                      </p>
+                    </div>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                      {profile.commission_percentage}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
         {/* Fixed Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 shadow-lg z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] z-40">
           <div className="max-w-[375px] mx-auto flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {profile.price_tiers && profile.price_tiers.length > 0 
-                  ? profile.price_tiers[selectedTierIndex]?.name 
+                  ? 'From' 
                   : 'Price'}
               </p>
-              <p className="text-2xl font-bold">
-                ${profile.price_tiers && profile.price_tiers.length > 0 
-                  ? profile.price_tiers[selectedTierIndex]?.price 
-                  : profile.price_per_person || 'TBD'}
+              <p className="text-[18px] font-semibold">
+                ${currentPrice}
+                <span className="text-[13px] font-normal text-muted-foreground"> /person</span>
               </p>
             </div>
             <Button 
-              variant="default"
               size="lg"
-              className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (profile.price_tiers && profile.price_tiers.length > 0) {
-                  params.set('tier', selectedTierIndex.toString());
-                }
-                // Pass hostId through to booking form if present
-                if (hostId) {
-                  params.set('host', hostId);
-                }
-                navigate(`/vendor/${id}/book${params.toString() ? `?${params.toString()}` : ''}`);
-              }}
+              className="rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-8 font-semibold"
+              onClick={handleBook}
             >
-              Book Now
+              Book
             </Button>
           </div>
         </div>
