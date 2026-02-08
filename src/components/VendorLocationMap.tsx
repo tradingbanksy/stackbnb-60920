@@ -13,6 +13,8 @@ interface VendorLocationMapProps {
   vendorName: string;
   vendorAddress?: string;
   placeId?: string;
+  /** "directions" shows the full route from Tulum Centro; "pin" shows only the vendor location marker */
+  mode?: 'directions' | 'pin';
 }
 
 interface DirectionsData {
@@ -52,7 +54,8 @@ interface MapboxRouteData {
 
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
 
-export function VendorLocationMap({ vendorName, vendorAddress, placeId }: VendorLocationMapProps) {
+export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = 'directions' }: VendorLocationMapProps) {
+  const isPinMode = mode === 'pin';
   const { toast } = useToast();
   const [directionsData, setDirectionsData] = useState<DirectionsData | null>(null);
   const [mapRouteData, setMapRouteData] = useState<MapboxRouteData | null>(null);
@@ -129,8 +132,9 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     }
   }, [vendorName, vendorAddress, placeId]);
 
-  // Fetch Mapbox route when we have vendor location
+  // Fetch Mapbox route when we have vendor location (skip in pin mode)
   useEffect(() => {
+    if (isPinMode) return;
     const fetchMapboxRoute = async () => {
       if (!directionsData?.vendorLocation) return;
 
@@ -156,10 +160,94 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
     };
 
     fetchMapboxRoute();
-  }, [directionsData?.vendorLocation]);
+  }, [directionsData?.vendorLocation, isPinMode]);
 
-  // Initialize Mapbox map when route data is available
+  // In pin mode, fetch just the Mapbox token and init map centered on vendor
   useEffect(() => {
+    if (!isPinMode || !directionsData?.vendorLocation) return;
+    if (!mapContainer.current || map.current) return;
+
+    const initPinMap = async () => {
+      try {
+        // Fetch token via mapbox-directions (we just need the token)
+        const { data, error: fnError } = await supabase.functions.invoke('mapbox-directions', {
+          body: { 
+            destinationLat: directionsData.vendorLocation!.lat,
+            destinationLng: directionsData.vendorLocation!.lng
+          }
+        });
+
+        if (fnError || !data?.mapboxToken) {
+          console.error('Could not get Mapbox token:', fnError);
+          setMapError(true);
+          return;
+        }
+
+        if (!mapContainer.current || map.current) return;
+
+        mapboxgl.accessToken = data.mapboxToken;
+        const { lat, lng } = directionsData.vendorLocation!;
+
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/light-v11',
+          center: [lng, lat],
+          zoom: 15,
+          attributionControl: false,
+        });
+
+        map.current.on('load', () => {
+          if (!map.current) return;
+
+          // Add vendor marker
+          const destEl = document.createElement('div');
+          destEl.className = 'destination-marker';
+          destEl.innerHTML = `
+            <div style="
+              width: 36px; 
+              height: 36px; 
+              background: #ef4444; 
+              border: 3px solid white; 
+              border-radius: 50%; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              box-shadow: 0 2px 12px rgba(239,68,68,0.4);
+            ">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+          `;
+          new mapboxgl.Marker(destEl)
+            .setLngLat([lng, lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${vendorName}</strong>`))
+            .addTo(map.current!);
+
+          map.current!.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+          setMapLoaded(true);
+        });
+
+      } catch (err) {
+        console.error('Error initializing pin map:', err);
+        setMapError(true);
+      }
+    };
+
+    initPinMap();
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [isPinMode, directionsData?.vendorLocation, vendorName]);
+
+  // Initialize Mapbox map when route data is available (directions mode only)
+  useEffect(() => {
+    if (isPinMode) return;
     if (!mapContainer.current || !mapRouteData?.mapboxToken || !mapRouteData?.route) return;
     if (map.current) return; // Already initialized
 
@@ -537,14 +625,14 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
             />
             
             {/* Loading overlay */}
-            {!mapLoaded && mapRouteData && (
+            {!mapLoaded && (isPinMode || mapRouteData) && (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             )}
 
-            {/* Fallback stylized map while loading Mapbox data */}
-            {!mapRouteData && (
+            {/* Fallback stylized map while loading Mapbox data (directions mode only) */}
+            {!isPinMode && !mapRouteData && (
               <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-teal-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-teal-950/30">
                 {/* Subtle map grid pattern */}
                 <div className="absolute inset-0 opacity-10">
@@ -609,8 +697,8 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
 
             {/* Map controls row */}
             <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-              {/* Animate journey button */}
-              {mapLoaded && mapRouteData?.route && (
+              {/* Animate journey button (directions mode only) */}
+              {!isPinMode && mapLoaded && mapRouteData?.route && (
                 <button
                   onClick={animateCar}
                   disabled={isAnimating}
@@ -625,7 +713,7 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
                   {isAnimating ? "Driving..." : "Animate Route"}
                 </button>
               )}
-              {!mapLoaded && <div />}
+              {(!mapLoaded || isPinMode) && <div />}
               
               {/* Open in Maps button */}
               <button
@@ -670,8 +758,8 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
               </p>
             )}
             
-            {/* Distance & Duration Pills */}
-            {(displayDistance || displayDuration) && (
+            {/* Distance & Duration Pills (directions mode only) */}
+            {!isPinMode && (displayDistance || displayDuration) && (
               <div className="flex items-center gap-2 mt-2">
                 {displayDistance && (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
@@ -690,8 +778,8 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
           </div>
         </div>
 
-        {/* Turn-by-Turn Directions */}
-        {mapRouteData?.steps && mapRouteData.steps.length > 0 && (
+        {/* Turn-by-Turn Directions (directions mode only) */}
+        {!isPinMode && mapRouteData?.steps && mapRouteData.steps.length > 0 && (
           <div className="rounded-lg border border-border/50 overflow-hidden">
             <button
               onClick={() => setShowDirections(!showDirections)}
@@ -716,15 +804,12 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
                     key={index}
                     className="flex items-start gap-3 p-3 hover:bg-muted/20 transition-colors"
                   >
-                    {/* Step number with icon */}
                     <div className="flex flex-col items-center gap-1">
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                         {getDirectionIcon(step.instruction)}
                       </div>
                       <span className="text-[10px] text-muted-foreground">{index + 1}</span>
                     </div>
-                    
-                    {/* Step details */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground leading-relaxed">
                         {step.instruction}
@@ -743,7 +828,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
                   </div>
                 ))}
                 
-                {/* Arrival step */}
                 <div className="flex items-start gap-3 p-3 bg-green-500/5">
                   <div className="flex flex-col items-center gap-1">
                     <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-600 shrink-0">
@@ -763,8 +847,8 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId }: Vendor
           </div>
         )}
 
-        {/* Arrival Tips */}
-        {directionsData?.arrivalTips && directionsData.arrivalTips.length > 0 && (
+        {/* Arrival Tips (directions mode only) */}
+        {!isPinMode && directionsData?.arrivalTips && directionsData.arrivalTips.length > 0 && (
           <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3">
             <div className="flex items-start gap-2">
               <Lightbulb className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />

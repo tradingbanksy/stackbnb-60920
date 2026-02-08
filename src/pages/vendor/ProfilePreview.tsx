@@ -541,6 +541,7 @@ const VendorProfilePreview = () => {
               <VendorLocationMap
                 vendorName={profile.name}
                 placeId={profile.google_place_id || undefined}
+                mode="pin"
               />
             </div>
             {profile.meeting_point_description && (
