@@ -574,6 +574,8 @@ export type Database = {
           google_place_id: string | null
           google_rating: number | null
           google_reviews_url: string | null
+          host_avatar_url: string | null
+          host_bio: string | null
           host_commission_percentage: number | null
           host_user_id: string | null
           id: string
@@ -582,6 +584,7 @@ export type Database = {
           is_published: boolean | null
           listing_type: string
           max_guests: number | null
+          meeting_point_description: string | null
           menu_url: string | null
           name: string
           photos: string[] | null
@@ -615,6 +618,8 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           google_reviews_url?: string | null
+          host_avatar_url?: string | null
+          host_bio?: string | null
           host_commission_percentage?: number | null
           host_user_id?: string | null
           id?: string
@@ -623,6 +628,7 @@ export type Database = {
           is_published?: boolean | null
           listing_type?: string
           max_guests?: number | null
+          meeting_point_description?: string | null
           menu_url?: string | null
           name: string
           photos?: string[] | null
@@ -656,6 +662,8 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           google_reviews_url?: string | null
+          host_avatar_url?: string | null
+          host_bio?: string | null
           host_commission_percentage?: number | null
           host_user_id?: string | null
           id?: string
@@ -664,6 +672,7 @@ export type Database = {
           is_published?: boolean | null
           listing_type?: string
           max_guests?: number | null
+          meeting_point_description?: string | null
           menu_url?: string | null
           name?: string
           photos?: string[] | null
@@ -834,12 +843,15 @@ export type Database = {
           google_place_id: string | null
           google_rating: number | null
           google_reviews_url: string | null
+          host_avatar_url: string | null
+          host_bio: string | null
           id: string | null
           included_items: string[] | null
           instagram_url: string | null
           is_published: boolean | null
           listing_type: string | null
           max_guests: number | null
+          meeting_point_description: string | null
           menu_url: string | null
           name: string | null
           photos: string[] | null
@@ -860,12 +872,15 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           google_reviews_url?: string | null
+          host_avatar_url?: string | null
+          host_bio?: string | null
           id?: string | null
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
           listing_type?: string | null
           max_guests?: number | null
+          meeting_point_description?: string | null
           menu_url?: string | null
           name?: string | null
           photos?: string[] | null
@@ -886,12 +901,15 @@ export type Database = {
           google_place_id?: string | null
           google_rating?: number | null
           google_reviews_url?: string | null
+          host_avatar_url?: string | null
+          host_bio?: string | null
           id?: string | null
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
           listing_type?: string | null
           max_guests?: number | null
+          meeting_point_description?: string | null
           menu_url?: string | null
           name?: string | null
           photos?: string[] | null
