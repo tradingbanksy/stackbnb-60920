@@ -1,130 +1,93 @@
 
 
-## Redesign Vendor Public Profile to Match Airbnb Experience Pages
+## Unify All Profile/Detail Pages to Match Airbnb Design Theme
 
 ### Overview
 
-A full visual redesign of the Vendor Public Profile page (`/vendor/:id`) to closely match Airbnb's experience detail page layout and styling. This covers the photo grid, content sections, typography, spacing, reviews, and bottom CTA -- not just the images.
+Three additional pages still use the old `InteractiveSelector` (expanding photo strips) and `Card`-wrapped content sections. These need to be updated to match the Airbnb-style design already implemented on `VendorPublicProfile.tsx`.
 
-### Reference Analysis (from your uploaded screenshots)
+### Pages That Need Updating
 
-Key Airbnb patterns identified:
-1. **Photo grid**: 2 photos on top (side by side), 1 wide photo on bottom, tight 2px gap, rounded corners
-2. **Title area**: Large bold title, category as a subtle label, rating with review count inline
-3. **Host/provider section**: Circular avatar, "Hosted by [Name]", short bio -- separated by a thin divider
-4. **Description**: Clean text, no card wrapper, with "Read more" truncation for long descriptions
-5. **What you'll do / What's included**: Simple list with icons, no card borders, clean spacing
-6. **Reviews**: Horizontal scrollable review cards with avatar, name, date, and star rating
-7. **Bottom CTA bar**: Price on the left, pink/gradient "Book" button on the right, fixed to bottom
+| Page | Route | Current State |
+|------|-------|--------------|
+| **Vendor Profile Preview** (`src/pages/vendor/ProfilePreview.tsx`) | `/vendor/preview` | Uses `InteractiveSelector` + Card-wrapped sections |
+| **Experience Details** (`src/pages/guest/ExperienceDetailsPage.tsx`) | `/experience/:id` | Uses `InteractiveSelector` + Card-wrapped sections |
+| **Restaurant Detail** (`src/pages/guest/RestaurantDetail.tsx`) | `/restaurant/:id` | Uses `InteractiveSelector` + Card-wrapped sections |
 
-### What Changes
+The already-updated page (`VendorPublicProfile.tsx`) serves as the design reference.
 
 ---
 
-#### 1. Stacked Photo Grid (replaces InteractiveSelector)
+### Design Consistency Checklist (applied to all pages)
 
-**New component**: `src/components/ui/stacked-photo-grid.tsx`
+Each page will be updated to follow these Airbnb-style patterns:
 
-```text
-+-------------------+-------------------+
-|                   |                   |
-|   Photo 1         |   Photo 2         |
-|   (square-ish)    |   (square-ish)    |
-|                   |                   |
-+-------------------+-------------------+
-|                                       |
-|         Photo 3 (wide, shorter)       |
-|                                       |
-+---------------------------------------+
-```
-
-- 2px gap between photos
-- Top row: two equal-width images, ~160px tall
-- Bottom row: one full-width image, ~120px tall
-- Rounded corners on the outer edges only (like Airbnb)
-- "Show all photos" overlay button with grid icon (bottom-right of last photo)
-- Handles 1, 2, or 3+ photos gracefully
-- Full-screen photo viewer dialog when tapping photos or "Show all"
+1. **Photo grid**: Replace `InteractiveSelector` with `StackedPhotoGrid` (2 photos on top, 1 wide on bottom, 2px gap, rounded corners, "Show all photos" button)
+2. **Header bar**: Clean sticky header with back arrow (no border), share and favorite buttons on the right
+3. **Title section**: `text-2xl font-semibold` title, category/cuisine as subtle text, inline star rating
+4. **Section separators**: Thin `<Separator />` dividers between sections instead of Card wrappers
+5. **Section spacing**: `py-6` padding on each section block
+6. **Typography**: Section headers use `text-[22px] font-semibold`, body text uses `text-[15px] leading-relaxed text-foreground`
+7. **Lists**: Clean checklist items with `CheckCircle` icons, no Card background
+8. **Bottom CTA**: Price on the left ("From $XX"), action button on the right with rounded pink/gradient styling
 
 ---
 
-#### 2. Content Layout Overhaul (Airbnb-style sections)
+### File-by-File Changes
 
-Remove the heavy `Card` wrappers around every section. Airbnb uses flat, borderless sections separated by thin horizontal dividers (`<Separator />`).
+#### 1. `src/pages/vendor/ProfilePreview.tsx` (Vendor's own preview)
 
-**Section order** (matching Airbnb):
+This is the vendor's "how guests see you" preview. It needs the same visual treatment as the public profile, while keeping the vendor-specific features (photo upload/reorder, publish/submit buttons, verification banners).
 
-1. **Photo Grid** (full width, no padding)
-2. **Title + Rating** -- bold title, category label, star rating with count
-3. **Divider**
-4. **Quick Info Row** -- duration and max guests as inline pills/icons (not in a card)
-5. **Divider**
-6. **About This Experience** -- plain text (no card), with "Read more" toggle if text is long (over 4 lines)
-7. **Divider**
-8. **What's Included** -- clean checklist, no card wrapper
-9. **Divider**
-10. **Price Tier Selector** (if applicable) -- kept but styled flatter
-11. **Price Comparison** -- kept as-is (already well-designed)
-12. **Divider**
-13. **Guest Reviews** -- redesigned as horizontal scroll cards (Airbnb-style)
-14. **Airbnb Reviews** (if any)
-15. **Divider**
-16. **External Links** -- Instagram, Menu, Google Reviews as a row
-17. **Affiliate Commission** (host-only, conditional)
-18. **Fixed Bottom CTA** -- price left, Book Now right
+- Replace `InteractiveSelector` import with `StackedPhotoGrid`
+- Remove `Card` wrappers from Quick Info, Description, What's Included, Links, and Photo Gallery sections
+- Add `<Separator />` dividers between sections
+- Update typography to match: `text-[22px] font-semibold` for section headers, `text-[15px]` for body
+- Keep vendor-only features intact: preview banner, verification status, photo upload, reorder, publish/submit buttons, commission display
+- Update Quick Info to use the inline icon+text layout (instead of centered grid-cols-3 Card)
+- Update bottom action bar styling to be consistent
 
----
+#### 2. `src/pages/guest/ExperienceDetailsPage.tsx` (Mock data experiences)
 
-#### 3. Reviews Redesign
+This page uses hardcoded mock data for demo experiences. It needs the same Airbnb styling.
 
-The current `VendorReviews` component uses vertical stacked cards. Airbnb uses horizontally scrolling review cards.
+- Replace `InteractiveSelector` import with `StackedPhotoGrid`
+- Remove `Card` wrappers from Quick Info, Description, and What's Included sections
+- Add `<Separator />` dividers between sections
+- Update header to match: clean sticky header with just back arrow (no border-b on the header bar, use `bg-background/95 backdrop-blur-sm`)
+- Update typography to match
+- Update Quick Info from centered grid-cols-3 Card to inline icon+text layout
+- Update bottom CTA to match: price left, rounded pink/gradient "Book Now" button right
 
-- Show aggregate rating with star count prominently
-- Display review cards in a horizontal scrollable row
-- Each card: rounded, fixed width (~260px), shows avatar initials, name, date, star rating, and truncated comment
-- "Show all N reviews" link at the end
+#### 3. `src/pages/guest/RestaurantDetail.tsx` (Restaurant detail page)
 
----
+This page shows restaurant details with Google reviews. It needs the same treatment while keeping restaurant-specific features (hours, reservation, Google reviews).
 
-#### 4. Typography and Spacing
-
-- Title: `text-2xl font-semibold` (Airbnb uses medium-weight, not ultra-bold)
-- Section headers: `text-[22px] font-semibold` with generous top margin
-- Body text: `text-[15px] leading-relaxed text-foreground` (not muted -- Airbnb uses dark text for descriptions)
-- Dividers between sections: `border-t border-border` with `py-6` spacing on each section
-- Remove Card shadows from content sections for a flatter, cleaner look
+- Replace `InteractiveSelector` import with `StackedPhotoGrid`
+- Move share/favorite buttons into the header bar (same pattern as VendorPublicProfile)
+- Update header to match: clean `bg-background/95 backdrop-blur-sm` without border
+- Update typography and spacing to match
+- Keep restaurant-specific content (hours, reservation buttons, Google reviews) but remove Card wrappers
+- Add `<Separator />` dividers between sections
 
 ---
 
-#### 5. Bottom CTA Bar
+### What Stays the Same
 
-Keep the current fixed bottom bar but match Airbnb styling more closely:
-- Left side: "From $XX" with price on a second line
-- Right side: Rounded pink/gradient "Book" button
-- Add subtle top shadow for depth
+- The `StackedPhotoGrid` component (`src/components/ui/stacked-photo-grid.tsx`) -- already built, reused across all pages
+- The `VendorReviews` component -- already Airbnb-styled with horizontal scroll
+- All business logic, data fetching, navigation, and functionality remains unchanged
+- Only the visual presentation layer changes
 
----
+### Files Modified
 
-### Files to Create
+| File | Type of Change |
+|------|---------------|
+| `src/pages/vendor/ProfilePreview.tsx` | Replace InteractiveSelector with StackedPhotoGrid, remove Card wrappers, add Separators, update typography |
+| `src/pages/guest/ExperienceDetailsPage.tsx` | Replace InteractiveSelector with StackedPhotoGrid, remove Card wrappers, add Separators, update typography and CTA |
+| `src/pages/guest/RestaurantDetail.tsx` | Replace InteractiveSelector with StackedPhotoGrid, remove Card wrappers, add Separators, update header and typography |
 
-| File | Purpose |
-|------|---------|
-| `src/components/ui/stacked-photo-grid.tsx` | New reusable photo grid component with 2+1 layout and full-screen viewer |
+### No New Files or Dependencies
 
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/vendor/PublicProfile.tsx` | Full layout restructure -- replace InteractiveSelector, remove Card wrappers, add dividers, reorder sections, update typography |
-
-### Technical Details
-
-- The `StackedPhotoGrid` component will use CSS Grid (`grid-cols-2` for top, `col-span-2` for bottom)
-- Photos use `object-cover` for consistent aspect ratios
-- Full-screen photo viewer uses Radix Dialog with swipe navigation
-- "Read more" uses local state to toggle `line-clamp-4` on the description
-- Horizontal review scroll uses `overflow-x-auto` with `snap-x` for smooth mobile scrolling
-- No new dependencies required -- all built with existing Tailwind, Radix, and lucide-react
-- Mobile-first, constrained to `max-w-[375px]`
-- All existing functionality preserved: favorites, booking flow, host commission, price comparison, external links
+All changes use existing components (`StackedPhotoGrid`, `Separator`) and existing Tailwind classes. No new packages needed.
 
