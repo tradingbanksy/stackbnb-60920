@@ -18,6 +18,7 @@ import { Reorder } from 'framer-motion';
 import MeetTheHost from '@/components/MeetTheHost';
 import { VendorLocationMap } from '@/components/VendorLocationMap';
 import StackdVerifiedBadge from '@/components/StackdVerifiedBadge';
+import { GoogleReviewsPreview } from '@/components/GoogleReviewsPreview';
 
 // PriceTier interface
 interface PriceTier {
@@ -568,6 +569,16 @@ const VendorProfilePreview = () => {
             />
           </div>
           <Separator />
+
+          {/* Section: Google Reviews Preview */}
+          {profile.google_place_id && (
+            <>
+              <div className="py-6">
+                <GoogleReviewsPreview googlePlaceId={profile.google_place_id} />
+              </div>
+              <Separator />
+            </>
+          )}
 
           {/* Section: stackd Verified Badge */}
           <StackdVerifiedBadge category={profile.category} />
