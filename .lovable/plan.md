@@ -1,39 +1,57 @@
 
 
-## Simplify "Where You'll Meet" to Match Airbnb Style
+## Add stackd Verified Quality Badge to Vendor Profiles
 
-### What Changes
+### What It Does
 
-The `VendorLocationMap` component in `pin` mode currently shows too much below the map -- the vendor name with a location icon, a "Get Directions" button, and a bookmark button. The Airbnb style is much cleaner: just the map with a pin, and an "Open in Maps" link overlay on the map itself. The meeting point text and city are already shown separately in the profile page layout, so the component just needs to be the map.
+Adds a trust/quality badge section near the bottom of every vendor profile page, similar to how Airbnb displays its AirCover badge. The section will feature the uploaded gold wax seal logo alongside text confirming the vendor's category has been vetted for quality by stackd.
 
-### Visual Comparison
+### Design
 
-| Current | Target (Airbnb-style) |
-|---------|----------------------|
-| Map + Open in Maps overlay | Map + Open in Maps overlay (keep) |
-| Vendor name with pin icon below map | Remove |
-| Get Directions + Bookmark buttons | Remove |
-| Card wrapper with gradient | Clean rounded container, no card chrome |
+The badge section will appear as its own separated section (consistent with the Airbnb flat-section style used throughout the profile):
 
-### File to Modify
+```text
+-------------------------------------------
+|                                         |
+|  [Gold Seal Logo]                       |
+|                                         |
+|  stackd verified                        |
+|  Every [category] on stackd is vetted   |
+|  for quality and safety so you can      |
+|  book with confidence.                  |
+|                                         |
+|  Learn more                             |
+|                                         |
+-------------------------------------------
+```
 
-**`src/components/VendorLocationMap.tsx`** -- In `pin` mode only:
+- The gold wax seal image (uploaded by user) will be displayed at ~48px size
+- "stackd verified" as a bold heading
+- A short description dynamically inserting the vendor's category (e.g., "Every Water Sports vendor on stackd...")
+- A "Learn more" underlined link (can point to a help/trust page later)
+- Separated by horizontal dividers above and below, matching the existing Airbnb-style layout
 
-1. Remove the entire bottom section below the map (lines ~740-901) that contains:
-   - The vendor name row with the gradient pin icon
-   - The "Get Directions" button
-   - The bookmark/save-to-itinerary button
-2. Remove the Card wrapper -- render just the map container with rounded corners and the "Open in Maps" overlay
-3. Keep the "Open in Maps" button on the map itself (already there)
-4. The loading skeleton should also be simplified for pin mode -- just show a map-sized placeholder without the card content below
+### Placement
 
-This change only affects `pin` mode -- the full `directions` mode used elsewhere (trip planner, itinerary) will remain unchanged with all its features intact.
+The badge will sit between the **Guest Reviews** section and the **External Links** section on both pages, giving it prominence near the bottom before the CTA bar.
+
+### Files to Change
+
+1. **Copy the uploaded image** to `src/assets/stackd-verified-seal.png` so it can be imported as an ES module
+
+2. **Create `src/components/StackdVerifiedBadge.tsx`** -- A small reusable component that:
+   - Imports the gold seal image
+   - Accepts a `category` prop (string)
+   - Renders the seal image, heading, dynamic description text, and "Learn more" link
+   - Uses the same typography scale as the rest of the profile (text-[22px] heading, text-[15px] body)
+
+3. **`src/pages/vendor/PublicProfile.tsx`** -- Add the badge section after Guest Reviews / Airbnb Reviews and before External Links, wrapped in Separator dividers
+
+4. **`src/pages/vendor/ProfilePreview.tsx`** -- Same placement: after Meet your host / before External Links, with Separator dividers
 
 ### What Stays the Same
 
-- The map itself with the red pin marker
-- The "Open in Maps" overlay button on the map
-- The `meeting_point_description` and `city` text are rendered separately in `PublicProfile.tsx` and `ProfilePreview.tsx`, so they will still appear below the map
-- The full `directions` mode with route, turn-by-turn, tips, and buttons remains untouched
-- All vendors will see this same clean map layout since both profile pages already pass `mode="pin"`
+- All existing profile sections remain untouched
+- The badge is purely additive -- no existing content is removed or rearranged
+- Both profile pages will show the same badge since both have access to `profile.category`
 
