@@ -1,36 +1,130 @@
 
 
-# Update OG Image to Branded Stackd Image
+## Redesign Vendor Public Profile to Match Airbnb Experience Pages
 
-## What's Changing
+### Overview
 
-The `index.html` file currently points to a generic Lovable placeholder image for social media previews (the image that shows up when you share your link on Twitter, Facebook, LinkedIn, iMessage, etc.). We'll replace it with your own Stackd branding.
+A full visual redesign of the Vendor Public Profile page (`/vendor/:id`) to closely match Airbnb's experience detail page layout and styling. This covers the photo grid, content sections, typography, spacing, reviews, and bottom CTA -- not just the images.
 
-## Approach
+### Reference Analysis (from your uploaded screenshots)
 
-Since the OG image needs to be a publicly accessible URL (not a bundled asset), we'll move your existing `stackd-logo-new.png` into the `public/` folder so it's served at a fixed URL. Then we'll update the two meta tags in `index.html` to point to it.
+Key Airbnb patterns identified:
+1. **Photo grid**: 2 photos on top (side by side), 1 wide photo on bottom, tight 2px gap, rounded corners
+2. **Title area**: Large bold title, category as a subtle label, rating with review count inline
+3. **Host/provider section**: Circular avatar, "Hosted by [Name]", short bio -- separated by a thin divider
+4. **Description**: Clean text, no card wrapper, with "Read more" truncation for long descriptions
+5. **What you'll do / What's included**: Simple list with icons, no card borders, clean spacing
+6. **Reviews**: Horizontal scrollable review cards with avatar, name, date, and star rating
+7. **Bottom CTA bar**: Price on the left, pink/gradient "Book" button on the right, fixed to bottom
 
-If you'd prefer a custom OG banner image (typically 1200x630px) instead of just the logo, you can upload one and we'll use that instead. For now, we'll use your existing logo.
+### What Changes
 
-## Changes
+---
 
-### 1. Copy logo to public folder
-- Place `stackd-logo-new.png` into `public/` so it's available at `/stackd-logo-new.png`
+#### 1. Stacked Photo Grid (replaces InteractiveSelector)
 
-### 2. Update `index.html` (2 lines)
-- **Line 38**: Change `og:image` from `https://lovable.dev/opengraph-image-p98pqg.png` to `/stackd-logo-new.png`
-- **Line 42**: Change `twitter:image` from `https://lovable.dev/opengraph-image-p98pqg.png` to `/stackd-logo-new.png`
+**New component**: `src/components/ui/stacked-photo-grid.tsx`
 
-We'll use an absolute URL based on your published domain (`https://stackbnb-60920.lovable.app/stackd-logo-new.png`) so the image resolves correctly when shared on social platforms (relative paths don't work for OG tags).
+```text
++-------------------+-------------------+
+|                   |                   |
+|   Photo 1         |   Photo 2         |
+|   (square-ish)    |   (square-ish)    |
+|                   |                   |
++-------------------+-------------------+
+|                                       |
+|         Photo 3 (wide, shorter)       |
+|                                       |
++---------------------------------------+
+```
 
-## Technical Details
+- 2px gap between photos
+- Top row: two equal-width images, ~160px tall
+- Bottom row: one full-width image, ~120px tall
+- Rounded corners on the outer edges only (like Airbnb)
+- "Show all photos" overlay button with grid icon (bottom-right of last photo)
+- Handles 1, 2, or 3+ photos gracefully
+- Full-screen photo viewer dialog when tapping photos or "Show all"
 
-| File | Change |
-|------|--------|
-| `public/stackd-logo-new.png` | Copy of your branded logo for use as OG image |
-| `index.html` (line 38) | `og:image` updated to `https://stackbnb-60920.lovable.app/stackd-logo-new.png` |
-| `index.html` (line 42) | `twitter:image` updated to `https://stackbnb-60920.lovable.app/stackd-logo-new.png` |
+---
 
-### Note on Image Size
-Social platforms recommend OG images be **1200x630 pixels**. Your current logo may appear small or oddly cropped in previews. If you have (or want to create) a proper banner-sized image, we can use that instead.
+#### 2. Content Layout Overhaul (Airbnb-style sections)
+
+Remove the heavy `Card` wrappers around every section. Airbnb uses flat, borderless sections separated by thin horizontal dividers (`<Separator />`).
+
+**Section order** (matching Airbnb):
+
+1. **Photo Grid** (full width, no padding)
+2. **Title + Rating** -- bold title, category label, star rating with count
+3. **Divider**
+4. **Quick Info Row** -- duration and max guests as inline pills/icons (not in a card)
+5. **Divider**
+6. **About This Experience** -- plain text (no card), with "Read more" toggle if text is long (over 4 lines)
+7. **Divider**
+8. **What's Included** -- clean checklist, no card wrapper
+9. **Divider**
+10. **Price Tier Selector** (if applicable) -- kept but styled flatter
+11. **Price Comparison** -- kept as-is (already well-designed)
+12. **Divider**
+13. **Guest Reviews** -- redesigned as horizontal scroll cards (Airbnb-style)
+14. **Airbnb Reviews** (if any)
+15. **Divider**
+16. **External Links** -- Instagram, Menu, Google Reviews as a row
+17. **Affiliate Commission** (host-only, conditional)
+18. **Fixed Bottom CTA** -- price left, Book Now right
+
+---
+
+#### 3. Reviews Redesign
+
+The current `VendorReviews` component uses vertical stacked cards. Airbnb uses horizontally scrolling review cards.
+
+- Show aggregate rating with star count prominently
+- Display review cards in a horizontal scrollable row
+- Each card: rounded, fixed width (~260px), shows avatar initials, name, date, star rating, and truncated comment
+- "Show all N reviews" link at the end
+
+---
+
+#### 4. Typography and Spacing
+
+- Title: `text-2xl font-semibold` (Airbnb uses medium-weight, not ultra-bold)
+- Section headers: `text-[22px] font-semibold` with generous top margin
+- Body text: `text-[15px] leading-relaxed text-foreground` (not muted -- Airbnb uses dark text for descriptions)
+- Dividers between sections: `border-t border-border` with `py-6` spacing on each section
+- Remove Card shadows from content sections for a flatter, cleaner look
+
+---
+
+#### 5. Bottom CTA Bar
+
+Keep the current fixed bottom bar but match Airbnb styling more closely:
+- Left side: "From $XX" with price on a second line
+- Right side: Rounded pink/gradient "Book" button
+- Add subtle top shadow for depth
+
+---
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/ui/stacked-photo-grid.tsx` | New reusable photo grid component with 2+1 layout and full-screen viewer |
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/vendor/PublicProfile.tsx` | Full layout restructure -- replace InteractiveSelector, remove Card wrappers, add dividers, reorder sections, update typography |
+
+### Technical Details
+
+- The `StackedPhotoGrid` component will use CSS Grid (`grid-cols-2` for top, `col-span-2` for bottom)
+- Photos use `object-cover` for consistent aspect ratios
+- Full-screen photo viewer uses Radix Dialog with swipe navigation
+- "Read more" uses local state to toggle `line-clamp-4` on the description
+- Horizontal review scroll uses `overflow-x-auto` with `snap-x` for smooth mobile scrolling
+- No new dependencies required -- all built with existing Tailwind, Radix, and lucide-react
+- Mobile-first, constrained to `max-w-[375px]`
+- All existing functionality preserved: favorites, booking flow, host commission, price comparison, external links
 
