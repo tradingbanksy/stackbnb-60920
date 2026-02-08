@@ -386,7 +386,7 @@ const VendorPublicProfile = () => {
 
           {/* Section: Where you'll be */}
           <div className="py-6 space-y-4">
-            <h2 className="text-[22px] font-semibold">Where you'll be</h2>
+            <h2 className="text-[22px] font-semibold">Where you'll meet</h2>
             <div className="rounded-xl overflow-hidden">
               <VendorLocationMap
                 vendorName={profile.name}
