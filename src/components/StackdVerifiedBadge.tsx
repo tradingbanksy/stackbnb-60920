@@ -6,11 +6,11 @@ interface StackdVerifiedBadgeProps {
 
 const StackdVerifiedBadge = ({ category }: StackdVerifiedBadgeProps) => {
   return (
-    <div className="py-6 space-y-3">
+    <div className="py-6 space-y-3 text-center items-center">
       <img
         src={stackdSeal}
         alt="stackd verified seal"
-        className="h-12 w-12 object-contain"
+        className="h-16 w-16 object-contain mx-auto"
       />
       <h2 className="text-[22px] font-semibold">stackd verified</h2>
       <p className="text-[15px] leading-relaxed text-muted-foreground">
