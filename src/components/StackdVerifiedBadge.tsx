@@ -10,7 +10,7 @@ const StackdVerifiedBadge = ({ category }: StackdVerifiedBadgeProps) => {
       <img
         src={stackdSeal}
         alt="stackd verified seal"
-        className="h-14 w-14 object-contain mx-auto"
+        className="h-40 w-40 object-contain mx-auto"
       />
       <h2 className="text-[22px] font-semibold">stackd verified</h2>
       <p className="text-[15px] leading-relaxed text-muted-foreground">
