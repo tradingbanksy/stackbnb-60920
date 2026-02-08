@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Star, MessageSquare, User } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Star, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -46,7 +45,6 @@ export function VendorReviews({ vendorProfileId, className }: VendorReviewsProps
 
       if (error) throw error;
 
-      // Fetch profile names separately
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map(r => r.user_id))];
         const { data: profiles } = await supabase
@@ -62,8 +60,6 @@ export function VendorReviews({ vendorProfileId, className }: VendorReviewsProps
         }));
 
         setReviews(reviewsWithProfiles);
-
-        // Calculate average rating
         const total = reviewsWithProfiles.reduce((sum, r) => sum + r.rating, 0);
         setAverageRating(total / reviewsWithProfiles.length);
       } else {
@@ -77,112 +73,101 @@ export function VendorReviews({ vendorProfileId, className }: VendorReviewsProps
     }
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={cn(
-              "h-4 w-4",
-              star <= rating
-                ? "fill-amber-400 text-amber-400"
-                : "text-muted-foreground/30"
-            )}
-          />
-        ))}
-      </div>
-    );
-  };
+  const renderStars = (rating: number) => (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={cn(
+            "h-3 w-3",
+            star <= rating
+              ? "fill-foreground text-foreground"
+              : "text-muted-foreground/30"
+          )}
+        />
+      ))}
+    </div>
+  );
 
   const getInitials = (name: string | null) => {
     if (!name) return "G";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   if (isLoading) {
     return (
       <div className={cn("space-y-3", className)}>
         <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+        <div className="flex gap-3 overflow-hidden">
+          <Skeleton className="h-[160px] w-[260px] rounded-xl flex-shrink-0" />
+          <Skeleton className="h-[160px] w-[260px] rounded-xl flex-shrink-0" />
+        </div>
       </div>
     );
   }
 
-  if (reviews.length === 0) {
-    return null;
-  }
+  if (reviews.length === 0) return null;
 
   return (
-    <div className={cn("space-y-3", className)}>
-      {/* Header with average rating */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          Guest Reviews
-        </h2>
+    <div className={cn("space-y-4", className)}>
+      {/* Header with aggregate rating */}
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-            <span className="font-bold">{averageRating.toFixed(1)}</span>
-          </div>
-          <span className="text-sm text-muted-foreground">
-            ({reviews.length} {reviews.length === 1 ? "review" : "reviews"})
+          <Star className="h-5 w-5 fill-foreground text-foreground" />
+          <span className="text-[22px] font-semibold">{averageRating.toFixed(1)}</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-[15px] text-muted-foreground">
+            {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
           </span>
         </div>
       </div>
 
-      {/* Reviews list */}
-      <div className="space-y-3">
-        {reviews.slice(0, 5).map((review) => (
-          <Card key={review.id} className="p-4">
-            <div className="space-y-3">
-              {/* Reviewer info */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                    {review.profiles?.full_name ? (
-                      <span className="text-sm font-medium">
-                        {getInitials(review.profiles.full_name)}
-                      </span>
-                    ) : (
-                      <User className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">
-                      {review.profiles?.full_name || "Guest"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(review.created_at), "MMM d, yyyy")}
-                    </p>
-                  </div>
-                </div>
-                {renderStars(review.rating)}
-              </div>
+      {/* Horizontal scrollable review cards */}
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+        {reviews.slice(0, 8).map((review) => (
+          <div
+            key={review.id}
+            className="flex-shrink-0 w-[260px] snap-start rounded-xl border border-border p-4 space-y-3"
+          >
+            {/* Stars */}
+            {renderStars(review.rating)}
 
-              {/* Comment */}
-              {review.comment && (
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  "{review.comment}"
+            {/* Comment */}
+            {review.comment && (
+              <p className="text-[14px] leading-relaxed text-foreground line-clamp-4">
+                {review.comment}
+              </p>
+            )}
+
+            {/* Reviewer */}
+            <div className="flex items-center gap-2 pt-1">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                {review.profiles?.full_name ? (
+                  <span className="text-xs font-medium">
+                    {getInitials(review.profiles.full_name)}
+                  </span>
+                ) : (
+                  <User className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+              <div>
+                <p className="font-medium text-[13px]">
+                  {review.profiles?.full_name || "Guest"}
                 </p>
-              )}
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(review.created_at), "MMM yyyy")}
+                </p>
+              </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      {/* Show more indicator */}
-      {reviews.length > 5 && (
-        <p className="text-sm text-muted-foreground text-center">
-          Showing 5 of {reviews.length} reviews
-        </p>
+      {/* Show all reviews link */}
+      {reviews.length > 3 && (
+        <button className="text-[15px] font-semibold underline underline-offset-4 hover:text-foreground/80 transition-colors">
+          Show all {reviews.length} reviews
+        </button>
       )}
     </div>
   );
