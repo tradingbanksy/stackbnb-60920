@@ -17,6 +17,7 @@ import PriceComparison from '@/components/PriceComparison';
 import { VendorReviews } from '@/components/VendorReviews';
 import MeetTheHost from '@/components/MeetTheHost';
 import { VendorLocationMap } from '@/components/VendorLocationMap';
+import StackdVerifiedBadge from '@/components/StackdVerifiedBadge';
 
 // --- Types ---
 
@@ -457,6 +458,10 @@ const VendorPublicProfile = () => {
               </div>
             </>
           )}
+
+          {/* Section: stackd Verified Badge */}
+          <Separator />
+          <StackdVerifiedBadge category={profile.category} />
 
           {/* Section: External Links */}
           {(profile.instagram_url || profile.menu_url || profile.google_reviews_url) && (

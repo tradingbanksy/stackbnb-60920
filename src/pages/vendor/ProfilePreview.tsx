@@ -17,6 +17,7 @@ import StackedPhotoGrid from '@/components/ui/stacked-photo-grid';
 import { Reorder } from 'framer-motion';
 import MeetTheHost from '@/components/MeetTheHost';
 import { VendorLocationMap } from '@/components/VendorLocationMap';
+import StackdVerifiedBadge from '@/components/StackdVerifiedBadge';
 
 // PriceTier interface
 interface PriceTier {
@@ -566,6 +567,10 @@ const VendorProfilePreview = () => {
               googleRating={profile.google_rating}
             />
           </div>
+          <Separator />
+
+          {/* Section: stackd Verified Badge */}
+          <StackdVerifiedBadge category={profile.category} />
           <Separator />
 
           {/* Section: External Links */}
