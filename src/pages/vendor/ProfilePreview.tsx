@@ -574,7 +574,7 @@ const VendorProfilePreview = () => {
           <Separator />
 
           {/* Section: External Links */}
-          {(profile.instagram_url || profile.menu_url || profile.google_reviews_url) && (
+          {(profile.instagram_url || profile.menu_url || profile.google_reviews_url || profile.google_place_id) && (
             <>
               <div className="py-6 flex flex-wrap gap-2">
                 {profile.instagram_url && (
@@ -604,6 +604,17 @@ const VendorProfilePreview = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => openExternalLink(profile.google_reviews_url!)}
+                    className="gap-2 rounded-full"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Airbnb Reviews
+                  </Button>
+                )}
+                {profile.google_place_id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openExternalLink(`https://www.google.com/maps/place/?q=place_id:${profile.google_place_id}`)}
                     className="gap-2 rounded-full"
                   >
                     <Star className="h-4 w-4" />
