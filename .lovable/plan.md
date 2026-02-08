@@ -1,34 +1,36 @@
 
 
-## Populate Google Place IDs for All Vendors
+## Fix Google Review Link and Add Airbnb Link Field to Vendor Profile Editor
 
-### What's Happening
+### Problem 1: Google Review Link Blocked
 
-Currently only 1 out of 9 vendors (IK Snorkeling) has a `google_place_id` set. The other 8 vendors are missing it, which means the Google Reviews preview section won't appear on their profiles. We need to update each vendor's database record with the correct Google Place ID so the reviews section shows up automatically.
+The "View all on Google" link in the `GoogleReviewsPreview` component uses a standard `<a href="..." target="_blank">` tag, which should work fine. However, the **external link buttons** in the bottom section of the vendor public profile (lines 504-524 of `PublicProfile.tsx`) use a programmatic `openExternalLink()` helper that creates and clicks a dynamically-generated anchor element. This approach can be blocked by some browsers as a popup.
 
-### Vendors to Update
+**Fix:** Replace the programmatic `openExternalLink()` calls for Google Reviews and Airbnb Reviews buttons with standard `<a>` tags styled as buttons. This ensures the browser treats them as direct user-initiated navigations, not popups.
 
-| Vendor | Google Business Match | Rating |
-|--------|----------------------|--------|
-| Araucaria Massage Tulum | Araucaria Massage Tulum | 5.0 |
-| Bautista Chef | Private Chef Tulum by Turismo Mexico | 5.0 |
-| Moov Adventure | Moving (transportation/rental in Tulum) | 4.8 |
-| Paddle to the Sun | Extreme Control Adventures Tulum (paddleboarding/kitesurfing) | 4.7 |
-| Tavi Castro Breathwork | Freedive Utopia (cenotes and reef) | 5.0 |
-| Taco Tour | Tulum Taco Tour | 5.0 |
-| Mexico Handmade | Tulum Craft Center | 4.2 |
-| Unveil Sacred Mayan Cenotes | Cenote Calavera | 4.1 |
+### Problem 2: Vendors Can't Paste Their Airbnb Link
 
-IK Snorkeling already has its Place ID set -- no change needed.
+Currently, the vendor profile editor (`CreateProfile.tsx`) has an "Airbnb Experience Reviews" section that only lets vendors paste a URL and then click "Import" to scrape reviews via Firecrawl. However:
+- The Airbnb URL (`airbnb_experience_url`) is already saved to the database on form submit
+- But there's no clear way for vendors to simply **save their Airbnb link** without needing to scrape -- the URL is only stored if the form is submitted
+- The existing Airbnb button on the public profile (labeled "Airbnb Reviews") points to `google_reviews_url`, which is confusing
 
-### Technical Change
+**Fix:** 
+1. Keep the existing Airbnb URL input field in the editor -- it already saves to `airbnb_experience_url` on submit, which is correct
+2. Update the external links section in `PublicProfile.tsx` to show a proper "View on Airbnb" button that links to `airbnb_experience_url` (instead of the current mislabeled button using `google_reviews_url`)
+3. Make the Airbnb link button use a standard `<a>` tag to avoid popup blocking
 
-A single database migration will update the `google_place_id` column for all 8 vendors. No code changes are needed -- the `GoogleReviewsPreview` component already renders automatically when `google_place_id` is present.
+### Technical Changes
 
-### What You'll See
+**File: `src/pages/vendor/PublicProfile.tsx`**
+- Replace all `openExternalLink()` calls in the external links section with native `<a>` tags wrapped in button styling
+- Fix the "Airbnb Reviews" button to use `airbnb_experience_url` instead of `google_reviews_url`
+- Also fix the "View all on Airbnb" link in the Airbnb reviews section to use an `<a>` tag
 
-After this update, every vendor profile page will show a "Google Reviews" section with:
-- Aggregate star rating and review count
-- Up to 5 horizontally scrollable review cards
-- A "View all on Google" link
+**File: `src/components/GoogleReviewsPreview.tsx`**
+- No changes needed -- it already uses a proper `<a>` tag
+
+**File: `src/pages/vendor/CreateProfile.tsx`**
+- No structural changes needed -- it already has the Airbnb URL input and saves it correctly
+- Optionally improve the label/description to make it clearer the link will be saved and shown on their profile
 
