@@ -1,26 +1,39 @@
 
 
-## Fix: Always Show "Where You'll Be" Map Section
-
-### Problem
-
-The "Where you'll be" section is currently hidden because it only renders when a vendor has a `google_place_id` set. The vendor you're viewing ("Araucaria Massage Tulum") -- and likely many others -- don't have that field filled in. However, the map component already supports looking up locations by vendor name alone, so the section should always appear.
+## Simplify "Where You'll Meet" to Match Airbnb Style
 
 ### What Changes
 
-Both the public profile page and vendor preview page will be updated to always show the "Where you'll be" map section, using the vendor's name to locate them when a Google Place ID isn't available.
+The `VendorLocationMap` component in `pin` mode currently shows too much below the map -- the vendor name with a location icon, a "Get Directions" button, and a bookmark button. The Airbnb style is much cleaner: just the map with a pin, and an "Open in Maps" link overlay on the map itself. The meeting point text and city are already shown separately in the profile page layout, so the component just needs to be the map.
 
-### Files to Modify
+### Visual Comparison
 
-| File | Change |
-|------|--------|
-| `src/pages/vendor/PublicProfile.tsx` | Remove the `google_place_id` guard -- always show the "Where you'll be" section. Pass `vendorName` as the primary lookup. |
-| `src/pages/vendor/ProfilePreview.tsx` | Same change -- remove the `google_place_id` guard so the map always appears for vendors. |
+| Current | Target (Airbnb-style) |
+|---------|----------------------|
+| Map + Open in Maps overlay | Map + Open in Maps overlay (keep) |
+| Vendor name with pin icon below map | Remove |
+| Get Directions + Bookmark buttons | Remove |
+| Card wrapper with gradient | Clean rounded container, no card chrome |
 
-### Technical Details
+### File to Modify
 
-- The `VendorLocationMap` component already accepts `vendorName`, `vendorAddress`, and `placeId` as optional props
-- The backend function (`vendor-directions`) already handles lookups by name when no Place ID is provided -- it searches Google Places API using the vendor name + "Tulum Mexico"
-- The conditional will change from `{profile.google_place_id && (...)}` to always rendering the section, passing the vendor name and optionally the `google_place_id` if it exists
-- No database changes needed
+**`src/components/VendorLocationMap.tsx`** -- In `pin` mode only:
+
+1. Remove the entire bottom section below the map (lines ~740-901) that contains:
+   - The vendor name row with the gradient pin icon
+   - The "Get Directions" button
+   - The bookmark/save-to-itinerary button
+2. Remove the Card wrapper -- render just the map container with rounded corners and the "Open in Maps" overlay
+3. Keep the "Open in Maps" button on the map itself (already there)
+4. The loading skeleton should also be simplified for pin mode -- just show a map-sized placeholder without the card content below
+
+This change only affects `pin` mode -- the full `directions` mode used elsewhere (trip planner, itinerary) will remain unchanged with all its features intact.
+
+### What Stays the Same
+
+- The map itself with the red pin marker
+- The "Open in Maps" overlay button on the map
+- The `meeting_point_description` and `city` text are rendered separately in `PublicProfile.tsx` and `ProfilePreview.tsx`, so they will still appear below the map
+- The full `directions` mode with route, turn-by-turn, tips, and buttons remains untouched
+- All vendors will see this same clean map layout since both profile pages already pass `mode="pin"`
 
