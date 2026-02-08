@@ -18,6 +18,7 @@ import { VendorReviews } from '@/components/VendorReviews';
 import MeetTheHost from '@/components/MeetTheHost';
 import { VendorLocationMap } from '@/components/VendorLocationMap';
 import StackdVerifiedBadge from '@/components/StackdVerifiedBadge';
+import { GoogleReviewsPreview } from '@/components/GoogleReviewsPreview';
 
 // --- Types ---
 
@@ -423,6 +424,16 @@ const VendorPublicProfile = () => {
           <div className="py-6">
             <VendorReviews vendorProfileId={profile.id} />
           </div>
+
+          {/* Section: Google Reviews Preview */}
+          {profile.google_place_id && (
+            <>
+              <Separator />
+              <div className="py-6">
+                <GoogleReviewsPreview googlePlaceId={profile.google_place_id} />
+              </div>
+            </>
+          )}
 
           {/* Section: Airbnb Reviews */}
           {profile.airbnb_reviews && profile.airbnb_reviews.length > 0 && (
