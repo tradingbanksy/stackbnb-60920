@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { 
   ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
-  Instagram, ExternalLink, Store, MessageSquare, Quote, Share
+  Instagram, ExternalLink, Store, MessageSquare, Quote, Share, MapPin
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import StackedPhotoGrid from '@/components/ui/stacked-photo-grid';
 import PriceComparison from '@/components/PriceComparison';
 import { VendorReviews } from '@/components/VendorReviews';
+import MeetTheHost from '@/components/MeetTheHost';
+import { VendorLocationMap } from '@/components/VendorLocationMap';
 
 // --- Types ---
 
@@ -48,6 +50,11 @@ interface VendorProfile {
   commission_percentage: number | null;
   airbnb_experience_url: string | null;
   airbnb_reviews: AirbnbReview[] | null;
+  host_bio: string | null;
+  host_avatar_url: string | null;
+  meeting_point_description: string | null;
+  google_place_id: string | null;
+  city: string | null;
 }
 
 // --- Helpers ---
@@ -119,6 +126,11 @@ const VendorPublicProfile = () => {
           price_tiers: priceTiers,
           airbnb_reviews: airbnbReviews,
           commission_percentage: null,
+          host_bio: data.host_bio || null,
+          host_avatar_url: data.host_avatar_url || null,
+          meeting_point_description: data.meeting_point_description || null,
+          google_place_id: data.google_place_id || null,
+          city: data.city || null,
         } as VendorProfile);
       }
     } catch (error) {
@@ -371,6 +383,43 @@ const VendorPublicProfile = () => {
               <Separator />
             </>
           )}
+
+          {/* Section: Where you'll be */}
+          {profile.google_place_id && (
+            <>
+              <div className="py-6 space-y-4">
+                <h2 className="text-[22px] font-semibold">Where you'll be</h2>
+                <div className="rounded-xl overflow-hidden">
+                  <VendorLocationMap
+                    vendorName={profile.name}
+                    placeId={profile.google_place_id}
+                  />
+                </div>
+                {profile.meeting_point_description && (
+                  <div className="flex items-start gap-2 pt-1">
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <p className="text-[15px] text-foreground">{profile.meeting_point_description}</p>
+                  </div>
+                )}
+                {profile.city && (
+                  <p className="text-[14px] text-muted-foreground">{profile.city}</p>
+                )}
+              </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Section: Meet your host */}
+          <div className="py-6">
+            <MeetTheHost
+              name={profile.name}
+              category={profile.category}
+              bio={profile.host_bio}
+              avatarUrl={profile.host_avatar_url}
+              googleRating={profile.google_rating}
+            />
+          </div>
+          <Separator />
 
           {/* Section: Guest Reviews (Airbnb-style horizontal scroll) */}
           <div className="py-6">
