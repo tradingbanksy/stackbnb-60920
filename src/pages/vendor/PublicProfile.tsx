@@ -61,16 +61,6 @@ interface VendorProfile {
 
 // --- Helpers ---
 
-const openExternalLink = (url: string) => {
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.target = '_blank';
-  anchor.rel = 'noopener noreferrer';
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-};
-
 // --- Component ---
 
 const VendorPublicProfile = () => {
@@ -459,12 +449,14 @@ const VendorPublicProfile = () => {
                   ))}
                 </div>
                 {profile.airbnb_experience_url && (
-                  <button
-                    onClick={() => openExternalLink(profile.airbnb_experience_url!)}
+                  <a
+                    href={profile.airbnb_experience_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-[15px] font-semibold underline underline-offset-4 hover:text-foreground/80 transition-colors"
                   >
                     View all on Airbnb
-                  </button>
+                  </a>
                 )}
               </div>
             </>
@@ -475,53 +467,53 @@ const VendorPublicProfile = () => {
           <StackdVerifiedBadge category={profile.category} />
 
           {/* Section: External Links */}
-          {(profile.instagram_url || profile.menu_url || profile.google_reviews_url || profile.google_place_id) && (
+          {(profile.instagram_url || profile.menu_url || profile.airbnb_experience_url || profile.google_place_id) && (
             <>
               <Separator />
               <div className="py-6 flex flex-wrap gap-2">
                 {profile.instagram_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openExternalLink(profile.instagram_url!)}
-                    className="gap-2 rounded-full"
+                  <a
+                    href={profile.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                   >
                     <Instagram className="h-4 w-4" />
                     Instagram
-                  </Button>
+                  </a>
                 )}
                 {profile.menu_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openExternalLink(profile.menu_url!)}
-                    className="gap-2 rounded-full"
+                  <a
+                    href={profile.menu_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                   >
                     <ExternalLink className="h-4 w-4" />
                     Menu
-                  </Button>
+                  </a>
                 )}
-                {profile.google_reviews_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openExternalLink(profile.google_reviews_url!)}
-                    className="gap-2 rounded-full"
+                {profile.airbnb_experience_url && (
+                  <a
+                    href={profile.airbnb_experience_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Airbnb Reviews
-                  </Button>
+                    View on Airbnb
+                  </a>
                 )}
                 {profile.google_place_id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openExternalLink(`https://www.google.com/maps/place/?q=place_id:${profile.google_place_id}`)}
-                    className="gap-2 rounded-full"
+                  <a
+                    href={`https://www.google.com/maps/place/?q=place_id:${profile.google_place_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                   >
                     <Star className="h-4 w-4" />
                     Google Reviews
-                  </Button>
+                  </a>
                 )}
               </div>
             </>
