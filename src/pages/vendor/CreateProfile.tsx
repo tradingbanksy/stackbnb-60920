@@ -14,9 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
   Loader2, Instagram, Upload, Sparkles, Check, X, Plus, 
-  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare
+  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare, MapPin, UserCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import type { Json } from '@/integrations/supabase/types';
 import { useAuthContext } from '@/contexts/AuthContext';
 
@@ -94,6 +95,9 @@ interface ExistingProfile {
   commission_percentage: number | null;
   airbnb_experience_url: string | null;
   airbnb_reviews: AirbnbReview[] | null;
+  host_bio: string | null;
+  host_avatar_url: string | null;
+  meeting_point_description: string | null;
 }
 
 const CreateVendorProfile = () => {
@@ -130,6 +134,12 @@ const CreateVendorProfile = () => {
   const [airbnbUrl, setAirbnbUrl] = useState('');
   const [isScrapingAirbnb, setIsScrapingAirbnb] = useState(false);
   const [airbnbReviews, setAirbnbReviews] = useState<AirbnbReview[]>([]);
+  
+  // Meet the host state
+  const [hostBio, setHostBio] = useState('');
+  const [hostAvatarUrl, setHostAvatarUrl] = useState<string | null>(null);
+  const [meetingPointDescription, setMeetingPointDescription] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -194,6 +204,9 @@ const CreateVendorProfile = () => {
             ...data,
             price_tiers: priceTiersData,
             airbnb_reviews: airbnbReviewsData,
+            host_bio: data.host_bio || null,
+            host_avatar_url: data.host_avatar_url || null,
+            meeting_point_description: data.meeting_point_description || null,
           } as ExistingProfile);
           
           // Pre-populate form with existing data
@@ -220,6 +233,9 @@ const CreateVendorProfile = () => {
           setPriceTiers(priceTiersData);
           setAirbnbUrl(data.airbnb_experience_url || '');
           setAirbnbReviews(airbnbReviewsData);
+          setHostBio(data.host_bio || '');
+          setHostAvatarUrl(data.host_avatar_url || null);
+          setMeetingPointDescription(data.meeting_point_description || '');
         }
       } catch (error) {
         console.error('Error checking existing profile:', error);
@@ -476,6 +492,9 @@ const CreateVendorProfile = () => {
         commission_percentage: formData.commissionPercentage || null,
         airbnb_experience_url: airbnbUrl || null,
         airbnb_reviews: airbnbReviews.map(r => ({ reviewerName: r.reviewerName, date: r.date, comment: r.comment })) as Json,
+        host_bio: hostBio || null,
+        host_avatar_url: hostAvatarUrl || null,
+        meeting_point_description: meetingPointDescription || null,
       };
 
       if (existingProfile) {
@@ -1009,6 +1028,105 @@ const CreateVendorProfile = () => {
                 💡 Paste your Airbnb experience URL to automatically import guest reviews
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Meet the Vendor / About You */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCircle className="h-5 w-5" />
+              Meet the Host
+            </CardTitle>
+            <CardDescription>
+              Add a personal touch — guests love knowing who's behind the experience
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Avatar Upload */}
+            <div className="space-y-2">
+              <Label>Your Photo</Label>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  {hostAvatarUrl ? (
+                    <AvatarImage src={hostAvatarUrl} alt="Host avatar" />
+                  ) : null}
+                  <AvatarFallback className="text-lg bg-muted">
+                    <UserCircle className="h-8 w-8 text-muted-foreground" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploadingAvatar}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !user) return;
+                      setIsUploadingAvatar(true);
+                      try {
+                        const fileExt = file.name.split('.').pop();
+                        const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+                        const { error: uploadError } = await supabase.storage.from('vendor-photos').upload(filePath, file);
+                        if (uploadError) throw uploadError;
+                        const { data: { publicUrl } } = supabase.storage.from('vendor-photos').getPublicUrl(filePath);
+                        setHostAvatarUrl(publicUrl);
+                        toast.success('Photo uploaded!');
+                      } catch (err) {
+                        console.error('Avatar upload error:', err);
+                        toast.error('Failed to upload photo');
+                      } finally {
+                        setIsUploadingAvatar(false);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">A friendly headshot helps build trust</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <Label htmlFor="hostBio">About You</Label>
+              <Textarea
+                id="hostBio"
+                placeholder="Tell guests about yourself — your passion, what makes your experience special..."
+                value={hostBio}
+                onChange={(e) => setHostBio(e.target.value)}
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                {hostBio.length}/500 characters
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Where You'll Meet */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Where You'll Meet
+            </CardTitle>
+            <CardDescription>
+              Describe where guests should meet you for the experience
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="meetingPoint">Meeting Point Description</Label>
+              <Textarea
+                id="meetingPoint"
+                placeholder="e.g., We'll meet at the cenote entrance near the parking lot. Look for the blue van with our logo."
+                value={meetingPointDescription}
+                onChange={(e) => setMeetingPointDescription(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                💡 Be specific so guests can easily find you
+              </p>
+            </div>
           </CardContent>
         </Card>
 

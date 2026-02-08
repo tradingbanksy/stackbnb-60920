@@ -8,13 +8,15 @@ import { toast } from 'sonner';
 import { 
   ArrowLeft, Star, Clock, Users, CheckCircle, Heart,
   Instagram, ExternalLink, Store, Eye, Edit, Globe, Plus, Trash2, Loader2, ImagePlus, GripVertical,
-  ShieldCheck, AlertCircle, XCircle, MessageSquare, Send
+  ShieldCheck, AlertCircle, XCircle, MessageSquare, Send, MapPin
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import StackedPhotoGrid from '@/components/ui/stacked-photo-grid';
 import { Reorder } from 'framer-motion';
+import MeetTheHost from '@/components/MeetTheHost';
+import { VendorLocationMap } from '@/components/VendorLocationMap';
 
 // PriceTier interface
 interface PriceTier {
@@ -46,6 +48,11 @@ interface VendorProfile {
   verification_status: VerificationStatus | null;
   verification_notes: string | null;
   stripe_onboarding_complete: boolean | null;
+  host_bio: string | null;
+  host_avatar_url: string | null;
+  meeting_point_description: string | null;
+  google_place_id: string | null;
+  city: string | null;
 }
 
 const openExternalLink = (url: string) => {
@@ -526,6 +533,43 @@ const VendorProfilePreview = () => {
               <Separator />
             </>
           )}
+
+          {/* Section: Where you'll be */}
+          {profile.google_place_id && (
+            <>
+              <div className="py-6 space-y-4">
+                <h2 className="text-[22px] font-semibold">Where you'll be</h2>
+                <div className="rounded-xl overflow-hidden">
+                  <VendorLocationMap
+                    vendorName={profile.name}
+                    placeId={profile.google_place_id}
+                  />
+                </div>
+                {profile.meeting_point_description && (
+                  <div className="flex items-start gap-2 pt-1">
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <p className="text-[15px] text-foreground">{profile.meeting_point_description}</p>
+                  </div>
+                )}
+                {profile.city && (
+                  <p className="text-[14px] text-muted-foreground">{profile.city}</p>
+                )}
+              </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Section: Meet your host */}
+          <div className="py-6">
+            <MeetTheHost
+              name={profile.name}
+              category={profile.category}
+              bio={profile.host_bio}
+              avatarUrl={profile.host_avatar_url}
+              googleRating={profile.google_rating}
+            />
+          </div>
+          <Separator />
 
           {/* Section: External Links */}
           {(profile.instagram_url || profile.menu_url || profile.google_reviews_url) && (
