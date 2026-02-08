@@ -1,13 +1,14 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Star, Clock, Users, CheckCircle } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Star, Clock, Users, CheckCircle, Share, Heart } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import { experiences } from "@/data/mockData";
-import InteractiveSelector from "@/components/ui/interactive-selector";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
 import { VendorListButton } from "@/components/VendorListButton";
-import { FaWater, FaBicycle, FaSwimmer, FaCamera, FaSpa, FaWineGlass, FaMotorcycle, FaShip, FaTree, FaHorse, FaMask, FaMountain, FaParachuteBox, FaPray, FaFish, FaUtensils, FaCloudSun, FaGlassCheers } from 'react-icons/fa';
+import StackedPhotoGrid from "@/components/ui/stacked-photo-grid";
+import { toast } from "@/hooks/use-toast";
 
 // Base images
 import kayakingImg from "@/assets/experiences/kayaking.jpg";
@@ -43,112 +44,36 @@ import balloon3Img from "@/assets/experiences/balloon-3.jpg";
 import parasailing2Img from "@/assets/experiences/parasailing-2.jpg";
 import parasailing3Img from "@/assets/experiences/parasailing-3.jpg";
 
-// Experience configuration with unique images, titles, and icons
-const experienceConfig: Record<number, { images: string[]; titles: string[]; icons: React.ReactNode[] }> = {
-  1: { // Kayak Tour
-    images: [kayakingImg, kayaking2Img, kayaking3Img],
-    titles: ["Sunset Paddle", "Bay Exploration", "Aerial View"],
-    icons: [<FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />]
-  },
-  2: { // Bike Rental
-    images: [bikesImg, bikesImg, bikesImg],
-    titles: ["Beach Cruisers", "Coastal Path", "Scenic Route"],
-    icons: [<FaBicycle size={20} className="text-white" />, <FaBicycle size={20} className="text-white" />, <FaBicycle size={20} className="text-white" />]
-  },
-  3: { // Snorkeling
-    images: [snorkelingImg, snorkeling2Img, snorkeling3Img],
-    titles: ["Crystal Waters", "Coral Reef", "Snorkel Gear"],
-    icons: [<FaSwimmer size={20} className="text-white" />, <FaSwimmer size={20} className="text-white" />, <FaSwimmer size={20} className="text-white" />]
-  },
-  4: { // Photography
-    images: [photographyImg, photographyImg, photographyImg],
-    titles: ["Golden Hour", "Beach Portrait", "Scenic Shot"],
-    icons: [<FaCamera size={20} className="text-white" />, <FaCamera size={20} className="text-white" />, <FaCamera size={20} className="text-white" />]
-  },
-  5: { // Spa
-    images: [spaImg, yogaImg, spaImg],
-    titles: ["Massage Suite", "Relaxation", "Treatment Room"],
-    icons: [<FaSpa size={20} className="text-white" />, <FaSpa size={20} className="text-white" />, <FaSpa size={20} className="text-white" />]
-  },
-  6: { // Food & Wine Tour
-    images: [diningImg, wineImg, cookingImg],
-    titles: ["Gourmet Dish", "Wine Tasting", "Local Cuisine"],
-    icons: [<FaUtensils size={20} className="text-white" />, <FaWineGlass size={20} className="text-white" />, <FaUtensils size={20} className="text-white" />]
-  },
-  7: { // ATV Adventure
-    images: [atvImg, atvImg, atvImg],
-    titles: ["Jungle Trail", "Off-Road Action", "Muddy Fun"],
-    icons: [<FaMotorcycle size={20} className="text-white" />, <FaMotorcycle size={20} className="text-white" />, <FaMotorcycle size={20} className="text-white" />]
-  },
-  8: { // Boat Rental
-    images: [boatImg, fishingImg, boatImg],
-    titles: ["Private Charter", "Ocean Cruise", "Island Hop"],
-    icons: [<FaShip size={20} className="text-white" />, <FaShip size={20} className="text-white" />, <FaShip size={20} className="text-white" />]
-  },
-  9: { // Zipline
-    images: [ziplineImg, ziplineImg, ziplineImg],
-    titles: ["Canopy Flight", "Forest View", "Adventure"],
-    icons: [<FaTree size={20} className="text-white" />, <FaTree size={20} className="text-white" />, <FaTree size={20} className="text-white" />]
-  },
-  10: { // Horseback
-    images: [horsebackImg, horsebackImg, horsebackImg],
-    titles: ["Beach Ride", "Sunset Trail", "Gentle Horse"],
-    icons: [<FaHorse size={20} className="text-white" />, <FaHorse size={20} className="text-white" />, <FaHorse size={20} className="text-white" />]
-  },
-  11: { // Scuba
-    images: [scubaImg, scuba2Img, scuba3Img],
-    titles: ["Deep Dive", "Shipwreck", "Dive Gear"],
-    icons: [<FaMask size={20} className="text-white" />, <FaMask size={20} className="text-white" />, <FaMask size={20} className="text-white" />]
-  },
-  12: { // Hiking
-    images: [hikingImg, hiking2Img, hiking3Img],
-    titles: ["Summit Trail", "Group Hike", "Peak View"],
-    icons: [<FaMountain size={20} className="text-white" />, <FaMountain size={20} className="text-white" />, <FaMountain size={20} className="text-white" />]
-  },
-  13: { // Parasailing
-    images: [parasailingImg, parasailing2Img, parasailing3Img],
-    titles: ["High Flying", "Ocean View", "Tropical Coast"],
-    icons: [<FaParachuteBox size={20} className="text-white" />, <FaParachuteBox size={20} className="text-white" />, <FaParachuteBox size={20} className="text-white" />]
-  },
-  14: { // Yoga
-    images: [yogaImg, spaImg, yogaImg],
-    titles: ["Beach Yoga", "Meditation", "Sunset Flow"],
-    icons: [<FaPray size={20} className="text-white" />, <FaPray size={20} className="text-white" />, <FaPray size={20} className="text-white" />]
-  },
-  15: { // Fishing
-    images: [fishingImg, boatImg, fishingImg],
-    titles: ["Big Catch", "Charter Boat", "Deep Sea"],
-    icons: [<FaFish size={20} className="text-white" />, <FaFish size={20} className="text-white" />, <FaFish size={20} className="text-white" />]
-  },
-  16: { // Cooking Class
-    images: [cookingImg, diningImg, cookingImg],
-    titles: ["Chef Demo", "Plated Dish", "Kitchen Action"],
-    icons: [<FaUtensils size={20} className="text-white" />, <FaUtensils size={20} className="text-white" />, <FaUtensils size={20} className="text-white" />]
-  },
-  17: { // Hot Air Balloon
-    images: [balloonImg, balloon2Img, balloon3Img],
-    titles: ["Sunrise Flight", "Valley View", "Basket View"],
-    icons: [<FaCloudSun size={20} className="text-white" />, <FaCloudSun size={20} className="text-white" />, <FaCloudSun size={20} className="text-white" />]
-  },
-  18: { // Wine Tasting
-    images: [wineImg, diningImg, wineImg],
-    titles: ["Vineyard Toast", "Food Pairing", "Cellar Tour"],
-    icons: [<FaGlassCheers size={20} className="text-white" />, <FaGlassCheers size={20} className="text-white" />, <FaGlassCheers size={20} className="text-white" />]
-  },
+// Experience image map
+const experienceImages: Record<number, string[]> = {
+  1: [kayakingImg, kayaking2Img, kayaking3Img],
+  2: [bikesImg, bikesImg, bikesImg],
+  3: [snorkelingImg, snorkeling2Img, snorkeling3Img],
+  4: [photographyImg, photographyImg, photographyImg],
+  5: [spaImg, yogaImg, spaImg],
+  6: [diningImg, wineImg, cookingImg],
+  7: [atvImg, atvImg, atvImg],
+  8: [boatImg, fishingImg, boatImg],
+  9: [ziplineImg, ziplineImg, ziplineImg],
+  10: [horsebackImg, horsebackImg, horsebackImg],
+  11: [scubaImg, scuba2Img, scuba3Img],
+  12: [hikingImg, hiking2Img, hiking3Img],
+  13: [parasailingImg, parasailing2Img, parasailing3Img],
+  14: [yogaImg, spaImg, yogaImg],
+  15: [fishingImg, boatImg, fishingImg],
+  16: [cookingImg, diningImg, cookingImg],
+  17: [balloonImg, balloon2Img, balloon3Img],
+  18: [wineImg, diningImg, wineImg],
 };
 
-const getExperienceConfig = (experienceId: number) => {
-  return experienceConfig[experienceId] || {
-    images: [kayakingImg, kayaking2Img, kayaking3Img],
-    titles: ["Adventure View", "Action Shot", "Scenic Beauty"],
-    icons: [<FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />, <FaWater size={20} className="text-white" />]
-  };
-};
+const getPhotos = (id: number) => experienceImages[id] || [kayakingImg, kayaking2Img, kayaking3Img];
 
 const ExperienceDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+
   const experience = experiences.find(exp => exp.id === Number(id));
 
   const handleBack = () => {
@@ -158,134 +83,171 @@ const ExperienceDetails = () => {
       navigate('/appview');
     }
   };
+
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    toast({ title: isFavorite ? "Removed from favorites" : "Added to favorites", duration: 2000 });
+  };
+
+  const handleShare = async () => {
+    if (navigator.share && experience) {
+      try {
+        await navigator.share({
+          title: experience.name,
+          text: `Check out ${experience.name}`,
+          url: window.location.href,
+        });
+      } catch {
+        navigator.clipboard.writeText(window.location.href);
+        toast({ title: "Link copied to clipboard", duration: 2000 });
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link copied to clipboard", duration: 2000 });
+    }
+  };
   
   if (!experience) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center">
+        <div className="text-center space-y-4">
           <p className="text-muted-foreground">Experience not found</p>
-          <Button asChild variant="link" className="mt-4">
-            <Link to="/">Back to Home</Link>
+          <Button variant="link" onClick={handleBack}>
+            Back to Explore
           </Button>
-        </Card>
+        </div>
       </div>
     );
   }
 
+  const photos = getPhotos(experience.id);
+
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[100px]">
       <div className="max-w-[375px] mx-auto">
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
-          <div className="px-4 py-3 flex items-center gap-3">
+
+        {/* Floating header bar */}
+        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+          <div className="px-4 py-3 flex items-center justify-between">
             <button
               onClick={handleBack}
               className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <span className="font-semibold">Experience</span>
+            <div className="flex items-center gap-1">
+              <button onClick={handleShare} className="p-2 rounded-full hover:bg-muted transition-colors">
+                <Share className="h-5 w-5" />
+              </button>
+              <button
+                onClick={toggleFavorite}
+                className="p-2 rounded-full hover:bg-muted transition-colors"
+              >
+                <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Interactive Photo Selector */}
-        <div className="mb-4">
-          {(() => {
-            const config = getExperienceConfig(experience.id);
-            return (
-              <InteractiveSelector 
-                photos={config.images} 
-                titles={config.titles}
-                icons={config.icons}
-              />
-            );
-          })()}
+        {/* Photo Grid */}
+        <div className="px-4">
+          <StackedPhotoGrid photos={photos} alt={experience.name} />
         </div>
 
-        <div className="px-4 py-6 space-y-6">
-          {/* Experience Header */}
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="text-4xl">{experience.categoryIcon}</span>
-              <div className="flex-1 space-y-1">
-                <h1 className="text-2xl font-bold leading-tight">{experience.name}</h1>
-                <p className="text-muted-foreground">{experience.vendor}</p>
-              </div>
-            </div>
+        {/* Content sections */}
+        <div className="px-4">
 
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold">{experience.rating}</span>
-                <span className="text-muted-foreground">({experience.reviewCount} reviews)</span>
+          {/* Section: Title + Rating */}
+          <div className="py-6 space-y-2">
+            <h1 className="text-2xl font-semibold leading-tight">{experience.name}</h1>
+            <p className="text-[15px] text-muted-foreground">{experience.vendor}</p>
+
+            <div className="flex items-center gap-1.5 pt-1">
+              <Star className="h-4 w-4 fill-foreground text-foreground" />
+              <span className="font-semibold text-[15px]">{experience.rating}</span>
+              <span className="text-muted-foreground text-[15px]">·</span>
+              <span className="text-[15px] text-muted-foreground">{experience.reviewCount} reviews</span>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Section: Quick Info */}
+          <div className="py-6">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-[15px] font-medium">{experience.duration}</p>
+                  <p className="text-[13px] text-muted-foreground">Duration</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-[15px] font-medium">Up to {experience.maxGuests}</p>
+                  <p className="text-[13px] text-muted-foreground">Guests</p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Quick Info */}
-          <Card className="p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="space-y-1">
-                <Clock className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">{experience.duration}</p>
-              </div>
-              <div className="space-y-1">
-                <Users className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs font-medium">Max {experience.maxGuests}</p>
-              </div>
-              <div className="space-y-1">
-                <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-pink-500 text-white">
-                  ${experience.price}
-                </Badge>
-                <p className="text-xs text-muted-foreground">per person</p>
-              </div>
-            </div>
-          </Card>
+          <Separator />
 
-          {/* Description */}
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">About This Experience</h2>
-            <Card className="p-4">
-              <p className="text-sm text-muted-foreground leading-relaxed">
+          {/* Section: About This Experience */}
+          <div className="py-6 space-y-3">
+            <h2 className="text-[22px] font-semibold">About this experience</h2>
+            <div className="relative">
+              <p className={`text-[15px] leading-relaxed text-foreground ${!descriptionExpanded ? 'line-clamp-4' : ''}`}>
                 {experience.description}
               </p>
-            </Card>
+              {experience.description.length > 200 && (
+                <button
+                  onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                  className="text-[15px] font-semibold underline underline-offset-4 mt-2 hover:text-foreground/80 transition-colors"
+                >
+                  {descriptionExpanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* What's Included */}
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">What's Included</h2>
-            <Card className="p-4">
-              <ul className="space-y-2">
-                {experience.included.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+          <Separator />
+
+          {/* Section: What's Included */}
+          <div className="py-6 space-y-4">
+            <h2 className="text-[22px] font-semibold">What's included</h2>
+            <ul className="space-y-3">
+              {experience.included.map((item, index) => (
+                <li key={index} className="flex items-start gap-3 text-[15px]">
+                  <CheckCircle className="h-5 w-5 text-foreground flex-shrink-0 mt-0.5" />
+                  <span className="text-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
+          <Separator />
 
           {/* Host Vendor List Button */}
-          <VendorListButton
-            vendorId={String(experience.vendorId)}
-            vendorName={experience.vendor}
-          />
+          <div className="py-6">
+            <VendorListButton
+              vendorId={String(experience.vendorId)}
+              vendorName={experience.vendor}
+            />
+          </div>
         </div>
 
         {/* Fixed Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-40">
           <div className="max-w-[375px] mx-auto flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">From</p>
-              <p className="text-2xl font-bold">${experience.price}</p>
+              <p className="text-[13px] text-muted-foreground">From</p>
+              <p className="text-xl font-semibold">${experience.price}<span className="text-[14px] font-normal text-muted-foreground"> /person</span></p>
             </div>
             <Button 
-              variant="gradient" 
+              className="rounded-full px-8 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
               size="lg"
-              className="flex-1"
               onClick={() => navigate(`/booking/${experience.id}`)}
             >
               Book Now
