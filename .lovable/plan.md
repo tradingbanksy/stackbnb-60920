@@ -1,57 +1,22 @@
 
 
-## Add stackd Verified Quality Badge to Vendor Profiles
+## Center and Enlarge the stackd Verified Badge
 
-### What It Does
+### What Changes
 
-Adds a trust/quality badge section near the bottom of every vendor profile page, similar to how Airbnb displays its AirCover badge. The section will feature the uploaded gold wax seal logo alongside text confirming the vendor's category has been vetted for quality by stackd.
+The `StackdVerifiedBadge` component will be updated so the content is centered and the seal image matches the host avatar size (64px instead of 48px).
 
-### Design
+### File to Modify
 
-The badge section will appear as its own separated section (consistent with the Airbnb flat-section style used throughout the profile):
+**`src/components/StackdVerifiedBadge.tsx`**:
 
-```text
--------------------------------------------
-|                                         |
-|  [Gold Seal Logo]                       |
-|                                         |
-|  stackd verified                        |
-|  Every [category] on stackd is vetted   |
-|  for quality and safety so you can      |
-|  book with confidence.                  |
-|                                         |
-|  Learn more                             |
-|                                         |
--------------------------------------------
-```
-
-- The gold wax seal image (uploaded by user) will be displayed at ~48px size
-- "stackd verified" as a bold heading
-- A short description dynamically inserting the vendor's category (e.g., "Every Water Sports vendor on stackd...")
-- A "Learn more" underlined link (can point to a help/trust page later)
-- Separated by horizontal dividers above and below, matching the existing Airbnb-style layout
-
-### Placement
-
-The badge will sit between the **Guest Reviews** section and the **External Links** section on both pages, giving it prominence near the bottom before the CTA bar.
-
-### Files to Change
-
-1. **Copy the uploaded image** to `src/assets/stackd-verified-seal.png` so it can be imported as an ES module
-
-2. **Create `src/components/StackdVerifiedBadge.tsx`** -- A small reusable component that:
-   - Imports the gold seal image
-   - Accepts a `category` prop (string)
-   - Renders the seal image, heading, dynamic description text, and "Learn more" link
-   - Uses the same typography scale as the rest of the profile (text-[22px] heading, text-[15px] body)
-
-3. **`src/pages/vendor/PublicProfile.tsx`** -- Add the badge section after Guest Reviews / Airbnb Reviews and before External Links, wrapped in Separator dividers
-
-4. **`src/pages/vendor/ProfilePreview.tsx`** -- Same placement: after Meet your host / before External Links, with Separator dividers
+1. Add `text-center items-center` to the container div so all content (image, heading, description, link) is centered
+2. Center the seal image using `mx-auto`
+3. Change the seal size from `h-12 w-12` (48px) to `h-16 w-16` (64px) to match the host avatar in "Meet your host"
 
 ### What Stays the Same
 
-- All existing profile sections remain untouched
-- The badge is purely additive -- no existing content is removed or rearranged
-- Both profile pages will show the same badge since both have access to `profile.category`
+- The text content (heading, description, "Learn more" link) remains identical
+- The placement on both `PublicProfile.tsx` and `ProfilePreview.tsx` stays the same
+- No other files need changes
 
