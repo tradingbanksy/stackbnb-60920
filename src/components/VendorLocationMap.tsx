@@ -580,6 +580,9 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
   };
 
   if (isLoading) {
+    if (isPinMode) {
+      return <Skeleton className="h-48 w-full rounded-xl" />;
+    }
     return (
       <Card className="overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
         <Skeleton className="h-48 w-full" />
@@ -598,6 +601,13 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
   }
 
   if (error && !directionsData?.vendorLocation) {
+    if (isPinMode) {
+      return (
+        <div className="rounded-xl bg-muted p-4">
+          <p className="text-muted-foreground text-sm">{error}</p>
+        </div>
+      );
+    }
     return (
       <Card className="p-4 border-border/50 bg-card/80 backdrop-blur-sm">
         <p className="text-muted-foreground text-sm">{error}</p>
@@ -607,6 +617,48 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
 
   const displayDistance = mapRouteData?.distanceText || directionsData?.distance;
   const displayDuration = mapRouteData?.durationText || directionsData?.duration;
+
+  // Pin mode: render just the map container, no Card wrapper
+  if (isPinMode) {
+    return (
+      <div className="relative w-full rounded-xl overflow-hidden" style={{ height: '192px', minHeight: '192px' }}>
+        {directionsData?.vendorLocation && !mapError ? (
+          <>
+            <div 
+              ref={mapContainer} 
+              className="absolute inset-0 w-full h-full"
+              style={{ width: '100%', height: '100%' }}
+            />
+            
+            {/* Loading overlay */}
+            {!mapLoaded && (
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+
+            {/* Open in Maps button */}
+            <div className="absolute bottom-2 right-2">
+              <button
+                onClick={openInGoogleMaps}
+                className="px-2.5 py-1.5 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium text-foreground flex items-center gap-1.5 shadow-sm border border-border/50 hover:bg-background transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open in Maps
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-teal-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-teal-950/30 flex items-center justify-center">
+            <div className="text-center">
+              <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-xs text-muted-foreground">Location loading...</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Card className="overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm">
@@ -619,22 +671,20 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
               className="absolute inset-0 w-full h-full"
               style={{ width: '100%', height: '100%' }}
               onClick={(e) => {
-                // Only open if not interacting with map controls
                 if ((e.target as HTMLElement).closest('.mapboxgl-ctrl')) return;
               }}
             />
             
             {/* Loading overlay */}
-            {!mapLoaded && (isPinMode || mapRouteData) && (
+            {!mapLoaded && mapRouteData && (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             )}
 
-            {/* Fallback stylized map while loading Mapbox data (directions mode only) */}
-            {!isPinMode && !mapRouteData && (
+            {/* Fallback stylized map while loading Mapbox data */}
+            {!mapRouteData && (
               <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-teal-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-teal-950/30">
-                {/* Subtle map grid pattern */}
                 <div className="absolute inset-0 opacity-10">
                   <div className="w-full h-full" style={{
                     backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -642,7 +692,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
                   }} />
                 </div>
                 
-                {/* Curved route path */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 192" preserveAspectRatio="xMidYMid slice">
                   <path 
                     d="M 80 96 Q 200 50 320 96" 
@@ -661,7 +710,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
                   </defs>
                 </svg>
 
-                {/* Origin */}
                 <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
                   <div className="h-10 w-10 rounded-full bg-muted border-2 border-primary/40 flex items-center justify-center shadow-md">
                     <CircleDot className="h-5 w-5 text-primary" />
@@ -671,7 +719,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
                   </span>
                 </div>
 
-                {/* Destination */}
                 <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
                   <div className="relative">
                     <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute inset-0" />
@@ -684,7 +731,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
                   </span>
                 </div>
 
-                {/* Loading indicator */}
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm shadow-sm border border-border/50">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                   <span className="text-xs font-medium text-muted-foreground">Loading route...</span>
@@ -694,7 +740,6 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
 
             {/* Gradient overlay at bottom */}
             <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
-
             {/* Map controls row */}
             <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
               {/* Animate journey button (directions mode only) */}
