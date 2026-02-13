@@ -48,8 +48,8 @@ const AllExperiences = () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('vendor_profiles')
-        .select('id, name, category, description, photos, price_per_person, google_rating')
+        .from('vendor_profiles_public')
+        .select('id, name, category, description, photos, price_per_person, google_rating, is_published, listing_type')
         .eq('is_published', true)
         .eq('listing_type', 'experience');
 
