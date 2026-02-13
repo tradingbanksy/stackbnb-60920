@@ -8,6 +8,7 @@ import chamicosTulum from '@/assets/restaurants/chamicos-tulum.jpg';
 import kitchenTableTulum from '@/assets/restaurants/kitchen-table-tulum.jpg';
 import rawLoveTulum from '@/assets/restaurants/raw-love-tulum.jpg';
 
+import { expandedTulumRestaurants } from './tulumRestaurantsExpanded';
 
 // Mock restaurant data with realistic information
 export interface Restaurant {
@@ -278,8 +279,8 @@ export const mockRestaurants: Restaurant[] = [
     reservationPlatform: null,
     coordinates: { lat: 20.2034, lng: -87.4298 },
   },
+  ...expandedTulumRestaurants,
 ];
-
 // Location suggestions for autocomplete
 export const locationSuggestions = [
   { type: 'city', value: 'Tulum', state: 'QR', zipCode: '77780' },
