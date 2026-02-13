@@ -1,5 +1,5 @@
 // Google Maps / Places API Service
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCBS6u3Z5MeYS-lyD-fRbvorFfzTm1NXq8';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export interface GeoapifyPlace {
   id: string;
