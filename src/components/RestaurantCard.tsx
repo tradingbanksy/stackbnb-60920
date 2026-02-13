@@ -3,11 +3,12 @@ import { Star, Heart, MapPin, Navigation, Plus, Check, Loader2 } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { toast } from "@/hooks/use-toast";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { formatDistance } from "@/services/googleMapsService";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { BlurImage } from "@/components/BlurImage";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -21,17 +22,39 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', 
   const [isAdding, setIsAdding] = useState(false);
   const isOpen = isRestaurantOpen(restaurant);
 
-  // Use cached Google photo as cover if available
-  const coverPhoto = useMemo(() => {
+  // Use cached Google photo as cover, or fetch it
+  const [coverPhoto, setCoverPhoto] = useState(restaurant.photos[0]);
+  
+  useEffect(() => {
+    const cacheKey = `google_reviews_detail_${restaurant.id}`;
     try {
-      const cached = localStorage.getItem(`google_reviews_detail_${restaurant.id}`);
+      const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const data = JSON.parse(cached);
-        if (data.photos?.length > 0) return data.photos[0];
+        if (data.photos?.length > 0) {
+          setCoverPhoto(data.photos[0]);
+          return;
+        }
       }
     } catch {}
-    return restaurant.photos[0];
-  }, [restaurant.id, restaurant.photos]);
+
+    // Fetch Google photos if not cached and restaurant has coordinates
+    if (restaurant.coordinates?.lat && restaurant.coordinates?.lng) {
+      const searchQuery = `${restaurant.name} restaurant ${restaurant.address || ''} ${restaurant.city}`;
+      supabase.functions.invoke('google-reviews', {
+        body: { searchQuery, lat: restaurant.coordinates.lat, lng: restaurant.coordinates.lng }
+      }).then(({ data }) => {
+        if (data?.photos?.length > 0) {
+          setCoverPhoto(data.photos[0]);
+          // Cache for future use
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({ ...data, timestamp: Date.now() }));
+          } catch {}
+        }
+      }).catch(() => {});
+    }
+  }, [restaurant.id]);
+
   const isSmall = size === 'small';
   
   const { isAuthenticated, role } = useAuthContext();
