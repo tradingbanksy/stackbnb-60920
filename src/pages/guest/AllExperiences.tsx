@@ -88,11 +88,7 @@ const AllExperiences = () => {
   });
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/appview');
-    }
+    navigate('/appview');
   };
 
   return (
