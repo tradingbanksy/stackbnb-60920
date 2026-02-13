@@ -194,9 +194,9 @@ const AllRestaurants = () => {
             <p className="text-sm text-muted-foreground">
               {filteredRestaurants.length} restaurant{filteredRestaurants.length !== 1 ? 's' : ''} found
             </p>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-2 gap-4">
               {filteredRestaurants.map((restaurant) => (
-                <RestaurantCard key={restaurant.id} restaurant={restaurant} variant="grid" size="small" />
+                <RestaurantCard key={restaurant.id} restaurant={restaurant} variant="grid" />
               ))}
             </div>
           </div>
