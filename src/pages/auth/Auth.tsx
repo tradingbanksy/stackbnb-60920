@@ -409,7 +409,7 @@ const Auth = () => {
       }
       
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: window.location.origin + "/auth",
       });
       if (error) throw error;
     } catch (error) {
@@ -431,7 +431,7 @@ const Auth = () => {
       }
       
       const { error } = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: window.location.origin,
+        redirect_uri: window.location.origin + "/auth",
       });
       if (error) throw error;
     } catch (error) {
