@@ -410,6 +410,9 @@ const Auth = () => {
       
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + "/auth",
+        extraParams: {
+          prompt: "select_account",
+        },
       });
       if (error) throw error;
     } catch (error) {
