@@ -1,30 +1,42 @@
+## Expand Tulum Restaurant Directory (4-5 Star Only)
 
+### Current State
 
-## Fix Google Sign-In Redirect on Mobile
+- 8 restaurants in `mockRestaurants.ts`, all rated 4.5-4.9 stars
+- Each uses a unique imported photo
 
-### Problem
-When tapping "Continue with Google" on mobile, the OAuth flow redirects back to `/` (the splash page) after authentication. The splash page has no logic to detect the newly authenticated session and route the user forward, so they just see the splash screen again.
+### Plan
 
-### Root Cause
-In both `Auth.tsx` and `AuthPromptDialog.tsx`, the Google (and Apple) OAuth calls set:
-```
-redirect_uri: window.location.origin
-```
-This resolves to the root URL `/`, which renders `SplashPage` -- a component with no auth-state handling.
+Add 15-20 more highly-rated (4.0-5.0 star) Tulum restaurants to the mock data, bringing the total to ~25. These will be real, well-known Tulum restaurants.
 
-### Fix
-Change the `redirect_uri` to point back to `/auth` instead of `/`. The Auth page already has a `useEffect` that detects authenticated users and redirects them to the correct dashboard based on their role.
+### New Restaurants to Add (all 4.0+ stars)
 
-### Files to Change
+1. **Gitano** - Mexican/Cocktails, 4.5 stars, $$$, Beach Zone
+2. **Mezzanine** - Thai/Mexican fusion, 4.6 stars, $$$, Beach Zone
+3. **Ziggy Beach** - Mediterranean, 4.4 stars, $$$, Beach Zone
+4. **Casa Jaguar** - Mexican, 4.5 stars, $$$$, Beach Zone
+5. **Noma Tulum** - Japanese/Mexican, 4.7 stars, $$$$, Beach Zone
+6. **Rosa del Viento** - Mediterranean, 4.3 stars, $$$, Beach Zone
+7. **Cenzontle** - Mexican, 4.6 stars, $$$, Centro
+8. **Co.ConAmor** - Healthy/Vegan, 4.5 stars, $$, Centro
+9. **La Zebra** - Mexican, 4.4 stars, $$$, Beach Zone
+10. **Taboo** - Mediterranean/Mexican, 4.3 stars, $$$$, Beach Zone
+11. **Tseen Ja** - Asian Fusion, 4.5 stars, $$$, Beach Zone
+12. **El Asadero** - Mexican BBQ, 4.4 stars, $$, Centro
+13. **La Nave Pizzeria** - Italian/Pizza, 4.6 stars, $$, Centro
+14. **Matcha Mama** - Healthy/Smoothies, 4.7 stars, $$, Beach Zone
+15. **Trattoria Romana** - Italian, 4.3 stars, $$$, Centro
 
-**1. `src/pages/auth/Auth.tsx`**
-- `handleGoogleSignIn`: Change `redirect_uri` from `window.location.origin` to `window.location.origin + "/auth"`
-- `handleAppleSignIn`: Same change
+### Photo Strategy
 
-**2. `src/features/trip-planner/components/AuthPromptDialog.tsx`**
-- `handleGoogleSignIn`: Change `redirect_uri` from `window.location.origin` to `window.location.origin + "/auth"`
-- `handleAppleSignIn`: Same change
+Since we don't have unique photos for each new restaurant, you will look on google to pull a few real images.
 
-### Why This Works
-The `/auth` page already has logic (lines 42-78) that checks if the user is authenticated after OAuth and redirects them to the appropriate dashboard (host, vendor, or guest). It also handles saving pending roles from `localStorage` (lines 81-97). Redirecting back to `/auth` lets all this existing logic run correctly.
+### Technical Changes
 
+**File: `src/data/mockRestaurants.ts**`
+
+- Import additional stock photos from `src/assets/restaurants/`
+- Add 15 new restaurant entries with realistic data (names, addresses, coordinates, hours, descriptions, cuisine types)
+- All rated between 4.0 and 5.0 stars
+
+No other files need to change -- `AllRestaurants.tsx` already renders all entries from `mockRestaurants`.
