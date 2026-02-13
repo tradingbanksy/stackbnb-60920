@@ -3,7 +3,7 @@ import { Star, Heart, MapPin, Navigation, Plus, Check, Loader2 } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { isRestaurantOpen, type Restaurant } from "@/data/mockRestaurants";
 import { toast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { formatDistance } from "@/services/googleMapsService";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -20,6 +20,18 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', 
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const isOpen = isRestaurantOpen(restaurant);
+
+  // Use cached Google photo as cover if available
+  const coverPhoto = useMemo(() => {
+    try {
+      const cached = localStorage.getItem(`google_reviews_detail_${restaurant.id}`);
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.photos?.length > 0) return data.photos[0];
+      }
+    } catch {}
+    return restaurant.photos[0];
+  }, [restaurant.id, restaurant.photos]);
   const isSmall = size === 'small';
   
   const { isAuthenticated, role } = useAuthContext();
@@ -92,7 +104,7 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', 
           {/* Image */}
           <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
             <BlurImage
-              src={restaurant.photos[0]}
+              src={coverPhoto}
               alt={restaurant.name}
               className="group-hover:scale-105 transition-transform duration-500"
             />
@@ -169,7 +181,7 @@ const RestaurantCard = ({ restaurant, variant = 'horizontal', size = 'default', 
         {/* Image with blur-up loading */}
         <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
           <BlurImage
-            src={restaurant.photos[0]}
+            src={coverPhoto}
             alt={restaurant.name}
             className="group-hover:scale-105 transition-transform duration-500"
           />
