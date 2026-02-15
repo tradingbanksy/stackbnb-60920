@@ -1,22 +1,44 @@
 
+## Fix Restaurant Cards in /appview
 
-## Fix Restaurant Images in /appview
-
-### Problem
-The `/appview` page renders restaurant images directly using `restaurant.photos[0]` (static mock photos) instead of using the `RestaurantCard` component. Meanwhile, the `/restaurants` page and detail pages show Google-sourced photos. This causes a mismatch between what users see on the home screen vs. when they click into a restaurant profile.
+### Problems
+1. **Size mismatch**: Restaurant cards use `RestaurantCard` which renders at `w-[200px]` with text below the image. Experience cards use inline `w-36` with an overlay gradient style. They look completely different side by side.
+2. **UI style mismatch**: Experience cards show name/rating/price overlaid on the image with a gradient. Restaurant cards show a separate text block underneath.
+3. **Duplicate images for ARCA and Hartwood**: Both restaurants share nearly identical coordinates (km 7.6 on the same road), so the Google Photos API may return the same or similar images for both.
 
 ### Solution
-Replace the inline restaurant card markup in `AppView.tsx` (lines ~502-529) with the existing `RestaurantCard` component, which already handles Google photo fetching and caching.
+
+**1. Switch to `RestaurantCardWithGoogleRating` in AppView**
+
+Replace `RestaurantCard` with the existing `RestaurantCardWithGoogleRating` component, which already:
+- Uses `w-36` width (matches experience cards)
+- Has the overlay gradient style (name, rating, price over the image)
+- Fetches Google photos and uses them as covers
+- Matches the experience card UI perfectly
+
+**2. Fix ARCA / Hartwood duplicate images**
+
+Since both restaurants are at nearly identical GPS coordinates, the Google Places API may return the same result for both. To fix this, the `RestaurantCardWithGoogleRating` component includes the restaurant name in its search query, which should differentiate them. If the static fallback photos are also the same, we'll verify the imported images (`arca-tulum.jpg` vs `hartwood-tulum.jpg`) are distinct files.
 
 ### Technical Details
 
 **File: `src/pages/guest/AppView.tsx`**
-- Replace the inline `<Link>` + `<BlurImage>` block for curated restaurants (~lines 502-529) with `<RestaurantCard restaurant={restaurant} size="small" />`
-- The `RestaurantCard` component (with `size="small"` and default `horizontal` variant) already:
-  - Checks localStorage for cached Google photos
-  - Fetches Google photos via the `google-reviews` edge function if not cached
-  - Falls back to static mock photos gracefully
-- Import `RestaurantCard` at the top of the file
+- Replace `RestaurantCard` import with `RestaurantCardWithGoogleRating`
+- Change the curated restaurants render from:
+  ```
+  <RestaurantCard key={restaurant.id} restaurant={restaurant} size="small" />
+  ```
+  to:
+  ```
+  <RestaurantCardWithGoogleRating
+    key={restaurant.id}
+    restaurant={restaurant}
+    index={vendorRestaurants.length + index}
+  />
+  ```
+- Remove unused `RestaurantCard` import
 
-This is a small change -- swapping ~25 lines of inline markup for a single component that already exists and handles the photo logic correctly.
+**File: `src/components/RestaurantCardWithGoogleRating.tsx`** (if needed)
+- Verify the search query includes enough unique info (restaurant name + address) to distinguish restaurants at similar coordinates like ARCA vs Hartwood
 
+This is a small swap that aligns restaurant cards with the experience card UI already used in AppView.
