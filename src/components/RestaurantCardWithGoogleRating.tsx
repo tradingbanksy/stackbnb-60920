@@ -21,6 +21,16 @@ const getCacheKey = (restaurantId: string) => `google_reviews_${restaurantId}`;
 
 const getCachedData = (restaurantId: string): GoogleReviewsData | null => {
   try {
+    // Check detail cache first (from RestaurantDetail page) for consistency
+    const detailCached = localStorage.getItem(`google_reviews_detail_${restaurantId}`);
+    if (detailCached) {
+      const parsed = JSON.parse(detailCached);
+      if (parsed.timestamp && Date.now() - parsed.timestamp < CACHE_DURATION_MS) {
+        return { rating: parsed.rating, totalReviews: parsed.totalReviews, photos: parsed.photos };
+      }
+    }
+    
+    // Fallback to card-level cache
     const cached = localStorage.getItem(getCacheKey(restaurantId));
     if (!cached) return null;
     
