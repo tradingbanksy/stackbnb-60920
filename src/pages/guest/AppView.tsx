@@ -41,7 +41,7 @@ import heroImage from "@/assets/hero-beach.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 import { BlurImage } from "@/components/BlurImage";
-import RestaurantCard from "@/components/RestaurantCard";
+import { RestaurantCardWithGoogleRating } from "@/components/RestaurantCardWithGoogleRating";
 
 const categories = [
   { id: "all", name: "All", icon: "✨" },
@@ -500,8 +500,12 @@ const AppView = () => {
                         ))}
                         
                         {/* Curated restaurants for the selected city */}
-                        {curatedRestaurants.map((restaurant) => (
-                          <RestaurantCard key={restaurant.id} restaurant={restaurant} size="small" />
+                        {curatedRestaurants.map((restaurant, index) => (
+                          <RestaurantCardWithGoogleRating
+                            key={restaurant.id}
+                            restaurant={restaurant}
+                            index={vendorRestaurants.length + index}
+                          />
                         ))}
 
                         {/* Empty state when no restaurants at all */}
