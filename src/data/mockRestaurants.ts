@@ -88,7 +88,7 @@ export const mockRestaurants: Restaurant[] = [
     rating: 4.8,
     reviewCount: 3247,
     priceRange: '$$$$',
-    address: "Carr. Tulum-Boca Paila km 7.6",
+    address: "Carr. Tulum-Boca Paila km 7.4",
     neighborhood: "Tulum Beach",
     city: "Tulum",
     zipCode: "77780",
@@ -108,7 +108,7 @@ export const mockRestaurants: Restaurant[] = [
     hasOutdoorSeating: true,
     reservationPlatform: 'resy',
     reservationUrl: 'https://resy.com/cities/tulum-mx/hartwood',
-    coordinates: { lat: 20.2047, lng: -87.4313 },
+    coordinates: { lat: 20.2070, lng: -87.4340 },
   },
   {
     id: 'r3',
