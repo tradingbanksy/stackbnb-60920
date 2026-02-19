@@ -41,7 +41,7 @@ import heroImage from "@/assets/hero-beach.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 import { BlurImage } from "@/components/BlurImage";
-import { RestaurantCardWithGoogleRating } from "@/components/RestaurantCardWithGoogleRating";
+
 
 const categories = [
   { id: "all", name: "All", icon: "✨" },
@@ -500,13 +500,43 @@ const AppView = () => {
                         ))}
                         
                         {/* Curated restaurants for the selected city */}
-                        {curatedRestaurants.map((restaurant, index) => (
-                          <RestaurantCardWithGoogleRating
-                            key={restaurant.id}
-                            restaurant={restaurant}
-                            index={vendorRestaurants.length + index}
-                          />
-                        ))}
+                        {curatedRestaurants.map((restaurant, index) => {
+                          // Use Google-cached photo or fallback to static
+                          let photo = restaurant.photos[0];
+                          try {
+                            const cached = localStorage.getItem(`google_reviews_detail_${restaurant.id}`);
+                            if (cached) {
+                              const parsed = JSON.parse(cached);
+                              if (parsed.photos?.length > 0) photo = parsed.photos[0];
+                            }
+                          } catch {}
+
+                          return (
+                            <Link
+                              key={restaurant.id}
+                              to={`/restaurant/${restaurant.id}`}
+                              className="flex-shrink-0 w-36 animate-fade-in group"
+                              style={{ animationDelay: `${(vendorRestaurants.length + index) * 50}ms` }}
+                            >
+                              <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
+                                <BlurImage
+                                  src={photo}
+                                  alt={restaurant.name}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                  <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
+                                  <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                    <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                                    <span>{restaurant.rating?.toFixed(1) ?? 'N/A'}</span>
+                                    <span>•</span>
+                                    <span>{restaurant.priceRange}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
 
                         {/* Empty state when no restaurants at all */}
                         {vendorRestaurants.length === 0 && curatedRestaurants.length === 0 && (
