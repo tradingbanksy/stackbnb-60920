@@ -522,6 +522,7 @@ const AppView = () => {
                                 <BlurImage
                                   src={photo}
                                   alt={restaurant.name}
+                                  containerClassName="w-full h-full"
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
