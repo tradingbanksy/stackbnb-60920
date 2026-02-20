@@ -115,20 +115,19 @@ const RestaurantDetail = () => {
       }
     }
     setRestaurant(found || null);
-    if (found) {
+    if (found && id) {
+      const cached = getCachedReviews(id);
+      if (cached) {
+        setGoogleReviews(cached);
+        setDisplayPhotos(cached.photos && cached.photos.length > 0 ? cached.photos : found.photos);
+      } else {
+        setDisplayPhotos(found.photos);
+      }
+    } else if (found) {
       setDisplayPhotos(found.photos);
     }
     const favorites = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
     setIsFavorite(favorites.includes(id));
-    if (id) {
-      const cached = getCachedReviews(id);
-      if (cached) {
-        setGoogleReviews(cached);
-        if (cached.photos && cached.photos.length > 0) {
-          setDisplayPhotos(cached.photos);
-        }
-      }
-    }
   }, [id]);
 
   useEffect(() => {
