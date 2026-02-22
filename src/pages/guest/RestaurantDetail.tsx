@@ -119,12 +119,12 @@ const RestaurantDetail = () => {
       const cached = getCachedReviews(id);
       if (cached) {
         setGoogleReviews(cached);
-        setDisplayPhotos(cached.photos && cached.photos.length > 0 ? cached.photos : found.photos);
+        setDisplayPhotos(cached.photos && cached.photos.length > 0 ? cached.photos : []);
       } else {
-        setDisplayPhotos(found.photos);
+        setDisplayPhotos([]);
       }
     } else if (found) {
-      setDisplayPhotos(found.photos);
+      setDisplayPhotos([]);
     }
     const favorites = JSON.parse(localStorage.getItem("restaurantFavorites") || "[]");
     setIsFavorite(favorites.includes(id));
@@ -145,9 +145,7 @@ const RestaurantDetail = () => {
         if (error) { console.error('Error fetching Google reviews:', error); return; }
         setGoogleReviews(data);
         setCachedReviews(id, data);
-        if (data.photos && data.photos.length > 0) {
-          setDisplayPhotos(data.photos);
-        }
+        setDisplayPhotos(data.photos && data.photos.length > 0 ? data.photos : []);
       } catch (error) {
         console.error('Error fetching Google reviews:', error);
       } finally {
@@ -230,7 +228,7 @@ const RestaurantDetail = () => {
   }
 
   const isOpen = isRestaurantOpen(restaurant);
-  const photos = (displayPhotos.length > 0 ? displayPhotos : restaurant.photos).slice(0, 6);
+  const photos = displayPhotos.slice(0, 6);
 
   // Reservation webview modal
   if (showReservationWebview && (reservationUrl || restaurant.reservationUrl)) {
@@ -282,10 +280,17 @@ const RestaurantDetail = () => {
           </div>
         </header>
 
-        {/* Photo Grid */}
-        <div className="px-4">
-          <StackedPhotoGrid photos={photos} alt={restaurant.name} />
-        </div>
+        {photos.length > 0 ? (
+          <div className="px-4">
+            <StackedPhotoGrid photos={photos} alt={restaurant.name} />
+          </div>
+        ) : isLoadingReviews ? (
+          <div className="px-4">
+            <div className="aspect-[4/3] rounded-xl bg-muted animate-pulse flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        ) : null}
 
         {/* Content sections */}
         <div className="px-4">
