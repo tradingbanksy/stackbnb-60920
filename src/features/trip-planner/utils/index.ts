@@ -224,8 +224,8 @@ export function hasBookingInConversation(messages: Message[]): boolean {
  */
 export function getInitialMessage(vendorCount: number): string {
   return vendorCount > 0
-    ? `🌴 Hey! I'm JC, your local Tulum guide. Your host has curated ${vendorCount} amazing experiences for you!\n\nBefore we dive in — **when are you visiting** and **how many days** do you have? This helps me plan the perfect itinerary for you! 🗓️`
-    : "🌴 Hey! I'm JC, your local Tulum guide. I know the best cenotes, beach clubs, tacos, and hidden gems around here!\n\nBefore we dive in — **when are you visiting** and **how many days** do you have? This helps me plan the perfect itinerary for you! 🗓️";
+    ? `🌴 Hey! I'm JC, your local Tulum guide. Your host has curated ${vendorCount} amazing experiences just for you — let's plan something great!`
+    : "🌴 Hey! I'm JC, your local Tulum guide. Tell me about your trip and I'll help you find the best cenotes, beach clubs, restaurants, and hidden gems!";
 }
 
 // ============================================
