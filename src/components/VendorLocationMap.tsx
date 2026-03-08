@@ -181,15 +181,16 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
 
     const initPinMap = async () => {
       try {
-        if (!MAPBOX_TOKEN) {
-          console.error('VITE_MAPBOX_PUBLIC_TOKEN not configured');
+        const token = await getMapboxToken();
+        if (!token) {
+          console.error('Could not get Mapbox token');
           setMapError(true);
           return;
         }
 
         if (!mapContainer.current || map.current) return;
 
-        mapboxgl.accessToken = MAPBOX_TOKEN;
+        mapboxgl.accessToken = token;
         const { lat, lng } = directionsData.vendorLocation!;
 
         map.current = new mapboxgl.Map({
@@ -252,11 +253,15 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
   // Initialize Mapbox map when route data is available (directions mode only)
   useEffect(() => {
     if (isPinMode) return;
-    if (!mapContainer.current || !MAPBOX_TOKEN || !mapRouteData?.route) return;
-    if (map.current) return; // Already initialized
+    if (!mapContainer.current || !mapRouteData?.route) return;
+    if (map.current) return;
 
-    try {
-      mapboxgl.accessToken = MAPBOX_TOKEN;
+    const initDirectionsMap = async () => {
+      const token = await getMapboxToken();
+      if (!token || !mapContainer.current || map.current) return;
+
+      try {
+        mapboxgl.accessToken = token;
 
       // Calculate bounds to fit the route
       const coordinates = mapRouteData.route.coordinates;
