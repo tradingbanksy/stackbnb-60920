@@ -138,7 +138,7 @@ const RestaurantDetail = () => {
         setIsLoadingReviews(true);
       }
       try {
-        const searchQuery = `${restaurant.name} restaurant ${restaurant.address} ${restaurant.city}`;
+        const searchQuery = `${restaurant.name} ${restaurant.city}`;
         const { data, error } = await supabase.functions.invoke('google-reviews', {
           body: { searchQuery, lat: restaurant.coordinates?.lat, lng: restaurant.coordinates?.lng }
         });
