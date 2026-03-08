@@ -11,7 +11,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { HostOnboardingCard } from "@/components/onboarding";
+import { HostOnboardingCard, HostVerificationCard } from "@/components/onboarding";
 
 interface VendorWithCommission {
   id: string;
