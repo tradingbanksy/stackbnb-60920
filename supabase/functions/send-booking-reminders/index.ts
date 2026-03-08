@@ -41,7 +41,7 @@ serve(async (req) => {
       .from("bookings")
       .select("*")
       .in("booking_date", [startDate, endDate])
-      .eq("status", "completed")
+      .eq("status", "confirmed")
       .is("reminder_sent_at", null);
 
     if (queryError) {
