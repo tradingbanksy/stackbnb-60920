@@ -51,6 +51,7 @@ interface MapboxRouteData {
   steps?: RouteStep[];
 }
 
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
 
 export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = 'directions' }: VendorLocationMapProps) {
@@ -168,23 +169,15 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
 
     const initPinMap = async () => {
       try {
-        // Fetch token via mapbox-directions (we just need the token)
-        const { data, error: fnError } = await supabase.functions.invoke('mapbox-directions', {
-          body: { 
-            destinationLat: directionsData.vendorLocation!.lat,
-            destinationLng: directionsData.vendorLocation!.lng
-          }
-        });
-
-        if (fnError || !data?.mapboxToken) {
-          console.error('Could not get Mapbox token:', fnError);
+        if (!MAPBOX_TOKEN) {
+          console.error('VITE_MAPBOX_PUBLIC_TOKEN not configured');
           setMapError(true);
           return;
         }
 
         if (!mapContainer.current || map.current) return;
 
-        mapboxgl.accessToken = data.mapboxToken;
+        mapboxgl.accessToken = MAPBOX_TOKEN;
         const { lat, lng } = directionsData.vendorLocation!;
 
         map.current = new mapboxgl.Map({
@@ -247,11 +240,11 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
   // Initialize Mapbox map when route data is available (directions mode only)
   useEffect(() => {
     if (isPinMode) return;
-    if (!mapContainer.current || !mapRouteData?.mapboxToken || !mapRouteData?.route) return;
+    if (!mapContainer.current || !MAPBOX_TOKEN || !mapRouteData?.route) return;
     if (map.current) return; // Already initialized
 
     try {
-      mapboxgl.accessToken = mapRouteData.mapboxToken;
+      mapboxgl.accessToken = MAPBOX_TOKEN;
 
       // Calculate bounds to fit the route
       const coordinates = mapRouteData.route.coordinates;
