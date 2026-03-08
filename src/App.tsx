@@ -39,6 +39,8 @@ import {
   AllExperiences,
   GuestGuide,
   MyBookings,
+  Conversation,
+  RequestRefund,
   Itinerary,
   SharedItinerary,
   TripItinerary,
@@ -111,6 +113,9 @@ import {
   AdminPromoCodes,
   VendorApprovals,
   HostVerifications,
+  MessageModeration,
+  FraudAlerts,
+  RefundRequests,
 } from "./pages/admin";
 
 // Standalone pages
