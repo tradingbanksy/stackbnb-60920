@@ -116,11 +116,15 @@ END:VCALENDAR`;
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'confirmed':
+        return 'bg-blue-500';
+      case 'completed':
         return 'bg-green-500';
       case 'pending':
         return 'bg-yellow-500';
       case 'cancelled':
         return 'bg-red-500';
+      case 'refunded':
+        return 'bg-orange-500';
       default:
         return 'bg-muted-foreground';
     }
