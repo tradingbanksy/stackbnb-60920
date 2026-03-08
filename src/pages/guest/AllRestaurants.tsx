@@ -31,7 +31,7 @@ const convertApiPlaceToRestaurant = (place: GeoapifyPlace): Restaurant => ({
   website: place.website,
   hours: {},
   description: `${place.name} located at ${place.address}`,
-  photos: place.photos.length > 0 ? place.photos : ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'],
+  photos: place.photos.length > 0 ? place.photos : [],
   features: [],
   hasOutdoorSeating: false,
   coordinates: { lat: place.lat, lng: place.lng },

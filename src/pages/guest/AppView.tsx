@@ -448,7 +448,10 @@ const AppView = () => {
                       </PopoverContent>
                     </Popover>
                     
-                    <button className="ml-2 bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0">
+                    <button 
+                      className="ml-2 bg-gradient-to-r from-orange-500 to-purple-600 text-white rounded-full p-1.5 flex-shrink-0"
+                      onClick={() => navigate('/restaurants')}
+                    >
                       <Search className="h-3 w-3" />
                     </button>
                   </div>
@@ -744,221 +747,6 @@ const AppView = () => {
                 )}
               </section>
 
-              {/* How stackd Works Section */}
-              <section className="space-y-3 pt-4">
-                <h2 className="text-base font-display font-bold tracking-wide">How stackd Works</h2>
-                <p className="text-xs text-muted-foreground">
-                  Turn your local knowledge into passive income
-                </p>
-                <div className="space-y-3">
-                  <Card className="p-4 bg-card border-border/50">
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-orange-500/10 to-purple-600/10 flex items-center justify-center flex-shrink-0">
-                        <Heart className="h-5 w-5 text-orange-500" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold">Curated Recommendations</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Your personal recommendations, not algorithmic suggestions. Guests trust you, not ads.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-4 bg-card border-border/50">
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-orange-500/10 to-purple-600/10 flex items-center justify-center flex-shrink-0">
-                        <DollarSign className="h-5 w-5 text-purple-500" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold">Commission Tracking</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          See exactly what you've earned from each vendor and get metrics on which vendors are performing well for you, updated in real-time.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-4 bg-card border-border/50">
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-orange-500/10 to-purple-600/10 flex items-center justify-center flex-shrink-0">
-                        <Zap className="h-5 w-5 text-pink-500" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold">Easy Integration</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Paste your guidebook, we handle the rest. No technical skills required.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              </section>
-
-              {/* Transparent Pricing Section */}
-              <section className="space-y-3 pt-2">
-                <h2 className="text-base font-display font-bold tracking-wide">Transparent Pricing</h2>
-                <p className="text-xs text-muted-foreground">
-                  No hidden fees. No monthly costs. Simple.
-                </p>
-                <Card className="p-4 bg-card border-border/50">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-semibold mb-3">How It Works:</h3>
-                      <ul className="space-y-2">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">Vendors set their own commission %</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">No affiliate program? We'll help set one up</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">Guests pay regular price (no markup)</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">No hidden fees. No monthly costs for hosts.</span>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="border-t border-border pt-4">
-                      <p className="text-xs text-muted-foreground mb-3">Example: Vendor offers 10% on a $100 tour</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-muted/50 rounded-lg p-2 text-center">
-                          <p className="text-[10px] text-muted-foreground mb-0.5">Guest pays</p>
-                          <p className="text-sm font-bold">$100</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-orange-500/10 to-purple-600/10 rounded-lg p-2 text-center border border-orange-500/20">
-                          <p className="text-[10px] text-muted-foreground mb-0.5">You earn</p>
-                          <p className="text-sm font-bold text-orange-500">$10</p>
-                        </div>
-                        <div className="bg-muted/50 rounded-lg p-2 text-center">
-                          <p className="text-[10px] text-muted-foreground mb-0.5">Vendor gets</p>
-                          <p className="text-sm font-bold">$90</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </section>
-
-              {/* FAQ Section */}
-              <section className="space-y-3 pt-2">
-                <Collapsible>
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border hover:border-purple-500/30 transition-all cursor-pointer group">
-                      <h2 className="text-sm font-display font-bold tracking-wide">Common Questions</h2>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform duration-200" />
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2">
-                    <Accordion type="single" collapsible className="space-y-2">
-                      <AccordionItem value="item-1" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          Do my guests pay more?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          No. Guests pay the vendor's regular price. Your commission comes from the vendor, not the guest.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-2" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          How do I get paid?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          Automatic payouts every week via Stripe. No chasing vendors for payment.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-3" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          What if I already recommend these places?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          Perfect! Now you'll get paid for recommendations you're already making for free.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-4" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          Is there a monthly fee?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          No monthly fee for hosts. stackd earns a small platform fee from vendors.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-5" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          What do vendors get?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          Advertising and exposure through trusted host recommendations — the most valuable kind of marketing.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-6" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          What do guests get?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          Convenience of booking highly recommended businesses in one place, curated by their host.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-7" className="bg-card rounded-lg border border-border px-4">
-                        <AccordionTrigger className="text-left text-xs font-semibold hover:no-underline py-3">
-                          I already have affiliate partnerships — can I still use stackd?
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs text-muted-foreground pb-3">
-                          Absolutely! Keep your existing relationships and discover new ones through our platform.
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </CollapsibleContent>
-                </Collapsible>
-              </section>
-
-              {/* Partner Links Section */}
-              <section className="space-y-3">
-                <Collapsible>
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border hover:border-purple-500/30 transition-all cursor-pointer group">
-                      <h2 className="text-sm font-display font-bold tracking-wide">Partner With Us</h2>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform duration-200" />
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2 space-y-2">
-                    <Link 
-                      to="/for-vendors" 
-                      className="flex items-center justify-between p-3 bg-card rounded-lg border border-border hover:border-orange-500/50 transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                          <Store className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold">For Vendors</p>
-                          <p className="text-[10px] text-muted-foreground">Grow your business with stackd</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-orange-500 transition-colors" />
-                    </Link>
-                    <Link 
-                      to="/for-hosts" 
-                      className="flex items-center justify-between p-3 bg-card rounded-lg border border-border hover:border-orange-500/50 transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                          <Home className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold">For Hosts</p>
-                          <p className="text-[10px] text-muted-foreground">Monetize your recommendations</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-orange-500 transition-colors" />
-                    </Link>
-                  </CollapsibleContent>
-                </Collapsible>
-              </section>
-
               {/* Footer spacer for bottom nav */}
               <div className="h-4" />
             </div>
@@ -1002,7 +790,7 @@ const AppView = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs font-semibold">For Vendors</h3>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-717:                       Get additional advertising and promote your affiliate programs to reach more customers through local Airbnb hosts.
+Get additional advertising and promote your affiliate programs to reach more customers through local Airbnb hosts.
                     </p>
                   </div>
                 </div>

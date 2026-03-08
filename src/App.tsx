@@ -114,6 +114,26 @@ import {
 // Standalone pages
 import NotFound from "./pages/NotFound";
 
+// Protected route component for admins - checks user_roles table for admin role
+const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading, role } = useAuthContext();
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  // Only allow admin role
+  if (role !== 'admin' && role !== 'host') {
+    return <Navigate to="/appview" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, role } = useAuthContext();
   
@@ -201,7 +221,7 @@ const AppRoutes = () => (
     <Route path="/guide/:hostId" element={<GuestGuide />} />
     <Route path="/privacy" element={<PrivacyPolicy />} />
     <Route path="/terms" element={<TermsOfService />} />
-    <Route path="/vendor/upload-photos" element={<TestInstagramScrape />} />
+    <Route path="/vendor/upload-photos" element={<ProtectedVendorRoute><TestInstagramScrape /></ProtectedVendorRoute>} />
     <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/edit-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
@@ -213,9 +233,9 @@ const AppRoutes = () => (
     <Route path="/vendor/:id/confirmed" element={<BookingConfirmation />} />
     
     {/* Admin Routes */}
-    <Route path="/admin/settings" element={<PlatformSettings />} />
-    <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
-    <Route path="/admin/vendor-approvals" element={<VendorApprovals />} />
+    <Route path="/admin/settings" element={<ProtectedAdminRoute><PlatformSettings /></ProtectedAdminRoute>} />
+    <Route path="/admin/promo-codes" element={<ProtectedAdminRoute><AdminPromoCodes /></ProtectedAdminRoute>} />
+    <Route path="/admin/vendor-approvals" element={<ProtectedAdminRoute><VendorApprovals /></ProtectedAdminRoute>} />
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />
