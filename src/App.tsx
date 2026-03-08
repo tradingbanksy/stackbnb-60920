@@ -114,20 +114,27 @@ import {
 // Standalone pages
 import NotFound from "./pages/NotFound";
 
-// Protected route component for admins - checks user_roles table for admin role
+// Protected route component for admins - checks user_roles table for admin role via DB
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading, role } = useAuthContext();
+  const { isAuthenticated, isLoading, user } = useAuthContext();
+  const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
   
-  if (isLoading) {
+  React.useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) { setIsAdmin(false); return; }
+      const { data } = await import('@/integrations/supabase/client').then(m => 
+        m.supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+      );
+      setIsAdmin(!!data);
+    };
+    if (isAuthenticated) checkAdmin();
+  }, [user, isAuthenticated]);
+  
+  if (isLoading || isAdmin === null) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-  
-  // Only allow admin role
-  if (role !== 'admin' && role !== 'host') {
+  if (!isAuthenticated || !isAdmin) {
     return <Navigate to="/appview" replace />;
   }
   
