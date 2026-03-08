@@ -334,8 +334,10 @@ export type Database = {
           city: string | null
           created_at: string
           email: string | null
+          first_booking_completed_at: string | null
           full_name: string | null
           government_id_url: string | null
+          host_trust_score: number
           host_verification_notes: string | null
           host_verification_status: Database["public"]["Enums"]["host_verification_status"]
           host_verified_at: string | null
@@ -355,8 +357,10 @@ export type Database = {
           city?: string | null
           created_at?: string
           email?: string | null
+          first_booking_completed_at?: string | null
           full_name?: string | null
           government_id_url?: string | null
+          host_trust_score?: number
           host_verification_notes?: string | null
           host_verification_status?: Database["public"]["Enums"]["host_verification_status"]
           host_verified_at?: string | null
@@ -376,8 +380,10 @@ export type Database = {
           city?: string | null
           created_at?: string
           email?: string | null
+          first_booking_completed_at?: string | null
           full_name?: string | null
           government_id_url?: string | null
+          host_trust_score?: number
           host_verification_notes?: string | null
           host_verification_status?: Database["public"]["Enums"]["host_verification_status"]
           host_verified_at?: string | null
@@ -496,7 +502,7 @@ export type Database = {
           {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
@@ -980,8 +986,13 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_host_trust_score: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      get_host_listing_limit: { Args: { _user_id: string }; Returns: number }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -998,6 +1009,10 @@ export type Database = {
         Returns: boolean
       }
       is_itinerary_owner: { Args: { _itinerary_id: string }; Returns: boolean }
+      refresh_host_trust_score: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       validate_promo_code: {
         Args: { p_code: string; p_order_amount: number }
         Returns: {

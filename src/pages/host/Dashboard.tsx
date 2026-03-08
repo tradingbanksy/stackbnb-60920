@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { HostOnboardingCard, HostVerificationCard } from "@/components/onboarding";
+import { TrustScoreBadge } from "@/components/TrustScoreBadge";
 
 interface VendorWithCommission {
   id: string;
@@ -115,7 +116,7 @@ const HostDashboard = () => {
       if (!user) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, city, recommendations, host_verification_status, government_id_url, selfie_url, host_verification_notes')
+        .select('full_name, city, recommendations, host_verification_status, government_id_url, selfie_url, host_verification_notes, host_trust_score')
         .eq('user_id', user.id)
         .maybeSingle();
       return data;
@@ -225,6 +226,11 @@ const HostDashboard = () => {
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
                 <p className="text-sm text-white/80">Here's your performance today</p>
+                {profileData && typeof profileData.host_trust_score === 'number' && (
+                  <div className="mt-2">
+                    <TrustScoreBadge score={profileData.host_trust_score} size="sm" />
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => navigate('/signout')}

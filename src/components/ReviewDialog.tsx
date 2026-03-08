@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 interface ReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bookingId?: string;
+  bookingId: string;
   vendorProfileId?: string;
   experienceName?: string;
   userId?: string;
@@ -62,7 +62,7 @@ export function ReviewDialog({
 
     try {
       const { error } = await supabase.from("reviews").insert({
-        booking_id: bookingId || null,
+        booking_id: bookingId,
         vendor_profile_id: vendorProfileId || null,
         user_id: userId,
         rating,
