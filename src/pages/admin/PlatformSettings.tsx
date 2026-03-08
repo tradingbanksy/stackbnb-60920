@@ -252,6 +252,60 @@ const PlatformSettings = () => {
             </Card>
           </Link>
 
+          {/* Message Moderation Link */}
+          <Link to="/admin/message-moderation">
+            <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20">
+                  <AlertTriangle className="h-6 w-6 text-red-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Message Moderation</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review flagged conversations
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </Card>
+          </Link>
+
+          {/* Fraud Alerts Link */}
+          <Link to="/admin/fraud-alerts">
+            <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20">
+                  <ShieldCheck className="h-6 w-6 text-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Fraud Alerts</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review suspicious activity
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </Card>
+          </Link>
+
+          {/* Refund Requests Link */}
+          <Link to="/admin/refund-requests">
+            <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20">
+                  <Settings className="h-6 w-6 text-cyan-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Refund Requests</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Process guest refund claims
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </Card>
+          </Link>
+
           {/* Info Card */}
           <Card className="p-4 bg-muted/50 border-dashed">
             <div className="flex items-start gap-3">

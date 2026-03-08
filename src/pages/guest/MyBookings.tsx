@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Clock, Users, CalendarPlus, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Users, CalendarPlus, ChevronDown, Loader2, MessageSquare, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -239,26 +239,49 @@ END:VCALENDAR`;
                       )}
                     </div>
 
-                    {booking.status !== 'cancelled' && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="gap-1 h-8 px-2">
-                            <CalendarPlus className="h-4 w-4" />
-                            <span className="text-xs">Add to Calendar</span>
-                            <ChevronDown className="h-3 w-3" />
+                    {booking.status !== 'cancelled' && booking.status !== 'refunded' && (
+                      <div className="flex gap-1">
+                        {booking.host_user_id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 h-8 px-2"
+                            onClick={() => navigate(`/bookings/${booking.id}/chat`)}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            <span className="text-xs">Chat</span>
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openGoogleCalendar(booking)} className="cursor-pointer">
-                            <span className="mr-2">📅</span>
-                            Google Calendar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => downloadICS(booking)} className="cursor-pointer">
-                            <span className="mr-2">🍎</span>
-                            Apple Calendar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        )}
+                        {(booking.status === 'completed' || booking.status === 'confirmed') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 h-8 px-2 text-destructive hover:text-destructive"
+                            onClick={() => navigate(`/bookings/${booking.id}/refund`)}
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                            <span className="text-xs">Refund</span>
+                          </Button>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="gap-1 h-8 px-2">
+                              <CalendarPlus className="h-4 w-4" />
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openGoogleCalendar(booking)} className="cursor-pointer">
+                              <span className="mr-2">📅</span>
+                              Google Calendar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => downloadICS(booking)} className="cursor-pointer">
+                              <span className="mr-2">🍎</span>
+                              Apple Calendar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     )}
                   </div>
                 </div>
