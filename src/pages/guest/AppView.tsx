@@ -561,6 +561,9 @@ const AppView = () => {
                         {curatedRestaurants.map((restaurant, index) => {
                           const photo = googlePhotos[restaurant.id];
 
+                          // Hide cards that failed to get a Google photo (empty string = no photo found)
+                          if (photo === '') return null;
+
                           return (
                             <Link
                               key={restaurant.id}
@@ -577,7 +580,7 @@ const AppView = () => {
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                   />
                                 ) : (
-                                  <div className="w-full h-full bg-muted animate-pulse" />
+                                  <Skeleton className="w-full h-full" />
                                 )}
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                                   <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
