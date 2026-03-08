@@ -458,6 +458,7 @@ export type Database = {
           host_verified_at: string | null
           host_verified_by: string | null
           id: string
+          is_banned: boolean
           phone: string | null
           recommendations: Json | null
           selfie_url: string | null
@@ -481,6 +482,7 @@ export type Database = {
           host_verified_at?: string | null
           host_verified_by?: string | null
           id?: string
+          is_banned?: boolean
           phone?: string | null
           recommendations?: Json | null
           selfie_url?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           host_verified_at?: string | null
           host_verified_by?: string | null
           id?: string
+          is_banned?: boolean
           phone?: string | null
           recommendations?: Json | null
           selfie_url?: string | null
@@ -756,6 +759,7 @@ export type Database = {
           age_restriction: string
           airbnb_experience_url: string | null
           airbnb_reviews: Json | null
+          business_registration_url: string | null
           cancellation_hours: number
           category: string
           city: string | null
@@ -774,17 +778,20 @@ export type Database = {
           included_items: string[] | null
           instagram_url: string | null
           is_published: boolean | null
+          linkedin_url: string | null
           listing_type: string
           max_guests: number | null
           meeting_point_description: string | null
           menu_url: string | null
           name: string
+          ownership_evidence_urls: string[] | null
           photos: string[] | null
           price_per_person: number | null
           price_tiers: Json | null
           stripe_account_id: string | null
           stripe_onboarding_complete: boolean | null
           submitted_for_review_at: string | null
+          trust_score: number
           updated_at: string
           user_id: string
           vendor_id: string | null
@@ -794,12 +801,14 @@ export type Database = {
             | null
           verified_at: string | null
           verified_by: string | null
+          website_url: string | null
         }
         Insert: {
           about_experience?: string | null
           age_restriction?: string
           airbnb_experience_url?: string | null
           airbnb_reviews?: Json | null
+          business_registration_url?: string | null
           cancellation_hours?: number
           category: string
           city?: string | null
@@ -818,17 +827,20 @@ export type Database = {
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
+          linkedin_url?: string | null
           listing_type?: string
           max_guests?: number | null
           meeting_point_description?: string | null
           menu_url?: string | null
           name: string
+          ownership_evidence_urls?: string[] | null
           photos?: string[] | null
           price_per_person?: number | null
           price_tiers?: Json | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
           submitted_for_review_at?: string | null
+          trust_score?: number
           updated_at?: string
           user_id: string
           vendor_id?: string | null
@@ -838,12 +850,14 @@ export type Database = {
             | null
           verified_at?: string | null
           verified_by?: string | null
+          website_url?: string | null
         }
         Update: {
           about_experience?: string | null
           age_restriction?: string
           airbnb_experience_url?: string | null
           airbnb_reviews?: Json | null
+          business_registration_url?: string | null
           cancellation_hours?: number
           category?: string
           city?: string | null
@@ -862,17 +876,20 @@ export type Database = {
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
+          linkedin_url?: string | null
           listing_type?: string
           max_guests?: number | null
           meeting_point_description?: string | null
           menu_url?: string | null
           name?: string
+          ownership_evidence_urls?: string[] | null
           photos?: string[] | null
           price_per_person?: number | null
           price_tiers?: Json | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
           submitted_for_review_at?: string | null
+          trust_score?: number
           updated_at?: string
           user_id?: string
           vendor_id?: string | null
@@ -882,6 +899,7 @@ export type Database = {
             | null
           verified_at?: string | null
           verified_by?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -1080,6 +1098,7 @@ export type Database = {
           included_items: string[] | null
           instagram_url: string | null
           is_published: boolean | null
+          linkedin_url: string | null
           listing_type: string | null
           max_guests: number | null
           meeting_point_description: string | null
@@ -1088,6 +1107,8 @@ export type Database = {
           photos: string[] | null
           price_per_person: number | null
           price_tiers: Json | null
+          trust_score: number | null
+          website_url: string | null
         }
         Insert: {
           about_experience?: string | null
@@ -1109,6 +1130,7 @@ export type Database = {
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
+          linkedin_url?: string | null
           listing_type?: string | null
           max_guests?: number | null
           meeting_point_description?: string | null
@@ -1117,6 +1139,8 @@ export type Database = {
           photos?: string[] | null
           price_per_person?: number | null
           price_tiers?: Json | null
+          trust_score?: number | null
+          website_url?: string | null
         }
         Update: {
           about_experience?: string | null
@@ -1138,6 +1162,7 @@ export type Database = {
           included_items?: string[] | null
           instagram_url?: string | null
           is_published?: boolean | null
+          linkedin_url?: string | null
           listing_type?: string | null
           max_guests?: number | null
           meeting_point_description?: string | null
@@ -1146,6 +1171,8 @@ export type Database = {
           photos?: string[] | null
           price_per_person?: number | null
           price_tiers?: Json | null
+          trust_score?: number | null
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -1153,6 +1180,10 @@ export type Database = {
     Functions: {
       calculate_host_trust_score: {
         Args: { _user_id: string }
+        Returns: number
+      }
+      calculate_vendor_trust_score: {
+        Args: { _vendor_profile_id: string }
         Returns: number
       }
       cleanup_expired_otps: { Args: never; Returns: undefined }
@@ -1176,6 +1207,10 @@ export type Database = {
       is_itinerary_owner: { Args: { _itinerary_id: string }; Returns: boolean }
       refresh_host_trust_score: {
         Args: { _user_id: string }
+        Returns: undefined
+      }
+      refresh_vendor_trust_score: {
+        Args: { _vendor_profile_id: string }
         Returns: undefined
       }
       validate_promo_code: {

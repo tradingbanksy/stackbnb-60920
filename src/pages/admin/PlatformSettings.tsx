@@ -306,6 +306,24 @@ const PlatformSettings = () => {
             </Card>
           </Link>
 
+          {/* Trust Score Monitoring Link */}
+          <Link to="/admin/trust-scores">
+            <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20">
+                  <ShieldCheck className="h-6 w-6 text-blue-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Trust Score Monitoring</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Monitor vendor health and reliability
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </Card>
+          </Link>
+
           {/* Info Card */}
           <Card className="p-4 bg-muted/50 border-dashed">
             <div className="flex items-start gap-3">

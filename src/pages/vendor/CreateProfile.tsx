@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
   Loader2, Instagram, Upload, Sparkles, Check, X, Plus, 
-  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare, MapPin, UserCircle
+  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare, MapPin, UserCircle, ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -32,6 +32,9 @@ const vendorProfileSchema = z.object({
   category: z.string().min(1, 'Please select a category'),
   ageRestriction: z.enum(['family_friendly', 'adults_only'], { required_error: 'Please select an age restriction' }),
   instagramUrl: z.string().optional(),
+  websiteUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  linkedinUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  businessRegistrationUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   pricePerPerson: z.coerce.number().min(0).optional(),
   duration: z.string().min(1, 'Please enter duration'),
   maxGuests: z.coerce.number().min(1, 'Must accommodate at least 1 guest'),
@@ -98,6 +101,10 @@ interface ExistingProfile {
   host_bio: string | null;
   host_avatar_url: string | null;
   meeting_point_description: string | null;
+  website_url: string | null;
+  linkedin_url: string | null;
+  business_registration_url: string | null;
+  ownership_evidence_urls: string[] | null;
 }
 
 const CreateVendorProfile = () => {
@@ -140,6 +147,10 @@ const CreateVendorProfile = () => {
   const [hostAvatarUrl, setHostAvatarUrl] = useState<string | null>(null);
   const [meetingPointDescription, setMeetingPointDescription] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // Ownership Evidence state
+  const [ownershipEvidenceUrls, setOwnershipEvidenceUrls] = useState<string[]>([]);
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -225,6 +236,9 @@ const CreateVendorProfile = () => {
             googleRating: data.google_rating || undefined,
             googleReviewsUrl: data.google_reviews_url || '',
             commissionPercentage: data.commission_percentage || undefined,
+            websiteUrl: data.website_url || '',
+            linkedinUrl: data.linkedin_url || '',
+            businessRegistrationUrl: data.business_registration_url || '',
           });
           setSelectedPhotos(data.photos || []);
           setScrapedPhotos(data.photos || []);
@@ -236,6 +250,7 @@ const CreateVendorProfile = () => {
           setHostBio(data.host_bio || '');
           setHostAvatarUrl(data.host_avatar_url || null);
           setMeetingPointDescription(data.meeting_point_description || '');
+          setOwnershipEvidenceUrls(data.ownership_evidence_urls || []);
         }
       } catch (error) {
         console.error('Error checking existing profile:', error);
@@ -455,6 +470,28 @@ const CreateVendorProfile = () => {
     }
   };
 
+  // Upload ownership evidence
+  const handleEvidenceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploadingEvidence(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/evidence-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('vendor-evidence').upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('vendor-evidence').getPublicUrl(filePath);
+      setOwnershipEvidenceUrls(prev => [...prev, publicUrl]);
+      toast.success('Evidence uploaded!');
+    } catch (err) {
+      console.error('Evidence upload error:', err);
+      toast.error('Failed to upload evidence');
+    } finally {
+      setIsUploadingEvidence(false);
+    }
+  };
+
   // Submit form
   const onSubmit = async (formData: VendorProfileFormData) => {
     if (!user) {
@@ -495,6 +532,10 @@ const CreateVendorProfile = () => {
         host_bio: hostBio || null,
         host_avatar_url: hostAvatarUrl || null,
         meeting_point_description: meetingPointDescription || null,
+        website_url: formData.websiteUrl || null,
+        linkedin_url: formData.linkedinUrl || null,
+        business_registration_url: formData.businessRegistrationUrl || null,
+        ownership_evidence_urls: ownershipEvidenceUrls,
       };
 
       if (existingProfile) {
@@ -1126,6 +1167,87 @@ const CreateVendorProfile = () => {
               <p className="text-xs text-muted-foreground">
                 💡 Be specific so guests can easily find you
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ownership Evidence */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              Ownership & Verification
+            </CardTitle>
+            <CardDescription>
+              Help us verify that you own and operate this experience to build trust and increase your trust score.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="websiteUrl">Website URL (Optional)</Label>
+              <Input
+                id="websiteUrl"
+                placeholder="https://www.yourbusiness.com"
+                {...register('websiteUrl')}
+              />
+              {errors.websiteUrl && <p className="text-sm text-destructive">{errors.websiteUrl.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="linkedinUrl">LinkedIn Profile (Optional)</Label>
+              <Input
+                id="linkedinUrl"
+                placeholder="https://linkedin.com/in/yourprofile"
+                {...register('linkedinUrl')}
+              />
+              {errors.linkedinUrl && <p className="text-sm text-destructive">{errors.linkedinUrl.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="businessRegistrationUrl">Business Registration URL (Optional)</Label>
+              <Input
+                id="businessRegistrationUrl"
+                placeholder="Link to public registry or document"
+                {...register('businessRegistrationUrl')}
+              />
+              {errors.businessRegistrationUrl && <p className="text-sm text-destructive">{errors.businessRegistrationUrl.message}</p>}
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Label>Additional Evidence (Photos/Documents)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Upload photos of your equipment, past events, or other proof of operation.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Input
+                  type="file"
+                  accept="image/*,.pdf"
+                  disabled={isUploadingEvidence}
+                  onChange={handleEvidenceUpload}
+                />
+                {isUploadingEvidence && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                
+                {ownershipEvidenceUrls.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {ownershipEvidenceUrls.map((url, index) => (
+                      <div key={index} className="relative flex-shrink-0 w-20 h-20 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                        {url.includes('.pdf') ? (
+                          <span className="text-xs font-medium">PDF</span>
+                        ) : (
+                          <img src={url} alt={`Evidence ${index + 1}`} className="w-full h-full object-cover" />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setOwnershipEvidenceUrls(prev => prev.filter((_, i) => i !== index))}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

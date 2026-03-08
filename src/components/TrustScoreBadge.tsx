@@ -11,7 +11,7 @@ interface TrustScoreBadgeProps {
 const getTier = (score: number) => {
   if (score >= 61) return { label: "Highly Trusted", color: "text-green-500", bg: "bg-green-500/10", ring: "ring-green-500/20", icon: ShieldCheck };
   if (score >= 30) return { label: "Trusted", color: "text-blue-500", bg: "bg-blue-500/10", ring: "ring-blue-500/20", icon: Shield };
-  return { label: "New Host", color: "text-amber-500", bg: "bg-amber-500/10", ring: "ring-amber-500/20", icon: ShieldAlert };
+  return { label: "Getting Started", color: "text-amber-500", bg: "bg-amber-500/10", ring: "ring-amber-500/20", icon: ShieldAlert };
 };
 
 export function TrustScoreBadge({ score, className, showLabel = true, size = "md" }: TrustScoreBadgeProps) {
