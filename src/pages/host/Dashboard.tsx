@@ -287,6 +287,19 @@ const HostDashboard = () => {
           </div>
         )}
 
+        {/* Host Verification Card */}
+        {profileData && (
+          <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 mb-3`}>
+            <HostVerificationCard
+              verificationStatus={(profileData.host_verification_status as any) || 'unverified'}
+              verificationNotes={profileData.host_verification_notes}
+              existingIdUrl={profileData.government_id_url}
+              existingSelfieUrl={profileData.selfie_url}
+              onStatusChange={() => refetchProfile()}
+            />
+          </div>
+        )}
+
         {/* Stats Cards - Overlapping Hero */}
         <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 space-y-3`}>
           {isLoadingStats ? (
