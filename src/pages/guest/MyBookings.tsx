@@ -23,6 +23,7 @@ interface Booking {
   total_amount: number;
   status: string;
   vendor_name: string | null;
+  host_user_id: string | null;
 }
 
 const MyBookings = () => {
