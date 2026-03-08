@@ -30,7 +30,7 @@ interface ChatHeaderProps {
 export function ChatHeader({ onOpenItinerary }: ChatHeaderProps) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { messages, isSaving, bionicEnabled, setBionicEnabled, clearChat } = useTripPlannerChatContext();
+  const { messages, isSaving, isAuthenticated, bionicEnabled, setBionicEnabled, clearChat } = useTripPlannerChatContext();
   const { itinerary } = useItineraryContext();
 
   const hasMessages = messages.length > 1;
@@ -51,33 +51,35 @@ export function ChatHeader({ onOpenItinerary }: ChatHeaderProps) {
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Trip Planner</h1>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span 
-                className={cn(
-                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300",
-                  isSaving 
-                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" 
-                    : "bg-green-500/10 text-green-600 dark:text-green-400"
-                )}
-              >
-                {isSaving ? (
-                  <>
-                    <Cloud className="h-3 w-3 animate-pulse" />
-                    <span className="animate-pulse">Saving…</span>
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-3 w-3" />
-                    Saved
-                  </>
-                )}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isSaving ? "Saving chat history…" : "Chat history is saved to your account"}</p>
-            </TooltipContent>
-          </Tooltip>
+          {isAuthenticated && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span 
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300",
+                    isSaving 
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" 
+                      : "bg-green-500/10 text-green-600 dark:text-green-400"
+                  )}
+                >
+                  {isSaving ? (
+                    <>
+                      <Cloud className="h-3 w-3 animate-pulse" />
+                      <span className="animate-pulse">Saving…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-3 w-3" />
+                      Saved
+                    </>
+                  )}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isSaving ? "Saving chat history…" : "Chat history is saved to your account"}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
         
         <div className="flex items-center gap-1">

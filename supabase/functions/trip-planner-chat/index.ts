@@ -105,9 +105,23 @@ serve(async (req) => {
                req.headers.get('x-real-ip') || 
                'unknown';
     
+    // Use user ID for rate limiting when authenticated, fall back to IP
+    let rateLimitIdentifier = `chat:${ip}`;
+    const authHeader = req.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (user?.id) {
+          rateLimitIdentifier = `chat:user:${user.id}`;
+        }
+      } catch {
+        // Fall back to IP-based rate limiting
+      }
+    }
+    
     const rateLimitResult = await checkRateLimit(
       supabaseAdmin,
-      `chat:${ip}`,
+      rateLimitIdentifier,
       'trip-planner-chat',
       { windowMinutes: 1, maxRequests: 10 }
     );
