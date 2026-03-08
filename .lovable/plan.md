@@ -1,24 +1,24 @@
 
 
-## Fix: Remove Flash of Mock Image on Restaurant Profile
+## Fix: Remove Stock Images from Restaurant Cards on AppView
 
 ### Problem
-When opening a restaurant profile, the static mock image (e.g., `burrito-amor-tulum.jpg`) briefly appears before the correct Google photos load in. This happens because the code sets `displayPhotos` to the mock photos first (line 119), then checks the cache and updates photos separately (lines 124-130).
+The curated restaurant cards on `/appview` still fall back to `restaurant.photos[0]` (a static mock asset) when no Google photo cache exists in `localStorage`. This means users see stock demo images instead of real photos.
 
 ### Solution
-Combine the logic so that when finding the restaurant, we immediately check the Google cache and use those photos from the start -- never showing the mock image if cached Google photos exist.
+Apply the same pattern used on the restaurant detail page: never show mock photos. Instead, show a loading skeleton while fetching Google photos, and only display real Google-sourced images.
 
 ### Technical Details
 
-**File: `src/pages/guest/RestaurantDetail.tsx`**
+**File: `src/pages/guest/AppView.tsx`**
 
-In the first `useEffect` (lines 109-132), restructure the photo initialization:
+1. **Add state and fetch logic** for Google photos for curated restaurants. Create a `useEffect` that iterates over `curatedRestaurants`, checks the `localStorage` cache for each, and fetches from the `google-reviews` edge function if not cached. Store results in a `Record<string, string>` map (restaurant ID → photo URL).
 
-1. Find the restaurant
-2. Immediately check the Google reviews cache
-3. If cached Google photos exist, use those as `displayPhotos` from the start
-4. Only fall back to `restaurant.photos` if no cached photos are available
-5. Set `googleReviews` state from cache as before
+2. **Replace the inline photo logic** (lines 504-512) — instead of defaulting to `restaurant.photos[0]`, look up the photo from the state map. If no photo is available yet, render a skeleton placeholder (same `w-36 aspect-square` with `animate-pulse`) instead of the card image.
 
-This eliminates the brief moment where mock photos are visible before being replaced by cached Google photos.
+3. **Card rendering** (lines 514-539):
+   - If a Google photo exists in the map → render the card as-is with that photo
+   - If no photo yet → render a skeleton square with the restaurant name overlay (no mock image)
+
+This ensures zero mock/stock images appear — only real Google photos or a loading skeleton.
 
