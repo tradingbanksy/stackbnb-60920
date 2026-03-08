@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { 
   Loader2, Instagram, Upload, Sparkles, Check, X, Plus, 
-  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare, MapPin, UserCircle
+  DollarSign, Clock, Users, ChevronLeft, Image as ImageIcon, Star, MessageSquare, MapPin, UserCircle, ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
