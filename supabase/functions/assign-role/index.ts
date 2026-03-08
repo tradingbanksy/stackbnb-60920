@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,14 +14,12 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create client with user's auth token to verify identity
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -31,7 +28,6 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("Auth error:", authError?.message || "No user found");
       return new Response(
         JSON.stringify({ error: "Invalid authentication token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -41,25 +37,22 @@ serve(async (req) => {
     const body = await req.json();
     const { role } = body;
 
-    console.log(`Assigning role '${role}' to user ${user.id}`);
+    console.log(`Role assignment request: '${role}' for user ${user.id}`);
 
-    // Validate role is one of allowed values
     const validRoles = ["host", "vendor", "user"];
     if (!role || !validRoles.includes(role)) {
-      console.error(`Invalid role requested: ${role}`);
       return new Response(
         JSON.stringify({ error: "Invalid role. Must be 'host', 'vendor', or 'user'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Use service role to bypass RLS and insert the role
     const serviceSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check if user already has this role
+    // Check if user already has a role
     const { data: existingRole, error: checkError } = await serviceSupabase
       .from("user_roles")
       .select("id, role")
@@ -74,8 +67,31 @@ serve(async (req) => {
       );
     }
 
+    // SECURITY: Prevent privilege escalation
+    // - Users with no role can only assign themselves "user" initially
+    // - Users with "user" role can upgrade to "host" or "vendor" (onboarding flow)
+    // - Users already "host" or "vendor" CANNOT switch roles without admin intervention
     if (existingRole) {
-      // User already has a role - update it
+      const currentRole = existingRole.role;
+
+      if (currentRole === role) {
+        // Already has this role — no-op
+        return new Response(
+          JSON.stringify({ success: true, role }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Hosts and vendors cannot self-switch to a different privileged role
+      if ((currentRole === 'host' || currentRole === 'vendor') && role !== 'user') {
+        console.warn(`Blocked role switch: ${currentRole} -> ${role} for user ${user.id}`);
+        return new Response(
+          JSON.stringify({ error: "Cannot change role. Please contact support." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Allow user -> host/vendor (onboarding) or host/vendor -> user (downgrade)
       const { error: updateError } = await serviceSupabase
         .from("user_roles")
         .update({ role })
@@ -89,9 +105,9 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Successfully updated role to '${role}' for user ${user.id}`);
+      console.log(`Updated role: ${currentRole} -> ${role} for user ${user.id}`);
     } else {
-      // Insert new role
+      // New role assignment
       const { error: insertError } = await serviceSupabase
         .from("user_roles")
         .insert({ user_id: user.id, role });
@@ -104,7 +120,7 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Successfully assigned role '${role}' to user ${user.id}`);
+      console.log(`Assigned role '${role}' to user ${user.id}`);
     }
 
     return new Response(
