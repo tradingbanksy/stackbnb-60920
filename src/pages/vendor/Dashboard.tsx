@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VendorOnboardingWizard } from "@/components/onboarding";
+import HostVerificationCard from "@/components/onboarding/HostVerificationCard";
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
@@ -122,6 +123,21 @@ const VendorDashboard = () => {
       return data;
     },
     staleTime: 30 * 1000,
+  });
+
+  // Fetch identity verification status
+  const { data: profileStatus, refetch: refetchProfile } = useQuery({
+    queryKey: ['vendorProfileStatus', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('host_verification_status, host_verification_notes, government_id_url, selfie_url')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
   });
 
   // Handle Stripe Connect return
@@ -268,8 +284,20 @@ const VendorDashboard = () => {
           </div>
         </div>
 
+        <div className="px-4 mt-6">
+          {profileStatus && profileStatus.host_verification_status !== 'verified' && (
+            <HostVerificationCard
+              verificationStatus={profileStatus.host_verification_status as any}
+              verificationNotes={profileStatus.host_verification_notes}
+              existingIdUrl={profileStatus.government_id_url}
+              existingSelfieUrl={profileStatus.selfie_url}
+              onStatusChange={() => refetchProfile()}
+            />
+          )}
+        </div>
+
         {/* Stats Cards - Overlapping Hero */}
-        <div className="px-4 -mt-12 relative z-20 space-y-3">
+        <div className="px-4 relative z-20 space-y-3 mt-4">
           {isLoadingStats ? (
             <>
               {[1, 2, 3, 4].map((i) => (
