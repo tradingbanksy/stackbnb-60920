@@ -48,7 +48,6 @@ interface MapboxRouteData {
   distanceText: string;
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
-  mapboxToken: string;
   steps?: RouteStep[];
 }
 
