@@ -51,7 +51,19 @@ interface MapboxRouteData {
   steps?: RouteStep[];
 }
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
+let _cachedMapboxToken: string | null = null;
+async function getMapboxToken(): Promise<string | null> {
+  if (_cachedMapboxToken) return _cachedMapboxToken;
+  try {
+    const { data, error } = await supabase.functions.invoke('mapbox-token');
+    if (error || !data?.token) return null;
+    _cachedMapboxToken = data.token;
+    return data.token;
+  } catch {
+    return null;
+  }
+}
+
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
 
 export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = 'directions' }: VendorLocationMapProps) {
