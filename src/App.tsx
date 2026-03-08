@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -114,6 +115,33 @@ import {
 // Standalone pages
 import NotFound from "./pages/NotFound";
 
+// Protected route component for admins - checks user_roles table for admin role via DB
+const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading, user } = useAuthContext();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) { setIsAdmin(false); return; }
+      const { data } = await import('@/integrations/supabase/client').then(m => 
+        m.supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+      );
+      setIsAdmin(!!data);
+    };
+    if (isAuthenticated) checkAdmin();
+  }, [user, isAuthenticated]);
+  
+  if (isLoading || isAdmin === null) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/appview" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const ProtectedHostRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, role } = useAuthContext();
   
@@ -201,7 +229,7 @@ const AppRoutes = () => (
     <Route path="/guide/:hostId" element={<GuestGuide />} />
     <Route path="/privacy" element={<PrivacyPolicy />} />
     <Route path="/terms" element={<TermsOfService />} />
-    <Route path="/vendor/upload-photos" element={<TestInstagramScrape />} />
+    <Route path="/vendor/upload-photos" element={<ProtectedVendorRoute><TestInstagramScrape /></ProtectedVendorRoute>} />
     <Route path="/vendor/create-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/edit-profile" element={<ProtectedVendorRoute><CreateVendorProfile /></ProtectedVendorRoute>} />
     <Route path="/vendor/preview" element={<ProtectedVendorRoute><VendorProfilePreview /></ProtectedVendorRoute>} />
@@ -213,9 +241,9 @@ const AppRoutes = () => (
     <Route path="/vendor/:id/confirmed" element={<BookingConfirmation />} />
     
     {/* Admin Routes */}
-    <Route path="/admin/settings" element={<PlatformSettings />} />
-    <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
-    <Route path="/admin/vendor-approvals" element={<VendorApprovals />} />
+    <Route path="/admin/settings" element={<ProtectedAdminRoute><PlatformSettings /></ProtectedAdminRoute>} />
+    <Route path="/admin/promo-codes" element={<ProtectedAdminRoute><AdminPromoCodes /></ProtectedAdminRoute>} />
+    <Route path="/admin/vendor-approvals" element={<ProtectedAdminRoute><VendorApprovals /></ProtectedAdminRoute>} />
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />

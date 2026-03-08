@@ -242,10 +242,12 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
 
     try {
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/trip-planner-chat`;
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify({
           messages: outgoingMessages,
