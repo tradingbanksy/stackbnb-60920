@@ -39,7 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-type VerificationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'changes_requested';
+type VerificationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'changes_requested' | 'suspended';
 
 interface VendorProfile {
   id: string;
@@ -63,6 +63,7 @@ const statusConfig: Record<VerificationStatus, { label: string; color: string; i
   approved: { label: 'Approved', color: 'bg-green-500', icon: <CheckCircle className="h-3 w-3" /> },
   rejected: { label: 'Rejected', color: 'bg-red-500', icon: <XCircle className="h-3 w-3" /> },
   changes_requested: { label: 'Changes Requested', color: 'bg-orange-500', icon: <MessageSquare className="h-3 w-3" /> },
+  suspended: { label: 'Suspended', color: 'bg-red-800', icon: <AlertTriangle className="h-3 w-3" /> },
 };
 
 const VendorApprovals = () => {
@@ -70,7 +71,7 @@ const VendorApprovals = () => {
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<VerificationStatus | 'all'>('pending');
   const [selectedVendor, setSelectedVendor] = useState<VendorProfile | null>(null);
-  const [actionDialog, setActionDialog] = useState<{ type: 'approve' | 'reject' | 'changes' | null; vendor: VendorProfile | null }>({ type: null, vendor: null });
+  const [actionDialog, setActionDialog] = useState<{ type: 'approve' | 'reject' | 'changes' | 'suspend' | null; vendor: VendorProfile | null }>({ type: null, vendor: null });
   const [notes, setNotes] = useState('');
 
   // Check if user is admin
@@ -177,7 +178,7 @@ const VendorApprovals = () => {
     },
   });
 
-  const handleAction = (type: 'approve' | 'reject' | 'changes', vendor: VendorProfile) => {
+  const handleAction = (type: 'approve' | 'reject' | 'changes' | 'suspend', vendor: VendorProfile) => {
     setActionDialog({ type, vendor });
     setNotes(vendor.verification_notes || '');
   };
@@ -189,6 +190,7 @@ const VendorApprovals = () => {
       approve: 'approved',
       reject: 'rejected',
       changes: 'changes_requested',
+      suspend: 'suspended',
     };
 
     updateStatus.mutate({
@@ -278,6 +280,7 @@ const VendorApprovals = () => {
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="changes_requested">Changes Requested</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
               </SelectContent>
             </Select>
