@@ -136,16 +136,16 @@ const AppView = () => {
         setGooglePhotos(prev => ({ ...prev, ...photosMap }));
       }
 
-      // Fetch missing ones in parallel
+      // Fetch missing ones in parallel with simplified search queries
       await Promise.all(
         toFetch.map(async (r) => {
           try {
-            const searchQuery = `${r.name} restaurant ${r.address} ${r.city}`;
+            // Use just name + city for better Google match rates
+            const query = `${r.name} ${r.city}`;
             const { data } = await supabase.functions.invoke('google-reviews', {
-              body: { searchQuery, lat: r.coordinates?.lat, lng: r.coordinates?.lng }
+              body: { searchQuery: query, lat: r.coordinates?.lat, lng: r.coordinates?.lng }
             });
             if (data?.photos?.length > 0) {
-              // Cache it
               try {
                 localStorage.setItem(
                   `google_reviews_detail_${r.id}`,
@@ -153,8 +153,13 @@ const AppView = () => {
                 );
               } catch {}
               setGooglePhotos(prev => ({ ...prev, [r.id]: data.photos[0] }));
+            } else {
+              // Mark as "no photo" so we can hide the card
+              setGooglePhotos(prev => ({ ...prev, [r.id]: '' }));
             }
-          } catch {}
+          } catch {
+            setGooglePhotos(prev => ({ ...prev, [r.id]: '' }));
+          }
         })
       );
     };
