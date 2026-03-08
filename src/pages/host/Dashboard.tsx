@@ -115,7 +115,7 @@ const HostDashboard = () => {
       if (!user) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, city, recommendations')
+        .select('full_name, city, recommendations, host_verification_status, government_id_url, selfie_url, host_verification_notes')
         .eq('user_id', user.id)
         .maybeSingle();
       return data;
