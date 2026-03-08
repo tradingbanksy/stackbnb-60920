@@ -426,6 +426,29 @@ const VendorApprovals = () => {
                           Approve
                         </Button>
                       )}
+
+                      {vendor.verification_status === 'approved' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleAction('suspend', vendor)}
+                          className="gap-1"
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Suspend
+                        </Button>
+                      )}
+
+                      {vendor.verification_status === 'suspended' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAction('approve', vendor)}
+                          className="gap-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="h-3 w-3" />
+                          Reinstate
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 );
