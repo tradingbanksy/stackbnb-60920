@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -117,9 +118,9 @@ import NotFound from "./pages/NotFound";
 // Protected route component for admins - checks user_roles table for admin role via DB
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, user } = useAuthContext();
-  const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   
-  React.useEffect(() => {
+  useEffect(() => {
     const checkAdmin = async () => {
       if (!user) { setIsAdmin(false); return; }
       const { data } = await import('@/integrations/supabase/client').then(m => 
