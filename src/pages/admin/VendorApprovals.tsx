@@ -55,6 +55,11 @@ interface VendorProfile {
   submitted_for_review_at: string | null;
   created_at: string;
   user_id: string;
+  website_url: string | null;
+  linkedin_url: string | null;
+  business_registration_url: string | null;
+  ownership_evidence_urls: string[] | null;
+  trust_score: number;
 }
 
 const statusConfig: Record<VerificationStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -98,7 +103,7 @@ const VendorApprovals = () => {
     queryFn: async () => {
       let query = supabase
         .from('vendor_profiles')
-        .select('id, name, category, description, about_experience, photos, price_per_person, duration, verification_status, verification_notes, submitted_for_review_at, created_at, user_id')
+        .select('id, name, category, description, about_experience, photos, price_per_person, duration, verification_status, verification_notes, submitted_for_review_at, created_at, user_id, website_url, linkedin_url, business_registration_url, ownership_evidence_urls, trust_score')
         .order('submitted_for_review_at', { ascending: false, nullsFirst: false });
 
       if (filterStatus !== 'all') {
@@ -351,6 +356,10 @@ const VendorApprovals = () => {
                               ${vendor.price_per_person}/person
                             </span>
                           )}
+                          <span className="flex items-center gap-1">
+                            <ShieldCheck className="h-3 w-3 text-blue-500" />
+                            Score: {vendor.trust_score}
+                          </span>
                           {vendor.duration && (
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
@@ -521,7 +530,60 @@ const VendorApprovals = () => {
                       <p className="text-sm text-muted-foreground">{selectedVendor.duration}</p>
                     </div>
                   )}
+                  <div>
+                    <Label className="text-sm font-medium">Trust Score</Label>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3 text-blue-500" />
+                      {selectedVendor.trust_score}
+                    </p>
+                  </div>
                 </div>
+
+                {/* Ownership Evidence */}
+                {(selectedVendor.website_url || selectedVendor.linkedin_url || selectedVendor.business_registration_url || (selectedVendor.ownership_evidence_urls && selectedVendor.ownership_evidence_urls.length > 0)) && (
+                  <div className="pt-4 border-t border-border">
+                    <Label className="text-sm font-bold block mb-2 flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Ownership Evidence
+                    </Label>
+                    <div className="space-y-2">
+                      {selectedVendor.website_url && (
+                        <p className="text-sm">
+                          <span className="font-medium">Website: </span>
+                          <a href={selectedVendor.website_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{selectedVendor.website_url}</a>
+                        </p>
+                      )}
+                      {selectedVendor.linkedin_url && (
+                        <p className="text-sm">
+                          <span className="font-medium">LinkedIn: </span>
+                          <a href={selectedVendor.linkedin_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{selectedVendor.linkedin_url}</a>
+                        </p>
+                      )}
+                      {selectedVendor.business_registration_url && (
+                        <p className="text-sm">
+                          <span className="font-medium">Registration: </span>
+                          <a href={selectedVendor.business_registration_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{selectedVendor.business_registration_url}</a>
+                        </p>
+                      )}
+                      {selectedVendor.ownership_evidence_urls && selectedVendor.ownership_evidence_urls.length > 0 && (
+                        <div>
+                          <span className="font-medium text-sm block mb-1">Attached Documents/Photos:</span>
+                          <div className="flex gap-2 overflow-x-auto pb-2">
+                            {selectedVendor.ownership_evidence_urls.map((url, i) => (
+                              <a key={i} href={url} target="_blank" rel="noreferrer" className="block w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center border hover:border-primary transition-colors">
+                                {url.includes('.pdf') ? (
+                                  <span className="text-xs font-medium">PDF</span>
+                                ) : (
+                                  <img src={url} alt={`Evidence ${i}`} className="w-full h-full object-cover" />
+                                )}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <DialogFooter>
