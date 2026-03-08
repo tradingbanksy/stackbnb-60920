@@ -301,7 +301,7 @@ const HostDashboard = () => {
         )}
 
         {/* Stats Cards - Overlapping Hero */}
-        <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 space-y-3`}>
+        <div className={`px-4 ${(showOnboarding || profileData) ? '' : '-mt-12'} relative z-20 space-y-3`}>
           {isLoadingStats ? (
             <>
               {[1, 2, 3, 4].map((i) => (
