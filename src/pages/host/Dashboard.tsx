@@ -11,7 +11,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { HostOnboardingCard } from "@/components/onboarding";
+import { HostOnboardingCard, HostVerificationCard } from "@/components/onboarding";
 
 interface VendorWithCommission {
   id: string;
@@ -115,7 +115,7 @@ const HostDashboard = () => {
       if (!user) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, city, recommendations')
+        .select('full_name, city, recommendations, host_verification_status, government_id_url, selfie_url, host_verification_notes')
         .eq('user_id', user.id)
         .maybeSingle();
       return data;
@@ -287,8 +287,21 @@ const HostDashboard = () => {
           </div>
         )}
 
+        {/* Host Verification Card */}
+        {profileData && (
+          <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 mb-3`}>
+            <HostVerificationCard
+              verificationStatus={(profileData.host_verification_status as any) || 'unverified'}
+              verificationNotes={profileData.host_verification_notes}
+              existingIdUrl={profileData.government_id_url}
+              existingSelfieUrl={profileData.selfie_url}
+              onStatusChange={() => refetchProfile()}
+            />
+          </div>
+        )}
+
         {/* Stats Cards - Overlapping Hero */}
-        <div className={`px-4 ${showOnboarding ? '' : '-mt-12'} relative z-20 space-y-3`}>
+        <div className={`px-4 ${(showOnboarding || profileData) ? '' : '-mt-12'} relative z-20 space-y-3`}>
           {isLoadingStats ? (
             <>
               {[1, 2, 3, 4].map((i) => (

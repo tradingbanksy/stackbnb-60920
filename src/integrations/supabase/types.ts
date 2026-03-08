@@ -335,13 +335,20 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string | null
+          government_id_url: string | null
+          host_verification_notes: string | null
+          host_verification_status: Database["public"]["Enums"]["host_verification_status"]
+          host_verified_at: string | null
+          host_verified_by: string | null
           id: string
           phone: string | null
           recommendations: Json | null
+          selfie_url: string | null
           stripe_account_id: string | null
           stripe_onboarding_complete: boolean | null
           updated_at: string
           user_id: string
+          verified_phone: string | null
           zip_code: string | null
         }
         Insert: {
@@ -349,13 +356,20 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          government_id_url?: string | null
+          host_verification_notes?: string | null
+          host_verification_status?: Database["public"]["Enums"]["host_verification_status"]
+          host_verified_at?: string | null
+          host_verified_by?: string | null
           id?: string
           phone?: string | null
           recommendations?: Json | null
+          selfie_url?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id: string
+          verified_phone?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -363,13 +377,20 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          government_id_url?: string | null
+          host_verification_notes?: string | null
+          host_verification_status?: Database["public"]["Enums"]["host_verification_status"]
+          host_verified_at?: string | null
+          host_verified_by?: string | null
           id?: string
           phone?: string | null
           recommendations?: Json | null
+          selfie_url?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id?: string
+          verified_phone?: string | null
           zip_code?: string | null
         }
         Relationships: []
@@ -990,6 +1011,11 @@ export type Database = {
     }
     Enums: {
       app_role: "host" | "vendor" | "user" | "admin"
+      host_verification_status:
+        | "unverified"
+        | "pending_verification"
+        | "verified"
+        | "rejected"
       vendor_verification_status:
         | "draft"
         | "pending"
@@ -1124,6 +1150,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["host", "vendor", "user", "admin"],
+      host_verification_status: [
+        "unverified",
+        "pending_verification",
+        "verified",
+        "rejected",
+      ],
       vendor_verification_status: [
         "draft",
         "pending",

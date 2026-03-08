@@ -110,6 +110,7 @@ import {
   PlatformSettings,
   AdminPromoCodes,
   VendorApprovals,
+  HostVerifications,
 } from "./pages/admin";
 
 // Standalone pages
@@ -244,6 +245,7 @@ const AppRoutes = () => (
     <Route path="/admin/settings" element={<ProtectedAdminRoute><PlatformSettings /></ProtectedAdminRoute>} />
     <Route path="/admin/promo-codes" element={<ProtectedAdminRoute><AdminPromoCodes /></ProtectedAdminRoute>} />
     <Route path="/admin/vendor-approvals" element={<ProtectedAdminRoute><VendorApprovals /></ProtectedAdminRoute>} />
+    <Route path="/admin/host-verifications" element={<ProtectedAdminRoute><HostVerifications /></ProtectedAdminRoute>} />
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />
