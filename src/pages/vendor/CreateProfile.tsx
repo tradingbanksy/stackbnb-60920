@@ -1171,6 +1171,87 @@ const CreateVendorProfile = () => {
           </CardContent>
         </Card>
 
+        {/* Ownership Evidence */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              Ownership & Verification
+            </CardTitle>
+            <CardDescription>
+              Help us verify that you own and operate this experience to build trust and increase your trust score.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="websiteUrl">Website URL (Optional)</Label>
+              <Input
+                id="websiteUrl"
+                placeholder="https://www.yourbusiness.com"
+                {...register('websiteUrl')}
+              />
+              {errors.websiteUrl && <p className="text-sm text-destructive">{errors.websiteUrl.message}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="linkedinUrl">LinkedIn Profile (Optional)</Label>
+              <Input
+                id="linkedinUrl"
+                placeholder="https://linkedin.com/in/yourprofile"
+                {...register('linkedinUrl')}
+              />
+              {errors.linkedinUrl && <p className="text-sm text-destructive">{errors.linkedinUrl.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="businessRegistrationUrl">Business Registration URL (Optional)</Label>
+              <Input
+                id="businessRegistrationUrl"
+                placeholder="Link to public registry or document"
+                {...register('businessRegistrationUrl')}
+              />
+              {errors.businessRegistrationUrl && <p className="text-sm text-destructive">{errors.businessRegistrationUrl.message}</p>}
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Label>Additional Evidence (Photos/Documents)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Upload photos of your equipment, past events, or other proof of operation.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Input
+                  type="file"
+                  accept="image/*,.pdf"
+                  disabled={isUploadingEvidence}
+                  onChange={handleEvidenceUpload}
+                />
+                {isUploadingEvidence && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                
+                {ownershipEvidenceUrls.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {ownershipEvidenceUrls.map((url, index) => (
+                      <div key={index} className="relative flex-shrink-0 w-20 h-20 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                        {url.includes('.pdf') ? (
+                          <span className="text-xs font-medium">PDF</span>
+                        ) : (
+                          <img src={url} alt={`Evidence ${index + 1}`} className="w-full h-full object-cover" />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setOwnershipEvidenceUrls(prev => prev.filter((_, i) => i !== index))}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Affiliate Program */}
         <Card>
           <CardHeader>
