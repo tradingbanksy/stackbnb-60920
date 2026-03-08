@@ -75,30 +75,8 @@ serve(async (req) => {
         const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time || '23:59'}:00`);
         const hoursSinceBooking = (now.getTime() - bookingDateTime.getTime()) / (1000 * 60 * 60);
 
-        // Determine required delay based on host trust score
-        let requiredHours = 24; // default for trusted hosts
-
-        if (booking.host_user_id) {
-          let hostProfile = hostProfileCache.get(booking.host_user_id);
-          if (!hostProfile) {
-            const { data } = await supabaseAdmin
-              .from("profiles")
-              .select("host_trust_score, first_booking_completed_at")
-              .eq("user_id", booking.host_user_id)
-              .single();
-            hostProfile = data || { host_trust_score: 0, first_booking_completed_at: null };
-            hostProfileCache.set(booking.host_user_id, hostProfile);
-          }
-
-          // New hosts (score < 30) get 7-day delay
-          if (hostProfile.host_trust_score < 30) {
-            requiredHours = 7 * 24; // 168 hours
-            logStep("New host - applying 7-day payout delay", { 
-              hostUserId: booking.host_user_id, 
-              trustScore: hostProfile.host_trust_score 
-            });
-          }
-        }
+        // All vendors are paid 24 hours after the event date
+        const requiredHours = 24;
 
         if (hoursSinceBooking < requiredHours) {
           logStep("Skipping - delay not met", { 
