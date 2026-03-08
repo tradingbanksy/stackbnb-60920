@@ -78,16 +78,40 @@ interface ChatMessageListProps {
 export function ChatMessageList({ onOpenItinerary }: ChatMessageListProps) {
   const { messages, isLoading, bionicEnabled, streamingStatus, retryLastMessage } = useTripPlannerChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, streamingStatus]);
+  }, [messages.length]);
+
+  // Auto-scroll during streaming by tracking content changes
+  useEffect(() => {
+    if (streamingStatus === "streaming" || isLoading) {
+      // Poll-scroll while streaming so content stays visible
+      scrollIntervalRef.current = setInterval(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+
+    return () => {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+    };
+  }, [streamingStatus, isLoading]);
+
+  // Final scroll when streaming ends
+  useEffect(() => {
+    if (streamingStatus === "idle" && !isLoading) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [streamingStatus, isLoading]);
 
   // Filter out empty assistant messages when showing the timeout banner
   const displayMessages = messages.filter((msg, idx) => {
-    // Keep all non-empty messages
     if (msg.content.trim()) return true;
-    // Hide empty assistant placeholder when timeout
     if (msg.role === "assistant" && idx === messages.length - 1 && streamingStatus === "timeout") {
       return false;
     }

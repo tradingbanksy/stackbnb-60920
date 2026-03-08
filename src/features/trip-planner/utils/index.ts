@@ -140,14 +140,28 @@ function categorizeFromTitle(title: string): ItineraryItemCategory {
 /**
  * Bionic reading: bold first part of each word for improved readability
  */
+/**
+ * Bionic reading: bold first part of each word for improved readability.
+ * Now operates on plain text segments only, preserving markdown syntax.
+ */
 export function applyBionicReading(text: string): string {
-  return text.replace(/\b(\w+)\b/g, (word) => {
-    if (word.length <= 1) return word;
-    const boldLength = Math.ceil(word.length * 0.4);
-    const boldPart = word.slice(0, boldLength);
-    const rest = word.slice(boldLength);
-    return `**${boldPart}**${rest}`;
-  });
+  // Split text into markdown tokens and plain text
+  // Preserve: **bold**, *italic*, [links](url), `code`, ```blocks```, #headings, emojis
+  return text.replace(
+    /(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]*\]\([^)]*\)|`[^`]+`|```[\s\S]*?```|#{1,6}\s|[^\s\w])/g,
+    '\x00$1\x00'
+  ).split('\x00').map(segment => {
+    // If it's a markdown token or empty, return as-is
+    if (!segment || /^(\*|`|#|\[|!)/.test(segment) || /^\W+$/.test(segment)) {
+      return segment;
+    }
+    // Apply bionic to plain text words only
+    return segment.replace(/\b(\w+)\b/g, (word) => {
+      if (word.length <= 1) return word;
+      const boldLength = Math.ceil(word.length * 0.4);
+      return `**${word.slice(0, boldLength)}**${word.slice(boldLength)}`;
+    });
+  }).join('');
 }
 
 /**
@@ -210,8 +224,8 @@ export function hasBookingInConversation(messages: Message[]): boolean {
  */
 export function getInitialMessage(vendorCount: number): string {
   return vendorCount > 0
-    ? `🌴 Hi! I'm JC, your Tulum travel assistant. Your host has curated ${vendorCount} amazing local experiences for you. Ask me about cenotes, beach clubs, restaurants, or let me help you plan your perfect Tulum adventure.`
-    : "🌴 Hi! I'm JC, your Tulum travel assistant. I know the best cenotes, beach clubs, tacos, and hidden gems in the area. What are you looking to experience during your stay?";
+    ? `🌴 Hey! I'm JC, your local Tulum guide. Your host has curated ${vendorCount} amazing experiences for you!\n\nBefore we dive in — **when are you visiting** and **how many days** do you have? This helps me plan the perfect itinerary for you! 🗓️`
+    : "🌴 Hey! I'm JC, your local Tulum guide. I know the best cenotes, beach clubs, tacos, and hidden gems around here!\n\nBefore we dive in — **when are you visiting** and **how many days** do you have? This helps me plan the perfect itinerary for you! 🗓️";
 }
 
 // ============================================

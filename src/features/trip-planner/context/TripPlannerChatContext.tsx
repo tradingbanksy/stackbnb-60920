@@ -6,11 +6,14 @@ import { CHAT_HISTORY_KEY, MAX_MESSAGE_LENGTH, getInitialMessage } from "../util
 
 export type StreamingStatus = "idle" | "streaming" | "slow" | "timeout";
 
+const MAX_STORED_MESSAGES = 50;
+
 interface TripPlannerChatContextValue {
   messages: Message[];
   hostVendors: HostVendor[];
   isLoading: boolean;
   isSaving: boolean;
+  isAuthenticated: boolean | null;
   bionicEnabled: boolean;
   streamingStatus: StreamingStatus;
   setBionicEnabled: (enabled: boolean) => void;
@@ -42,6 +45,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
   const hasInitialized = useRef(false);
   const lastUserMessageRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isSendingRef = useRef(false); // Synchronous guard against double-send
   
   const [messages, setMessages] = useState<Message[]>(() => [
     { role: "assistant", content: getInitialMessage(initialVendors.length) }
@@ -97,7 +101,11 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
           try {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              setMessages(parsed);
+              // Cap loaded messages
+              const capped = parsed.length > MAX_STORED_MESSAGES
+                ? [parsed[0], ...parsed.slice(-(MAX_STORED_MESSAGES - 1))]
+                : parsed;
+              setMessages(capped);
             }
           } catch {
             // Invalid JSON, use default
@@ -127,11 +135,15 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     return () => subscription.unsubscribe();
   }, [hostVendors.length]);
 
-  // Persist messages when they change (for authenticated users)
+  // Persist messages when they change (for authenticated users), with cap
   useEffect(() => {
     if (isAuthenticated && hasInitialized.current && messages.length > 1) {
       setIsSaving(true);
-      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+      // Cap stored messages to prevent localStorage overflow
+      const toStore = messages.length > MAX_STORED_MESSAGES
+        ? [messages[0], ...messages.slice(-(MAX_STORED_MESSAGES - 1))]
+        : messages;
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(toStore));
       const timer = setTimeout(() => setIsSaving(false), 800);
       return () => clearTimeout(timer);
     }
@@ -143,11 +155,12 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     setMessages([{ role: "assistant", content: getInitialMessage(hostVendors.length) }]);
     setStreamingStatus("idle");
     lastUserMessageRef.current = null;
+    isSendingRef.current = false;
   }, [hostVendors.length]);
 
   const sendMessage = useCallback(async (content: string) => {
     const trimmedInput = content.trim();
-    if (!trimmedInput || isLoading) return;
+    if (!trimmedInput || isSendingRef.current) return;
 
     if (trimmedInput.length > MAX_MESSAGE_LENGTH) {
       toast({
@@ -157,6 +170,9 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       });
       return;
     }
+
+    // Synchronous guard set BEFORE any async work
+    isSendingRef.current = true;
 
     // Store for retry
     lastUserMessageRef.current = trimmedInput;
@@ -265,6 +281,41 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
         } catch {
           // ignore
         }
+
+        // Specific error messages for rate limit and payment errors
+        if (response.status === 429) {
+          toast({
+            title: "Slow down",
+            description: "You're sending messages too quickly. Please wait a moment and try again.",
+            variant: "destructive",
+          });
+          // Remove the empty assistant bubble
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant" && last.content === "") return prev.slice(0, -1);
+            return prev;
+          });
+          clearTimers();
+          setStreamingStatus("idle");
+          return;
+        }
+
+        if (response.status === 402) {
+          toast({
+            title: "Service unavailable",
+            description: "The AI service is temporarily unavailable. Please try again later.",
+            variant: "destructive",
+          });
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant" && last.content === "") return prev.slice(0, -1);
+            return prev;
+          });
+          clearTimers();
+          setStreamingStatus("idle");
+          return;
+        }
+
         throw new Error(message);
       }
 
@@ -279,7 +330,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       
       // Throttling control
       let lastUpdateTime = 0;
-      const THROTTLE_MS = 50; // Update UI every 50ms max
+      const THROTTLE_MS = 50;
 
       const processDataStr = (dataStr: string) => {
         if (dataStr === "[DONE]") return true;
@@ -393,8 +444,9 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
       setStreamingStatus("idle");
     } finally {
       setIsLoading(false);
+      isSendingRef.current = false; // Release guard
     }
-  }, [hostVendors, isLoading, streamingStatus, toast]);
+  }, [hostVendors, streamingStatus, toast]);
 
   const retryLastMessage = useCallback(() => {
     if (!lastUserMessageRef.current) return;
@@ -414,6 +466,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     });
     
     setStreamingStatus("idle");
+    isSendingRef.current = false; // Reset guard for retry
     
     // Retry with stored message
     const messageToRetry = lastUserMessageRef.current;
@@ -427,6 +480,7 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     hostVendors,
     isLoading,
     isSaving,
+    isAuthenticated,
     bionicEnabled,
     streamingStatus,
     setBionicEnabled,

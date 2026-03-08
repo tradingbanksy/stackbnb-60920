@@ -115,13 +115,21 @@ export function ItinerarySheet({ open, onOpenChange }: ItinerarySheetProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Skeleton animation
-  if (isGenerating) {
+  // Skeleton animation - properly managed in useEffect
+  useEffect(() => {
+    if (!isGenerating) {
+      setSkeletonStep(0);
+      return;
+    }
     const interval = setInterval(() => {
       setSkeletonStep(prev => (prev < 3 ? prev + 1 : prev));
     }, 1500);
-    setTimeout(() => clearInterval(interval), 6000);
-  }
+    const maxTimer = setTimeout(() => clearInterval(interval), 6000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(maxTimer);
+    };
+  }, [isGenerating]);
 
   const handleRegenerateSelect = (option: RegenerateOption) => {
     if (option === null) {
