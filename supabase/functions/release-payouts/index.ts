@@ -33,20 +33,21 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Find confirmed bookings with held payouts where experience date+time is 24h+ ago
     const now = new Date();
-    const cutoffTime = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
-    const cutoffDate = cutoffTime.toISOString().split('T')[0];
 
-    logStep("Looking for bookings to release", { cutoffDate, now: now.toISOString() });
+    // Get all confirmed bookings with held payouts
+    // We fetch broadly and filter per-host based on trust score
+    const cutoff7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const cutoffDate7 = cutoff7Days.toISOString().split('T')[0];
 
-    // Get all confirmed bookings with held payouts on or before the cutoff date
+    logStep("Looking for bookings to release", { cutoffDate7, now: now.toISOString() });
+
     const { data: bookings, error: queryError } = await supabaseAdmin
       .from("bookings")
       .select("*")
       .eq("status", "confirmed")
       .eq("payout_status", "held")
-      .lte("booking_date", cutoffDate);
+      .lte("booking_date", cutoffDate7);
 
     if (queryError) {
       logStep("Query error", { error: queryError.message });
@@ -62,21 +63,54 @@ serve(async (req) => {
       });
     }
 
+    // Cache host profiles to avoid repeated lookups
+    const hostProfileCache = new Map<string, { host_trust_score: number; first_booking_completed_at: string | null }>();
+
     let released = 0;
     let errors = 0;
+    let skipped = 0;
 
     for (const booking of bookings) {
       try {
-        // Parse booking datetime and verify 24h has passed
         const bookingDateTime = new Date(`${booking.booking_date}T${booking.booking_time || '23:59'}:00`);
         const hoursSinceBooking = (now.getTime() - bookingDateTime.getTime()) / (1000 * 60 * 60);
 
-        if (hoursSinceBooking < 24) {
-          logStep("Skipping - less than 24h since experience", { bookingId: booking.id, hoursSinceBooking });
+        // Determine required delay based on host trust score
+        let requiredHours = 24; // default for trusted hosts
+
+        if (booking.host_user_id) {
+          let hostProfile = hostProfileCache.get(booking.host_user_id);
+          if (!hostProfile) {
+            const { data } = await supabaseAdmin
+              .from("profiles")
+              .select("host_trust_score, first_booking_completed_at")
+              .eq("user_id", booking.host_user_id)
+              .single();
+            hostProfile = data || { host_trust_score: 0, first_booking_completed_at: null };
+            hostProfileCache.set(booking.host_user_id, hostProfile);
+          }
+
+          // New hosts (score < 30) get 7-day delay
+          if (hostProfile.host_trust_score < 30) {
+            requiredHours = 7 * 24; // 168 hours
+            logStep("New host - applying 7-day payout delay", { 
+              hostUserId: booking.host_user_id, 
+              trustScore: hostProfile.host_trust_score 
+            });
+          }
+        }
+
+        if (hoursSinceBooking < requiredHours) {
+          logStep("Skipping - delay not met", { 
+            bookingId: booking.id, 
+            hoursSinceBooking: Math.round(hoursSinceBooking), 
+            requiredHours 
+          });
+          skipped++;
           continue;
         }
 
-        logStep("Processing payout release", { bookingId: booking.id, hoursSinceBooking });
+        logStep("Processing payout release", { bookingId: booking.id, hoursSinceBooking: Math.round(hoursSinceBooking) });
 
         const vendorPayoutCents = Math.round((booking.vendor_payout_amount || 0) * 100);
         const hostPayoutCents = Math.round((booking.host_payout_amount || 0) * 100);
@@ -95,10 +129,7 @@ serve(async (req) => {
               currency: booking.currency || "usd",
               destination: vendorProfile.stripe_account_id,
               transfer_group: booking.stripe_session_id || booking.id,
-              metadata: {
-                booking_id: booking.id,
-                type: "vendor_payout",
-              },
+              metadata: { booking_id: booking.id, type: "vendor_payout" },
             });
             logStep("Vendor transfer created", { transferId: transfer.id, amount: vendorPayoutCents });
           } else {
@@ -120,10 +151,7 @@ serve(async (req) => {
               currency: booking.currency || "usd",
               destination: hostProfile.stripe_account_id,
               transfer_group: booking.stripe_session_id || booking.id,
-              metadata: {
-                booking_id: booking.id,
-                type: "host_commission",
-              },
+              metadata: { booking_id: booking.id, type: "host_commission" },
             });
             logStep("Host transfer created", { transferId: transfer.id, amount: hostPayoutCents });
           } else {
@@ -134,10 +162,7 @@ serve(async (req) => {
         // Update booking: status = completed, payout_status = processed
         await supabaseAdmin
           .from("bookings")
-          .update({ 
-            status: "completed",
-            payout_status: "processed",
-          })
+          .update({ status: "completed", payout_status: "processed" })
           .eq("id", booking.id);
 
         logStep("Booking completed and payouts released", { bookingId: booking.id });
@@ -146,7 +171,6 @@ serve(async (req) => {
         const errorMsg = bookingError instanceof Error ? bookingError.message : String(bookingError);
         logStep("Error processing booking", { bookingId: booking.id, error: errorMsg });
         
-        // Mark as failed but don't block other bookings
         await supabaseAdmin
           .from("bookings")
           .update({ payout_status: "failed" })
@@ -156,9 +180,9 @@ serve(async (req) => {
       }
     }
 
-    logStep("Completed", { released, errors, total: bookings.length });
+    logStep("Completed", { released, errors, skipped, total: bookings.length });
 
-    return new Response(JSON.stringify({ success: true, released, errors }), {
+    return new Response(JSON.stringify({ success: true, released, errors, skipped }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
