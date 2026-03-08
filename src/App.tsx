@@ -116,6 +116,7 @@ import {
   MessageModeration,
   FraudAlerts,
   RefundRequests,
+  TrustScoreMonitoring,
 } from "./pages/admin";
 
 // Standalone pages
@@ -256,6 +257,7 @@ const AppRoutes = () => (
     <Route path="/admin/message-moderation" element={<ProtectedAdminRoute><MessageModeration /></ProtectedAdminRoute>} />
     <Route path="/admin/fraud-alerts" element={<ProtectedAdminRoute><FraudAlerts /></ProtectedAdminRoute>} />
     <Route path="/admin/refund-requests" element={<ProtectedAdminRoute><RefundRequests /></ProtectedAdminRoute>} />
+    <Route path="/admin/trust-scores" element={<ProtectedAdminRoute><TrustScoreMonitoring /></ProtectedAdminRoute>} />
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />
