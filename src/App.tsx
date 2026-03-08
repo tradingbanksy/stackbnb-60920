@@ -39,6 +39,8 @@ import {
   AllExperiences,
   GuestGuide,
   MyBookings,
+  Conversation,
+  RequestRefund,
   Itinerary,
   SharedItinerary,
   TripItinerary,
@@ -111,6 +113,9 @@ import {
   AdminPromoCodes,
   VendorApprovals,
   HostVerifications,
+  MessageModeration,
+  FraudAlerts,
+  RefundRequests,
 } from "./pages/admin";
 
 // Standalone pages
@@ -216,6 +221,8 @@ const AppRoutes = () => (
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/profile" element={<Profile />} />
     <Route path="/bookings" element={<MyBookings />} />
+    <Route path="/bookings/:bookingId/chat" element={<ProtectedRoute><Conversation /></ProtectedRoute>} />
+    <Route path="/bookings/:bookingId/refund" element={<ProtectedRoute><RequestRefund /></ProtectedRoute>} />
     <Route path="/for-hosts" element={<ForHosts />} />
     <Route path="/for-vendors" element={<ForVendors />} />
     <Route path="/trip-planner" element={<TripPlannerChat />} />
@@ -246,6 +253,9 @@ const AppRoutes = () => (
     <Route path="/admin/promo-codes" element={<ProtectedAdminRoute><AdminPromoCodes /></ProtectedAdminRoute>} />
     <Route path="/admin/vendor-approvals" element={<ProtectedAdminRoute><VendorApprovals /></ProtectedAdminRoute>} />
     <Route path="/admin/host-verifications" element={<ProtectedAdminRoute><HostVerifications /></ProtectedAdminRoute>} />
+    <Route path="/admin/message-moderation" element={<ProtectedAdminRoute><MessageModeration /></ProtectedAdminRoute>} />
+    <Route path="/admin/fraud-alerts" element={<ProtectedAdminRoute><FraudAlerts /></ProtectedAdminRoute>} />
+    <Route path="/admin/refund-requests" element={<ProtectedAdminRoute><RefundRequests /></ProtectedAdminRoute>} />
     
     {/* Host Routes */}
     <Route path="/auth/host" element={<HostAuth />} />

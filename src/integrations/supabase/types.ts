@@ -101,6 +101,83 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          booking_id: string
+          created_at: string
+          flag_reason: string | null
+          guest_user_id: string
+          host_user_id: string
+          id: string
+          is_flagged: boolean
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          flag_reason?: string | null
+          guest_user_id: string
+          host_user_id: string
+          id?: string
+          is_flagged?: boolean
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          flag_reason?: string | null
+          guest_user_id?: string
+          host_user_id?: string
+          id?: string
+          is_flagged?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fraud_alerts: {
+        Row: {
+          admin_notes: string | null
+          alert_type: string
+          created_at: string
+          details: Json
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          target_listing_id: string | null
+          target_user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          alert_type: string
+          created_at?: string
+          details?: Json
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_listing_id?: string | null
+          target_user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          alert_type?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_listing_id?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       host_vendor_links: {
         Row: {
           created_at: string
@@ -280,6 +357,44 @@ export type Database = {
           vendor_name?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          flag_reason: string | null
+          id: string
+          is_flagged: boolean
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          flag_reason?: string | null
+          id?: string
+          is_flagged?: boolean
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          flag_reason?: string | null
+          id?: string
+          is_flagged?: boolean
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_otps: {
         Row: {
@@ -469,6 +584,56 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      refund_requests: {
+        Row: {
+          admin_notes: string | null
+          booking_id: string
+          created_at: string
+          description: string
+          evidence_urls: string[] | null
+          id: string
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          booking_id: string
+          created_at?: string
+          description: string
+          evidence_urls?: string[] | null
+          id?: string
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          booking_id?: string
+          created_at?: string
+          description?: string
+          evidence_urls?: string[] | null
+          id?: string
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
