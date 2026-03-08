@@ -93,6 +93,7 @@ const AppView = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [googlePhotos, setGooglePhotos] = useState<Record<string, string>>({});
 
   const handleSignOut = async () => {
     await signOut();
@@ -106,6 +107,58 @@ const AppView = () => {
   // Re-fetch vendors when city changes
   useEffect(() => {
     fetchPublishedVendors();
+  }, [destination]);
+
+  // Fetch Google photos for curated restaurants (no mock fallback)
+  useEffect(() => {
+    const fetchPhotosForRestaurants = async () => {
+      const curatedForCity = mockRestaurants.filter(
+        r => r.city.toLowerCase() === destination.toLowerCase()
+      );
+      const photosMap: Record<string, string> = {};
+      const toFetch: typeof curatedForCity = [];
+
+      for (const r of curatedForCity) {
+        try {
+          const cached = localStorage.getItem(`google_reviews_detail_${r.id}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.photos?.length > 0) {
+              photosMap[r.id] = parsed.photos[0];
+              continue;
+            }
+          }
+        } catch {}
+        toFetch.push(r);
+      }
+
+      if (Object.keys(photosMap).length > 0) {
+        setGooglePhotos(prev => ({ ...prev, ...photosMap }));
+      }
+
+      // Fetch missing ones in parallel
+      await Promise.all(
+        toFetch.map(async (r) => {
+          try {
+            const searchQuery = `${r.name} restaurant ${r.address} ${r.city}`;
+            const { data } = await supabase.functions.invoke('google-reviews', {
+              body: { searchQuery, lat: r.coordinates?.lat, lng: r.coordinates?.lng }
+            });
+            if (data?.photos?.length > 0) {
+              // Cache it
+              try {
+                localStorage.setItem(
+                  `google_reviews_detail_${r.id}`,
+                  JSON.stringify({ ...data, timestamp: Date.now() })
+                );
+              } catch {}
+              setGooglePhotos(prev => ({ ...prev, [r.id]: data.photos[0] }));
+            }
+          } catch {}
+        })
+      );
+    };
+    fetchPhotosForRestaurants();
   }, [destination]);
 
   const fetchMyBusinesses = async () => {
@@ -501,15 +554,7 @@ const AppView = () => {
                         
                         {/* Curated restaurants for the selected city */}
                         {curatedRestaurants.map((restaurant, index) => {
-                          // Use Google-cached photo or fallback to static
-                          let photo = restaurant.photos[0];
-                          try {
-                            const cached = localStorage.getItem(`google_reviews_detail_${restaurant.id}`);
-                            if (cached) {
-                              const parsed = JSON.parse(cached);
-                              if (parsed.photos?.length > 0) photo = parsed.photos[0];
-                            }
-                          } catch {}
+                          const photo = googlePhotos[restaurant.id];
 
                           return (
                             <Link
@@ -519,12 +564,16 @@ const AppView = () => {
                               style={{ animationDelay: `${(vendorRestaurants.length + index) * 50}ms` }}
                             >
                               <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
-                                <BlurImage
-                                  src={photo}
-                                  alt={restaurant.name}
-                                  containerClassName="w-full h-full"
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
+                                {photo ? (
+                                  <BlurImage
+                                    src={photo}
+                                    alt={restaurant.name}
+                                    containerClassName="w-full h-full"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-muted animate-pulse" />
+                                )}
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                                   <p className="text-white text-xs font-medium line-clamp-1">{restaurant.name}</p>
                                   <div className="flex items-center gap-1 text-white/80 text-[10px]">
