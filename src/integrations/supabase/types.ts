@@ -809,7 +809,7 @@ export type Database = {
           id?: string | null
           is_confirmed?: boolean | null
           is_public?: boolean | null
-          itinerary_data?: never
+          itinerary_data?: Json | null
           share_token?: string | null
           start_date?: string | null
           updated_at?: string | null
@@ -821,7 +821,7 @@ export type Database = {
           id?: string | null
           is_confirmed?: boolean | null
           is_public?: boolean | null
-          itinerary_data?: never
+          itinerary_data?: Json | null
           share_token?: string | null
           start_date?: string | null
           updated_at?: string | null

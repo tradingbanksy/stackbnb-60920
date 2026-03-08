@@ -19,9 +19,12 @@ const getCorsHeaders = (origin: string | null) => {
   };
 };
 
-// Generate a 6-digit OTP
+// SECURITY: Use crypto.getRandomValues() instead of Math.random()
 function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  // Generate a 6-digit number between 100000 and 999999
+  return (100000 + (array[0] % 900000)).toString();
 }
 
 serve(async (req) => {
@@ -33,14 +36,13 @@ serve(async (req) => {
   }
 
   try {
-    // Create admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Rate limiting - 3 requests per minute per IP
+    // Rate limiting
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                req.headers.get('x-real-ip') || 
                'unknown';
@@ -66,21 +68,12 @@ serve(async (req) => {
       );
     }
 
-    // Check if user exists with this email
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+    // SECURITY: Use targeted lookup instead of listUsers() to avoid loading all users
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email.toLowerCase());
     
-    if (userError) {
-      console.error("Error checking user:", userError);
-      return new Response(
-        JSON.stringify({ success: true, message: "If an account exists, an OTP has been sent." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const userExists = userData.users.some(u => u.email?.toLowerCase() === email.toLowerCase());
-    
-    if (!userExists) {
-      console.log("User not found for email:", email);
+    if (userError || !userData?.user) {
+      // Don't reveal whether user exists
+      console.log("User not found for email (or error):", email);
       return new Response(
         JSON.stringify({ success: true, message: "If an account exists, an OTP has been sent." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -140,7 +133,6 @@ serve(async (req) => {
 
     console.log("Email response:", emailResponse);
 
-    // Check if Resend returned an error
     if (emailResponse.error) {
       console.error("Resend error:", emailResponse.error);
       return new Response(

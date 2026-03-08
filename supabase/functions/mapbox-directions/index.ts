@@ -69,7 +69,7 @@ serve(async (req) => {
       })) || [],
       origin: { lat: TULUM_CENTRO.lat, lng: TULUM_CENTRO.lng },
       destination: { lat: destinationLat, lng: destinationLng },
-      mapboxToken, // Pass token for frontend map rendering
+      // SECURITY: Do NOT return mapboxToken to the client
     };
 
     console.log('Route calculated:', { duration: result.durationText, distance: result.distanceText });

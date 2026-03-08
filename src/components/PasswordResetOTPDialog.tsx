@@ -90,21 +90,16 @@ export function PasswordResetOTPDialog({
 
       if (error) throw error;
 
-      if (data?.link) {
+      if (data?.redirectUrl) {
         setStep("success");
         toast({
           title: "Verified!",
           description: "Opening password reset page...",
         });
         
-        // Small delay then open link
+        // Small delay then redirect via the recovery link
         setTimeout(() => {
-          window.open(data.link, '_blank');
-          onOpenChange(false);
-          // Reset state
-          setStep("sending");
-          setOtp("");
-          setDevOtp(null);
+          window.location.href = data.redirectUrl;
         }, 1000);
       } else {
         throw new Error("Could not generate reset link");

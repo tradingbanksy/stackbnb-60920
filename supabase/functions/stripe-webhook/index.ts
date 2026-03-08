@@ -25,6 +25,16 @@ serve(async (req) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    
+    // SECURITY: Require webhook secret — reject if not configured
+    if (!webhookSecret) {
+      logStep("STRIPE_WEBHOOK_SECRET not configured — rejecting request");
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
+    }
+
     logStep("Stripe key verified");
 
     const stripe = new Stripe(stripeKey, {
@@ -35,25 +45,27 @@ serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
+    // SECURITY: Require signature header
+    if (!signature) {
+      logStep("Missing stripe-signature header — rejecting request");
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
     let event: Stripe.Event;
 
-    // Verify webhook signature if secret is set
-    if (webhookSecret && signature) {
-      try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Webhook signature verified");
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        logStep("Webhook signature verification failed", { error: errorMessage });
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
-    } else {
-      // For testing without signature verification
-      event = JSON.parse(body);
-      logStep("Webhook received without signature verification (testing mode)");
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      logStep("Webhook signature verified");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logStep("Webhook signature verification failed", { error: errorMessage });
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
 
     logStep("Event type", { type: event.type });
@@ -127,7 +139,7 @@ serve(async (req) => {
           booking_date: bookingDate,
           booking_time: bookingTime,
           guests: guests,
-          total_amount: (session.amount_total || 0) / 100, // Convert from cents
+          total_amount: (session.amount_total || 0) / 100,
           currency: session.currency || "usd",
           status: "completed",
           vendor_payout_amount: vendorPayoutCents / 100,
@@ -188,13 +200,11 @@ serve(async (req) => {
       } catch (notifError) {
         const notifErrorMsg = notifError instanceof Error ? notifError.message : String(notifError);
         logStep("Admin notification error", { error: notifErrorMsg });
-        // Don't fail the webhook for notification errors
       }
 
       // Send vendor notification
       if (vendorId) {
         try {
-          // Get vendor's email from vendor_profiles
           const { data: vendorProfile } = await supabaseAdmin
             .from("vendor_profiles")
             .select("user_id")
@@ -242,7 +252,6 @@ serve(async (req) => {
         } catch (vendorNotifError) {
           const vendorNotifErrorMsg = vendorNotifError instanceof Error ? vendorNotifError.message : String(vendorNotifError);
           logStep("Vendor notification error", { error: vendorNotifErrorMsg });
-          // Don't fail the webhook for notification errors
         }
       }
 
@@ -286,26 +295,22 @@ serve(async (req) => {
         } catch (guestNotifError) {
           const guestNotifErrorMsg = guestNotifError instanceof Error ? guestNotifError.message : String(guestNotifError);
           logStep("Guest confirmation email error", { error: guestNotifErrorMsg });
-          // Don't fail the webhook for notification errors
         }
       }
 
       // Transfer host's portion if applicable
       if (hostUserId && hostPayoutCents > 0) {
-        // Get host's Stripe account and email
         const { data: hostProfile } = await supabaseAdmin
           .from("profiles")
           .select("stripe_account_id, stripe_onboarding_complete")
           .eq("user_id", hostUserId)
           .single();
 
-        // Get host email for notification
         const { data: hostUserData } = await supabaseAdmin.auth.admin.getUserById(hostUserId);
         const hostEmail = hostUserData?.user?.email;
 
         if (hostProfile?.stripe_account_id && hostProfile?.stripe_onboarding_complete) {
           try {
-            // Create a transfer to the host from the application fee
             const transfer = await stripe.transfers.create({
               amount: hostPayoutCents,
               currency: session.currency || "usd",
@@ -318,7 +323,6 @@ serve(async (req) => {
             });
             logStep("Host transfer created", { transferId: transfer.id, amount: hostPayoutCents });
 
-            // Update booking payout status
             await supabaseAdmin
               .from("bookings")
               .update({ payout_status: "processed" })
@@ -326,7 +330,6 @@ serve(async (req) => {
           } catch (transferError) {
             const errorMsg = transferError instanceof Error ? transferError.message : String(transferError);
             logStep("Host transfer failed", { error: errorMsg });
-            // Don't fail the webhook, just log the error
           }
         } else {
           logStep("Host not set up for Stripe Connect, skipping transfer", { hostUserId });
@@ -369,7 +372,6 @@ serve(async (req) => {
           } catch (hostNotifError) {
             const hostNotifErrorMsg = hostNotifError instanceof Error ? hostNotifError.message : String(hostNotifError);
             logStep("Host commission notification error", { error: hostNotifErrorMsg });
-            // Don't fail the webhook for notification errors
           }
         }
       }

@@ -48,8 +48,20 @@ interface MapboxRouteData {
   distanceText: string;
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
-  mapboxToken: string;
   steps?: RouteStep[];
+}
+
+let _cachedMapboxToken: string | null = null;
+async function getMapboxToken(): Promise<string | null> {
+  if (_cachedMapboxToken) return _cachedMapboxToken;
+  try {
+    const { data, error } = await supabase.functions.invoke('mapbox-token');
+    if (error || !data?.token) return null;
+    _cachedMapboxToken = data.token;
+    return data.token;
+  } catch {
+    return null;
+  }
 }
 
 const TULUM_CENTRO = { lat: 20.2114, lng: -87.4654 };
@@ -169,23 +181,16 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
 
     const initPinMap = async () => {
       try {
-        // Fetch token via mapbox-directions (we just need the token)
-        const { data, error: fnError } = await supabase.functions.invoke('mapbox-directions', {
-          body: { 
-            destinationLat: directionsData.vendorLocation!.lat,
-            destinationLng: directionsData.vendorLocation!.lng
-          }
-        });
-
-        if (fnError || !data?.mapboxToken) {
-          console.error('Could not get Mapbox token:', fnError);
+        const token = await getMapboxToken();
+        if (!token) {
+          console.error('Could not get Mapbox token');
           setMapError(true);
           return;
         }
 
         if (!mapContainer.current || map.current) return;
 
-        mapboxgl.accessToken = data.mapboxToken;
+        mapboxgl.accessToken = token;
         const { lat, lng } = directionsData.vendorLocation!;
 
         map.current = new mapboxgl.Map({
@@ -248,160 +253,114 @@ export function VendorLocationMap({ vendorName, vendorAddress, placeId, mode = '
   // Initialize Mapbox map when route data is available (directions mode only)
   useEffect(() => {
     if (isPinMode) return;
-    if (!mapContainer.current || !mapRouteData?.mapboxToken || !mapRouteData?.route) return;
-    if (map.current) return; // Already initialized
+    if (!mapContainer.current || !mapRouteData?.route) return;
+    if (map.current) return;
 
-    try {
-      mapboxgl.accessToken = mapRouteData.mapboxToken;
+    const initDirectionsMap = async () => {
+      const token = await getMapboxToken();
+      if (!token || !mapContainer.current || map.current) return;
 
-      // Calculate bounds to fit the route
-      const coordinates = mapRouteData.route.coordinates;
-      const bounds = coordinates.reduce((bounds, coord) => {
-        return bounds.extend(coord as [number, number]);
-      }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+      try {
+        mapboxgl.accessToken = token;
 
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        bounds: bounds,
-        fitBoundsOptions: { padding: 40 },
-        attributionControl: false, // Hide Mapbox attribution/logo
-      });
+        // Calculate bounds to fit the route
+        const coordinates = mapRouteData.route.coordinates;
+        const bounds = coordinates.reduce((bounds, coord) => {
+          return bounds.extend(coord as [number, number]);
+        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
 
-      map.current.on('load', () => {
-        if (!map.current) return;
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/light-v11',
+          bounds: bounds,
+          fitBoundsOptions: { padding: 40 },
+          attributionControl: false,
+        });
 
-        // Add route line
-        map.current.addSource('route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString' as const,
-              coordinates: mapRouteData.route.coordinates
+        map.current.on('load', () => {
+          if (!map.current) return;
+
+          map.current.addSource('route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString' as const,
+                coordinates: mapRouteData.route.coordinates
+              }
             }
-          }
+          });
+
+          map.current.addLayer({
+            id: 'route-outline',
+            type: 'line',
+            source: 'route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#1e40af', 'line-width': 8, 'line-opacity': 0.4 }
+          });
+
+          map.current.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#3b82f6', 'line-width': 5, 'line-opacity': 0.9 }
+          });
+
+          const originEl = document.createElement('div');
+          originEl.className = 'origin-marker';
+          originEl.innerHTML = `
+            <div style="width: 32px; height: 32px; background: white; border: 3px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+              <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%;"></div>
+            </div>
+          `;
+          new mapboxgl.Marker(originEl)
+            .setLngLat([mapRouteData.origin.lng, mapRouteData.origin.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML('<strong>Tulum Centro</strong><p>Starting point</p>'))
+            .addTo(map.current);
+
+          const destEl = document.createElement('div');
+          destEl.className = 'destination-marker';
+          destEl.innerHTML = `
+            <div style="width: 36px; height: 36px; background: #ef4444; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 12px rgba(239,68,68,0.4);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+          `;
+          new mapboxgl.Marker(destEl)
+            .setLngLat([mapRouteData.destination.lng, mapRouteData.destination.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${vendorName}</strong><p>${mapRouteData.distanceText} • ${mapRouteData.durationText}</p>`))
+            .addTo(map.current);
+
+          const carEl = document.createElement('div');
+          carEl.className = 'car-marker';
+          carEl.innerHTML = `
+            <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(16,185,129,0.5); transition: transform 0.1s ease-out;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                <circle cx="7" cy="17" r="2"/>
+                <circle cx="17" cy="17" r="2"/>
+              </svg>
+            </div>
+          `;
+          carMarker.current = new mapboxgl.Marker(carEl)
+            .setLngLat([mapRouteData.origin.lng, mapRouteData.origin.lat])
+            .addTo(map.current);
+
+          map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+          setMapLoaded(true);
         });
 
-        // Route outline (darker)
-        map.current.addLayer({
-          id: 'route-outline',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#1e40af',
-            'line-width': 8,
-            'line-opacity': 0.4
-          }
-        });
+      } catch (err) {
+        console.error('Error initializing map:', err);
+        setMapError(true);
+      }
+    };
 
-        // Route line (primary color)
-        map.current.addLayer({
-          id: 'route-line',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#3b82f6',
-            'line-width': 5,
-            'line-opacity': 0.9
-          }
-        });
-
-        // Add origin marker (Tulum Centro)
-        const originEl = document.createElement('div');
-        originEl.className = 'origin-marker';
-        originEl.innerHTML = `
-          <div style="
-            width: 32px; 
-            height: 32px; 
-            background: white; 
-            border: 3px solid #3b82f6; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          ">
-            <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%;"></div>
-          </div>
-        `;
-        new mapboxgl.Marker(originEl)
-          .setLngLat([mapRouteData.origin.lng, mapRouteData.origin.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML('<strong>Tulum Centro</strong><p>Starting point</p>'))
-          .addTo(map.current);
-
-        // Add destination marker (Vendor)
-        const destEl = document.createElement('div');
-        destEl.className = 'destination-marker';
-        destEl.innerHTML = `
-          <div style="
-            width: 36px; 
-            height: 36px; 
-            background: #ef4444; 
-            border: 3px solid white; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            box-shadow: 0 2px 12px rgba(239,68,68,0.4);
-          ">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-          </div>
-        `;
-        new mapboxgl.Marker(destEl)
-          .setLngLat([mapRouteData.destination.lng, mapRouteData.destination.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${vendorName}</strong><p>${mapRouteData.distanceText} • ${mapRouteData.durationText}</p>`))
-          .addTo(map.current);
-
-        // Add car marker for animation
-        const carEl = document.createElement('div');
-        carEl.className = 'car-marker';
-        carEl.innerHTML = `
-          <div style="
-            width: 28px; 
-            height: 28px; 
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
-            border: 2px solid white; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            box-shadow: 0 3px 12px rgba(16,185,129,0.5);
-            transition: transform 0.1s ease-out;
-          ">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
-              <circle cx="7" cy="17" r="2"/>
-              <circle cx="17" cy="17" r="2"/>
-            </svg>
-          </div>
-        `;
-        carMarker.current = new mapboxgl.Marker(carEl)
-          .setLngLat([mapRouteData.origin.lng, mapRouteData.origin.lat])
-          .addTo(map.current);
-
-        // Add navigation controls
-        map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-
-        setMapLoaded(true);
-      });
-
-    } catch (err) {
-      console.error('Error initializing map:', err);
-      setMapError(true);
-    }
+    initDirectionsMap();
 
     return () => {
       if (animationRef.current) {
