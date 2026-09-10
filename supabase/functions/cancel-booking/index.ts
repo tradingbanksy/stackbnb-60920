@@ -146,6 +146,7 @@ serve(async (req) => {
       .from("bookings")
       .update({ 
         status: refundId ? "refunded" : "cancelled",
+        payment_status: refundId ? "refunded" : undefined,
         payout_status: refundId ? "refunded" : booking.payout_status,
       })
       .eq("id", bookingId);

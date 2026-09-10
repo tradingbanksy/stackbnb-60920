@@ -98,6 +98,7 @@ const VendorPayoutHistory = () => {
     switch (status) {
       case 'completed':
       case 'paid':
+      case 'processed':
         return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Paid</Badge>;
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Pending</Badge>;
