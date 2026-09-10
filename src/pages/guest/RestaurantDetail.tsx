@@ -97,6 +97,12 @@ const RestaurantDetail = () => {
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [reservationUrl, setReservationUrl] = useState<string | null>(null);
   const [displayPhotos, setDisplayPhotos] = useState<string[]>([]);
+  useEffect(() => {
+    if (!restaurant) return;
+    const data = { "@context": "https://schema.org", "@type": "Restaurant", name: restaurant.name, description: restaurant.description, image: displayPhotos, servesCuisine: restaurant.cuisine, address: { "@type": "PostalAddress", streetAddress: restaurant.address, addressLocality: restaurant.city }, aggregateRating: restaurant.rating ? { "@type": "AggregateRating", ratingValue: restaurant.rating, bestRating: 5 } : undefined };
+    const script = document.createElement("script"); script.type = "application/ld+json"; script.textContent = JSON.stringify(data); document.head.appendChild(script);
+    return () => script.remove();
+  }, [restaurant, displayPhotos]);
 
   const handleBack = () => {
     if (window.history.length > 1) {

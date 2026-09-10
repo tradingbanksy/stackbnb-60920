@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -75,6 +75,12 @@ const ExperienceDetails = () => {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const experience = experiences.find(exp => exp.id === Number(id));
+  useEffect(() => {
+    if (!experience) return;
+    const data = { "@context": "https://schema.org", "@type": "TouristAttraction", name: experience.name, description: experience.description, image: getPhotos(experience.id), offers: { "@type": "Offer", price: experience.price, priceCurrency: "USD", availability: "https://schema.org/InStock" }, aggregateRating: experience.rating ? { "@type": "AggregateRating", ratingValue: experience.rating, bestRating: 5 } : undefined };
+    const script = document.createElement("script"); script.type = "application/ld+json"; script.textContent = JSON.stringify(data); document.head.appendChild(script);
+    return () => script.remove();
+  }, [experience]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
