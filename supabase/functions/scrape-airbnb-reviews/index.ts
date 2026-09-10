@@ -1,3 +1,4 @@
+import { guardPaidApi, normalizeAirbnbUrl } from "../_shared/paidApiGuard.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -17,6 +18,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const blocked = await guardPaidApi(req, "scrape-airbnb-reviews", corsHeaders, true);
+  if (blocked) return blocked;
+
   try {
     const { airbnbUrl } = await req.json();
 
@@ -27,6 +31,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    const formattedUrl = normalizeAirbnbUrl(airbnbUrl);
+    if (!formattedUrl) {
+      return new Response(JSON.stringify({ success: false, error: 'Use an https://www.airbnb.com/experiences/ or /rooms/ listing URL.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!apiKey) {
       console.error('FIRECRAWL_API_KEY not configured');
@@ -34,12 +45,6 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: false, error: 'Firecrawl connector not configured. Please set up Firecrawl in Settings.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Format URL
-    let formattedUrl = airbnbUrl.trim();
-    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${formattedUrl}`;
     }
 
     console.log('Scraping Airbnb URL:', formattedUrl);

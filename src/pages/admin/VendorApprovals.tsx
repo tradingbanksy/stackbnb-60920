@@ -120,51 +120,11 @@ const VendorApprovals = () => {
   // Update verification status mutation
   const updateStatus = useMutation({
     mutationFn: async ({ vendorId, status, notes }: { vendorId: string; status: VerificationStatus; notes?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const updateData: Record<string, unknown> = {
-        verification_status: status,
-        verification_notes: notes || null,
-      };
-
-      if (status === 'approved') {
-        updateData.verified_at = new Date().toISOString();
-        updateData.verified_by = user.id;
-      }
-
-      const { error } = await supabase
-        .from('vendor_profiles')
-        .update(updateData)
-        .eq('id', vendorId);
-
-      if (error) throw error;
-
-      // Get vendor email for notification
-      const { data: profile } = await supabase
-        .from('vendor_profiles')
-        .select('name, user_id')
-        .eq('id', vendorId)
-        .single();
-
-      if (profile) {
-        // Get user email
-        const { data: authData } = await supabase.auth.admin.getUserById(profile.user_id);
-        const vendorEmail = authData?.user?.email;
-
-        if (vendorEmail) {
-          // Send notification email
-          await supabase.functions.invoke('send-admin-notification', {
-            body: {
-              type: status === 'approved' ? 'vendor_approved' :
-                    status === 'rejected' ? 'vendor_rejected' : 'vendor_changes_requested',
-              vendorEmail,
-              vendorName: profile.name,
-              verificationNotes: notes,
-            },
-          });
-        }
-      }
+      const { data, error } = await supabase.functions.invoke('vendor-review', {
+        body: { action: 'review', vendorId, status, notes },
+      });
+      if (error || !data?.success) throw error || new Error(data?.error || 'Review failed');
+      if (data.notificationSent === false) toast.warning('The review was saved, but the notification email could not be sent.');
 
       return { status, vendorId };
     },

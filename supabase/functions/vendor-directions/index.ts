@@ -1,3 +1,4 @@
+import { guardPaidApi } from "../_shared/paidApiGuard.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -29,6 +30,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const blocked = await guardPaidApi(req, "vendor-directions", corsHeaders, false);
+  if (blocked) return blocked;
 
   try {
     const { vendorName, vendorAddress, placeId } = await req.json();

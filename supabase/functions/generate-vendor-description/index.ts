@@ -1,3 +1,4 @@
+import { guardPaidApi } from "../_shared/paidApiGuard.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -10,6 +11,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const blocked = await guardPaidApi(req, "generate-vendor-description", corsHeaders, true);
+  if (blocked) return blocked;
 
   try {
     const { name, category, pricePerPerson, duration, maxGuests, includedItems } = await req.json();
@@ -43,6 +47,7 @@ Don't include the price or specifics in the description - just paint a picture o
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        max_tokens: 800,
         model: "google/gemini-2.5-flash",
         messages: [
           { 

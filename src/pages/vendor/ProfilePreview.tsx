@@ -159,16 +159,13 @@ const VendorProfilePreview = () => {
     }
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('vendor_profiles')
-        .update({ verification_status: 'pending', submitted_for_review_at: new Date().toISOString() })
-        .eq('id', profile.id);
-      if (error) throw error;
-      setProfile(prev => prev ? { ...prev, verification_status: 'pending' } : null);
-      toast.success('Profile submitted for review! We\'ll notify you once it\'s approved.');
-      await supabase.functions.invoke('send-admin-notification', {
-        body: { type: 'vendor_submitted_for_review', vendorName: profile.name, vendorId: profile.id },
+      const { data, error } = await supabase.functions.invoke('vendor-review', {
+        body: { action: 'submit', vendorId: profile.id },
       });
+      if (error || !data?.success) throw error || new Error(data?.error || 'Submission failed');
+      setProfile(prev => prev ? { ...prev, verification_status: 'pending' } : null);
+      toast.success('Profile submitted for review!');
+      if (data.notificationSent === false) toast.warning('Your submission was saved, but the notification email could not be sent.');
     } catch (error) {
       console.error('Error submitting for review:', error);
       toast.error('Failed to submit for review');
