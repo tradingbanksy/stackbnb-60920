@@ -10,6 +10,7 @@ import { ProfileProvider } from "./contexts/ProfileContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RouteSeo } from "./components/RouteSeo";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient({
@@ -413,6 +414,7 @@ const App = () => {
                   <Toaster />
                   <Sonner />
                   <BrowserRouter>
+                    <RouteSeo />
                     <ScrollToTop />
                     <AppRoutes />
                   </BrowserRouter>
