@@ -173,10 +173,11 @@ serve(async (req) => {
           }
         }
 
-        // Update booking: status = completed, payout_status = processed
+        // Keep booking completion and payout completion explicit. `paid` is the
+        // terminal payout state; legacy `processed` rows remain readable.
         await supabaseAdmin
           .from("bookings")
-          .update({ status: "completed", payout_status: "processed" })
+          .update({ status: "completed", payout_status: "paid" })
           .eq("id", booking.id);
 
         logStep("Booking completed and payouts released", { bookingId: booking.id });
