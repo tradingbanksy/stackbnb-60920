@@ -134,6 +134,7 @@ serve(async (req) => {
           total_amount: (session.amount_total || 0) / 100,
           currency: session.currency || "usd",
           status: "confirmed",
+          payment_status: "paid",
           vendor_payout_amount: vendorPayoutCents / 100,
           host_payout_amount: hostPayoutCents / 100,
           platform_fee_amount: platformFeeCents / 100,

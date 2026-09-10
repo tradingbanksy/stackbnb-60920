@@ -123,6 +123,7 @@ serve(async (req) => {
       .from("bookings")
       .update({
         status: "refunded",
+        payment_status: "refunded",
         payout_status: "refunded",
       })
       .eq("id", refundReq.booking_id);

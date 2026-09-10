@@ -7,8 +7,9 @@ is still held, or its payment can later be refunded.
 ## Current compatibility model
 
 The existing schema uses `bookings.status` for booking and some payment/refund
-outcomes, and `bookings.payout_status` for payout progress. Existing values must
-be preserved until a data migration and all callers are updated together.
+outcomes, and `bookings.payout_status` for payout progress. Migration
+`20260910122000_add_payment_state.sql` adds `bookings.payment_status` with a
+backfill, while preserving the legacy `status` values for compatibility.
 
 ## Target state machines
 
