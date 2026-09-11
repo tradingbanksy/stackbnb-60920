@@ -25,6 +25,7 @@ export type Database = {
           host_payout_amount: number | null
           host_user_id: string | null
           id: string
+          payment_status: string
           payout_status: string | null
           platform_fee_amount: number | null
           reminder_sent_at: string | null
@@ -48,6 +49,7 @@ export type Database = {
           host_payout_amount?: number | null
           host_user_id?: string | null
           id?: string
+          payment_status?: string
           payout_status?: string | null
           platform_fee_amount?: number | null
           reminder_sent_at?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           host_payout_amount?: number | null
           host_user_id?: string | null
           id?: string
+          payment_status?: string
           payout_status?: string | null
           platform_fee_amount?: number | null
           reminder_sent_at?: string | null
