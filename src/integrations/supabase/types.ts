@@ -25,6 +25,7 @@ export type Database = {
           host_payout_amount: number | null
           host_user_id: string | null
           id: string
+          payment_status: string
           payout_status: string | null
           platform_fee_amount: number | null
           reminder_sent_at: string | null
@@ -48,6 +49,7 @@ export type Database = {
           host_payout_amount?: number | null
           host_user_id?: string | null
           id?: string
+          payment_status?: string
           payout_status?: string | null
           platform_fee_amount?: number | null
           reminder_sent_at?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           host_payout_amount?: number | null
           host_user_id?: string | null
           id?: string
+          payment_status?: string
           payout_status?: string | null
           platform_fee_amount?: number | null
           reminder_sent_at?: string | null
@@ -395,6 +398,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      paid_api_limits: {
+        Row: {
+          bucket: string
+          endpoint: string
+          expires_at: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          endpoint: string
+          expires_at: string
+          request_count: number
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          endpoint?: string
+          expires_at?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
       }
       password_reset_otps: {
         Row: {
@@ -1188,6 +1215,10 @@ export type Database = {
       }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      consume_paid_api_quota: {
+        Args: { p_endpoint: string; p_subject?: string }
+        Returns: Json
+      }
       get_host_listing_limit: { Args: { _user_id: string }; Returns: number }
       get_user_role: {
         Args: { _user_id: string }
