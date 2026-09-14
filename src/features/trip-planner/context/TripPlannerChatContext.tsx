@@ -257,7 +257,11 @@ export function TripPlannerChatProvider({ children, initialVendors = [] }: TripP
     };
 
     try {
-      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/trip-planner-chat`;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error("Trip planner needs VITE_SUPABASE_URL. Copy .env.example to .env, then you can still build a weekend sample from the itinerary page.");
+      }
+      const CHAT_URL = `${supabaseUrl}/functions/v1/trip-planner-chat`;
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(CHAT_URL, {
         method: "POST",

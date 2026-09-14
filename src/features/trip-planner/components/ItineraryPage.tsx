@@ -108,6 +108,7 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
     confirmItinerary,
     unconfirmItinerary,
     generateShareLink,
+    generationError,
   } = useItineraryContext();
 
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -201,15 +202,33 @@ export function ItineraryPage({ messages = [] }: ItineraryPageProps) {
     return (
       <PageTransition>
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-          <Calendar className="h-16 w-16 text-muted-foreground/50 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No itinerary yet</h2>
-          <p className="text-muted-foreground text-center mb-6">
-            Chat with the Trip Planner to create your personalized itinerary.
-          </p>
-          <Button onClick={() => navigate("/trip-planner")}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Start Planning
-          </Button>
+          <div className="w-full max-w-[430px] text-center rounded-2xl border border-border/80 bg-card p-8 shadow-sm">
+            <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Calendar className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl mb-2">No itinerary yet</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Chat with JC to plan a trip, or build a weekend sample from published vendors.
+            </p>
+            {generationError && (
+              <p className="text-sm text-destructive mb-4">
+                {generationError.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-3">
+              <Button className="rounded-full" onClick={() => navigate("/trip-planner")}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Start Planning
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-full"
+                onClick={() => generateItineraryFromChat(messages, "full")}
+              >
+                Build weekend sample
+              </Button>
+            </div>
+          </div>
         </div>
       </PageTransition>
     );

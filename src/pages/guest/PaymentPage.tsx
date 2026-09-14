@@ -21,6 +21,7 @@ const PaymentPage = () => {
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoApplied, setPromoApplied] = useState(!!bookingData.promoCode);
   const [promoError, setPromoError] = useState('');
+  const [checkoutUnavailable, setCheckoutUnavailable] = useState(false);
 
   // Get hostId from URL or booking context
   const hostId = searchParams.get('host') || bookingData.hostId;
@@ -136,19 +137,42 @@ const PaymentPage = () => {
       }
     } catch (error) {
       console.error('Checkout error:', error);
+      setCheckoutUnavailable(true);
       toast({
-        title: "Payment error",
-        description: error instanceof Error ? error.message : "Failed to start checkout. Please try again.",
+        title: "Checkout unavailable",
+        description: "Stripe checkout needs test keys in this environment. You can still preview the confirmation screen.",
         variant: "destructive",
       });
       setIsProcessing(false);
     }
   };
 
+  const openConfirmationPreview = () => {
+    navigate(`/vendor/${id}/confirmed`);
+  };
+
+  const hasBookingDetails = Boolean(bookingData.experienceName && bookingData.date && bookingData.totalPrice > 0);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasBookingDetails) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="p-8 text-center max-w-sm space-y-4">
+          <h1 className="text-xl font-medium">No booking to pay for</h1>
+          <p className="text-sm text-muted-foreground">
+            Choose a vendor and complete the booking form first.
+          </p>
+          <Button variant="gradient" onClick={() => navigate(id ? `/vendor/${id}` : '/appview')}>
+            {id ? 'Back to vendor' : 'Back to Explore'}
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -321,6 +345,17 @@ const PaymentPage = () => {
                 <>Proceed to Payment - ${displayPrice.toFixed(2)}</>
               )}
             </Button>
+
+            {(checkoutUnavailable || !isAuthenticated) && (
+              <Button
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={openConfirmationPreview}
+              >
+                View confirmation preview
+              </Button>
+            )}
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" />

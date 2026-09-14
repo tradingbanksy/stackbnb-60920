@@ -1,73 +1,32 @@
-# Welcome to your Lovable project
+# stackd
 
-## Project info
+stackd is a three-sided marketplace for guests, hosts, and vendors, with an AI trip planner.
 
-**URL**: https://lovable.dev/projects/160a2441-125c-46e6-aa28-bab95c372e67
+## Setup
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/160a2441-125c-46e6-aa28-bab95c372e67) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+You need Node.js and npm. Copy `.env.example` to `.env` and fill in your own values. Do not commit `.env`.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Demo seed
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Published guest listings come from `vendor_profiles`. To fill Explore / AppView with 8 demo vendors:
 
-**Use GitHub Codespaces**
+1. Apply existing migrations to your Supabase project.
+2. Run `supabase/seed.sql` in the SQL editor, **or** apply the additive migration `supabase/migrations/20260913160000_demo_vendor_seed.sql` (`supabase db push` / `supabase db reset`).
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+`user_id` is a sentinel UUID (`00000000-0000-4000-a000-000000000001`). It is not a real auth user. The table does not require an `auth.users` row for that column.
 
-## What technologies are used for this project?
+Stripe checkout still needs test keys in Edge Function secrets. Without them, the booking form and payment summary still work; use **View confirmation preview** after checkout fails.
 
-This project is built with:
+## Tech
 
 - Vite
 - TypeScript
 - React
-- shadcn-ui
+- shadcn/ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/160a2441-125c-46e6-aa28-bab95c372e67) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Supabase

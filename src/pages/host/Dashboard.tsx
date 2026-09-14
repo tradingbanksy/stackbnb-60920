@@ -446,21 +446,27 @@ const HostDashboard = () => {
               ))}
             </div>
           ) : vendors.length === 0 ? (
-            <Card className="p-6 text-center">
+            <Card className="p-6 text-center rounded-2xl">
               <Store className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No vendors with affiliate programs yet</p>
+              <p className="text-sm font-medium mb-1">No partner rates yet</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Published vendors with a commission % will show here after you apply the demo seed.
+              </p>
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => navigate('/explore?mode=host')}>
+                Browse vendors
+              </Button>
             </Card>
           ) : (
             <div className="space-y-3">
               {vendors.map((vendor) => (
                 <Card
                   key={vendor.id}
-                  className="p-4 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 cursor-pointer group"
+                  className="p-4 rounded-2xl border-border/80 hover:shadow-lg transition-all duration-200 hover:scale-[1.01] active:scale-95 cursor-pointer group"
                   onClick={() => navigate(`/vendor/${vendor.id}?mode=host`)}
                 >
                   <div className="flex items-center gap-3">
                     {/* Vendor Photo */}
-                    <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-orange-500/20 to-pink-500/20">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-orange-500/20 to-pink-500/20 ring-1 ring-border/60">
                       {vendor.photos && vendor.photos.length > 0 ? (
                         <img
                           src={vendor.photos[0]}
@@ -489,10 +495,11 @@ const HostDashboard = () => {
                     </div>
                     
                     {/* Commission Badge */}
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 text-right">
                       <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-lg px-3 py-1 font-bold">
                         {vendor.commission_percentage}%
                       </Badge>
+                      <p className="text-[10px] text-muted-foreground mt-1">per booking</p>
                     </div>
                   </div>
                 </Card>

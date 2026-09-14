@@ -2,6 +2,28 @@ import type { Message, ItineraryItemCategory, ItineraryDay, ItineraryItem } from
 
 export const CHAT_HISTORY_KEY = "tripPlannerChatHistory";
 export const MAX_MESSAGE_LENGTH = 2000;
+export const LOCAL_SHARE_PREFIX = "stackd_local_share_";
+
+export function persistLocalSharedItinerary(token: string, payload: unknown) {
+  const serialized = JSON.stringify(payload);
+  try {
+    sessionStorage.setItem(LOCAL_SHARE_PREFIX + token, serialized);
+    localStorage.setItem(LOCAL_SHARE_PREFIX + token, serialized);
+  } catch {
+    // Ignore quota / private-mode failures
+  }
+}
+
+export function readLocalSharedItinerary(token: string): unknown | null {
+  try {
+    const raw =
+      sessionStorage.getItem(LOCAL_SHARE_PREFIX + token) ||
+      localStorage.getItem(LOCAL_SHARE_PREFIX + token);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 // ============================================
 // Confirmed Activity Detection (for auto-add)

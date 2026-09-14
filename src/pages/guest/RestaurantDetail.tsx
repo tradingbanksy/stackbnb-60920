@@ -261,7 +261,7 @@ const RestaurantDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-[100px]">
-      <div className="max-w-[375px] mx-auto">
+      <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto">
 
         {/* Floating header bar */}
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
@@ -286,20 +286,23 @@ const RestaurantDetail = () => {
           </div>
         </header>
 
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
         {photos.length > 0 ? (
-          <div className="px-4">
+          <div className="px-4 lg:px-6 lg:pt-2">
             <StackedPhotoGrid photos={photos} alt={restaurant.name} />
           </div>
         ) : isLoadingReviews ? (
-          <div className="px-4">
+          <div className="px-4 lg:px-6 lg:pt-2">
             <div className="aspect-[4/3] rounded-xl bg-muted animate-pulse flex items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="hidden lg:block" />
+        )}
 
         {/* Content sections */}
-        <div className="px-4">
+        <div className="px-4 lg:px-6">
 
           {/* Section: Title + Rating */}
           <div className="py-6 space-y-2">
@@ -526,10 +529,11 @@ const RestaurantDetail = () => {
             </>
           )}
         </div>
+        </div>
 
         {/* Fixed bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-40">
-          <div className="max-w-[375px] mx-auto flex gap-3">
+          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto flex gap-3">
             <Button
               variant="outline"
               className="flex-1 rounded-full"

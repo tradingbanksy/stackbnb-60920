@@ -81,7 +81,7 @@ const BookingForm = () => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="max-w-[375px] mx-auto">
+      <div className="max-w-[375px] md:max-w-xl lg:max-w-2xl mx-auto">
         {/* Progress Indicator */}
         <div className="bg-card border-b p-4">
           <div className="text-center text-sm text-muted-foreground mb-2">Step 1 of 3</div>

@@ -261,13 +261,14 @@ const AppView = () => {
   });
 
   return (
-    <PageTransition className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
-      {/* Phone Container - Centered & Constrained */}
-      <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative">
+    <PageTransition className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden lg:h-auto lg:min-h-screen lg:overflow-visible">
+      {/* Phone container on mobile; full-width website shell on md/lg+ */}
+      <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative md:max-w-5xl lg:max-w-6xl lg:h-auto lg:min-h-screen lg:overflow-visible">
+        <div className="hidden lg:block h-14 shrink-0" aria-hidden="true" />
         
-        <Tabs defaultValue="explore" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="explore" className="flex-1 flex flex-col overflow-hidden lg:overflow-visible">
           {/* Sticky Tabs Header */}
-          <div className="flex-shrink-0 sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="flex-shrink-0 sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border lg:top-14 lg:bg-background lg:z-30">
             <TabsList className="w-full justify-start rounded-none bg-transparent h-10 p-0">
               <TabsTrigger 
                 value="explore" 
@@ -290,7 +291,7 @@ const AppView = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="explore" className="flex-1 overflow-y-auto overflow-x-hidden pb-20 mt-0">
+          <TabsContent value="explore" className="flex-1 overflow-y-auto overflow-x-hidden pb-20 mt-0 lg:overflow-visible lg:pb-8">
             {/* Hero Section - Now scrollable */}
             <div className="relative">
               {/* Background image */}
@@ -380,7 +381,7 @@ const AppView = () => {
                 </p>
 
                 {/* Search Section - Single Bar */}
-                <div className="relative">
+                <div className="relative md:max-w-2xl md:mx-auto">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
                   <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2">
                     {/* Left: Location icon */}
@@ -459,7 +460,7 @@ const AppView = () => {
               </div>
             </div>
             
-            <div className="px-3 py-3 space-y-5">
+            <div className="px-3 py-3 space-y-5 md:px-6">
 
               {/* My Businesses */}
               {myBusinesses.length > 0 && (
@@ -470,13 +471,13 @@ const AppView = () => {
                       View all
                     </Link>
                   </div>
-                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                    <div className="flex gap-3 w-max">
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:overflow-visible md:mx-0 md:px-0">
+                    <div className="flex gap-3 w-max md:grid md:grid-cols-4 lg:grid-cols-6 md:w-full">
                       {myBusinesses.map((business) => (
                         <Link
                           key={business.id}
                           to="/host/vendors"
-                          className="flex-shrink-0 w-28"
+                          className="flex-shrink-0 w-28 md:w-auto md:min-w-0"
                         >
                           <div className="aspect-square bg-gradient-to-br from-orange-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-border">
                             <Store className="h-8 w-8 text-muted-foreground" />
@@ -498,13 +499,13 @@ const AppView = () => {
                     <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:overflow-visible md:mx-0 md:px-0">
+                  <div className="flex gap-3 w-max pb-2 md:grid md:grid-cols-3 lg:grid-cols-4 md:w-full">
                     {isLoadingVendors ? (
                       // Show skeleton loading states
                       <>
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="flex-shrink-0 w-36">
+                          <div key={i} className="flex-shrink-0 w-36 md:w-auto md:min-w-0">
                             <Skeleton className="aspect-square rounded-xl" />
                           </div>
                         ))}
@@ -516,7 +517,7 @@ const AppView = () => {
                           <Link
                             key={vendor.id}
                             to={`/vendor/${vendor.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group"
+                            className="flex-shrink-0 w-36 animate-fade-in group md:w-auto md:min-w-0"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
@@ -571,7 +572,7 @@ const AppView = () => {
                             <Link
                               key={restaurant.id}
                               to={`/restaurant/${restaurant.id}`}
-                              className="flex-shrink-0 w-36 animate-fade-in group"
+                              className="flex-shrink-0 w-36 animate-fade-in group md:w-auto md:min-w-0"
                               style={{ animationDelay: `${(vendorRestaurants.length + index) * 50}ms` }}
                             >
                               <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
@@ -601,7 +602,7 @@ const AppView = () => {
 
                         {/* Empty state when no restaurants at all */}
                         {vendorRestaurants.length === 0 && curatedRestaurants.length === 0 && (
-                          <div className="flex-shrink-0 w-full py-4 text-center">
+                          <div className="flex-shrink-0 w-full py-4 text-center md:col-span-full">
                             <p className="text-xs text-muted-foreground">No restaurants available in {destination} yet</p>
                           </div>
                         )}
@@ -619,13 +620,13 @@ const AppView = () => {
                     <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:overflow-visible md:mx-0 md:px-0">
+                  <div className="flex gap-3 w-max pb-2 md:grid md:grid-cols-3 lg:grid-cols-4 md:w-full">
                     {isLoadingVendors ? (
                       // Show skeleton loading states
                       <>
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="flex-shrink-0 w-36">
+                          <div key={i} className="flex-shrink-0 w-36 md:w-auto md:min-w-0">
                             <Skeleton className="aspect-square rounded-xl" />
                           </div>
                         ))}
@@ -637,7 +638,7 @@ const AppView = () => {
                           <Link
                             key={vendor.id}
                             to={`/vendor/${vendor.id}`}
-                            className="flex-shrink-0 w-36 animate-fade-in group"
+                            className="flex-shrink-0 w-36 animate-fade-in group md:w-auto md:min-w-0"
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <div className="aspect-square rounded-xl overflow-hidden relative transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)]">
@@ -682,7 +683,7 @@ const AppView = () => {
                         ))}
                         {/* Empty state when no experiences */}
                         {vendorExperiences.length === 0 && (
-                          <div className="flex-shrink-0 w-full py-4 text-center">
+                          <div className="flex-shrink-0 w-full py-4 text-center md:col-span-full">
                             <p className="text-xs text-muted-foreground">No experiences available in {destination} yet</p>
                           </div>
                         )}
@@ -707,7 +708,7 @@ const AppView = () => {
                     <p className="text-[10px] text-muted-foreground mt-1">Heart experiences to save them here</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {/* Vendor favorites */}
                     {[...vendorExperiences, ...vendorRestaurants]
                       .filter(vendor => vendorFavorites.includes(vendor.id))
@@ -752,8 +753,8 @@ const AppView = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="services" className="flex-1 overflow-y-auto pb-20 mt-0">
-            <div className="px-4 py-6 space-y-5">
+          <TabsContent value="services" className="flex-1 overflow-y-auto pb-20 mt-0 lg:overflow-visible lg:pb-8">
+            <div className="px-4 py-6 space-y-5 md:px-6 md:max-w-3xl md:mx-auto">
               <div className="text-center">
                 <img src={stackdLogo} alt="stackd" className="h-32 w-32 mx-auto" />
               </div>
@@ -914,8 +915,8 @@ Get additional advertising and promote your affiliate programs to reach more cus
             </div>
           </TabsContent>
 
-          <TabsContent value="about" className="flex-1 overflow-y-auto pb-20 mt-0">
-            <div className="px-4 py-6 space-y-6">
+          <TabsContent value="about" className="flex-1 overflow-y-auto pb-20 mt-0 lg:overflow-visible lg:pb-8">
+            <div className="px-4 py-6 space-y-6 md:px-6 md:max-w-3xl md:mx-auto">
               {/* Logo and Tagline */}
               <div className="text-center space-y-2">
                 <img src={stackdLogo} alt="stackd" className="h-32 w-32 mx-auto" />
@@ -972,18 +973,18 @@ Get additional advertising and promote your affiliate programs to reach more cus
           </TabsContent>
         </Tabs>
 
-        {/* Bottom Navigation - Fixed within container with glass effect */}
-        <nav className="absolute bottom-0 left-0 right-0 z-50 pb-safe">
+        {/* Bottom nav on mobile; top desktop nav on lg+ */}
+        <nav className="absolute bottom-0 left-0 right-0 z-50 pb-safe lg:fixed lg:bottom-auto lg:top-0 lg:pb-0 lg:z-[60]">
           {/* Glass effect container */}
           <div className="relative">
             {/* Frosted glass background */}
-            <div className="absolute inset-0 bg-card/80 backdrop-blur-xl border-t border-white/10 dark:border-white/5" />
+            <div className="absolute inset-0 bg-card/80 backdrop-blur-xl border-t border-white/10 dark:border-white/5 lg:border-t-0 lg:border-b" />
             
             {/* Gradient glow effect */}
-            <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent lg:top-auto lg:-bottom-px" />
             
             {/* Content */}
-            <div className="relative flex justify-around items-center h-14">
+            <div className="relative flex justify-around items-center h-14 lg:max-w-6xl lg:mx-auto lg:justify-center lg:gap-2">
               {[
                 { to: "/wishlists", icon: Heart, label: "Wishlists", badge: favorites.length },
                 { to: "/trip-planner", icon: Sparkles, label: "AI" },
@@ -998,7 +999,7 @@ Get additional advertising and promote your affiliate programs to reach more cus
                     to={item.to}
                     className={cn(
                       "relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-300",
-                      "active:scale-90 touch-manipulation",
+                      "active:scale-90 touch-manipulation lg:flex-none lg:flex-row lg:gap-2 lg:px-8",
                       isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1006,7 +1007,7 @@ Get additional advertising and promote your affiliate programs to reach more cus
                     {isActive && (
                       <motion.div
                         layoutId="appNavIndicator"
-                        className="absolute -top-0.5 h-1 w-1 rounded-full bg-primary"
+                        className="absolute -top-0.5 h-1 w-1 rounded-full bg-primary lg:top-auto lg:bottom-1"
                         initial={false}
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       />
@@ -1044,7 +1045,7 @@ Get additional advertising and promote your affiliate programs to reach more cus
                     </motion.div>
                     
                     <span className={cn(
-                      "text-[9px] transition-all duration-200",
+                      "text-[9px] transition-all duration-200 lg:text-sm",
                       isActive ? "font-semibold" : "font-medium"
                     )}>
                       {item.label}

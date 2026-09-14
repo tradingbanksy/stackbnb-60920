@@ -7,10 +7,6 @@ import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-beach.jpg";
 import stackdLogo from "@/assets/stackd-logo-new.png";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ExperienceCard } from "@/components/ExperienceCard";
-import RestaurantCard from "@/components/RestaurantCard";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -21,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface VendorProfile {
   id: string;
@@ -55,6 +52,81 @@ const restaurantCategories = [
   { id: "Mediterranean", name: "Mediterranean", icon: "🥗" },
 ];
 
+function ExploreVendorCard({
+  vendor,
+  isHostMode,
+  isSaved,
+  isLoading,
+  onAdd,
+  className,
+}: {
+  vendor: VendorProfile;
+  isHostMode: boolean;
+  isSaved: boolean;
+  isLoading: boolean;
+  onAdd: (e: React.MouseEvent) => void;
+  className?: string;
+}) {
+  return (
+    <Link
+      to={`/vendor/${vendor.id}${isHostMode ? "?mode=host" : ""}`}
+      className={cn("block", className)}
+    >
+      <div className="aspect-square rounded-xl overflow-hidden relative">
+        {vendor.photos && vendor.photos.length > 0 ? (
+          <img
+            src={vendor.photos[0]}
+            alt={vendor.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
+            <Store className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+        {isHostMode && (
+          <button
+            onClick={onAdd}
+            disabled={isLoading}
+            className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
+              isSaved
+                ? "bg-green-500 text-white"
+                : "bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600"
+            }`}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isSaved ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+          </button>
+        )}
+
+        <div className="absolute bottom-2 left-2 right-2">
+          <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+          <div className="flex items-center gap-1 text-white/80 text-[10px]">
+            {vendor.google_rating && (
+              <>
+                <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                <span>{vendor.google_rating}</span>
+                <span>•</span>
+              </>
+            )}
+            <span>${vendor.price_per_person || 0}</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-1.5">
+        <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
+      </div>
+    </Link>
+  );
+}
+
 const Explore = () => {
   const [selectedExperienceCategory, setSelectedExperienceCategory] = useState("all");
   const [selectedRestaurantCategory, setSelectedRestaurantCategory] = useState("all");
@@ -68,7 +140,6 @@ const Explore = () => {
   
   // Check if we're in host mode (came from host vendors page)
   const isHostMode = searchParams.get('mode') === 'host' || (isAuthenticated && role === 'host');
-  const isHost = isAuthenticated && role === 'host';
 
   useEffect(() => {
     fetchVendorProfiles();
@@ -182,12 +253,12 @@ const Explore = () => {
   const restaurantsRow2 = filteredVendorRestaurants.slice(restaurantMidPoint);
 
   return (
-    <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden">
-      {/* Phone Container - Centered & Constrained */}
-      <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative">
+    <div className="min-h-screen h-screen w-screen bg-background flex justify-center overflow-hidden lg:h-auto lg:min-h-screen lg:overflow-x-hidden">
+      {/* Phone container on mobile; full-width website shell on md/lg+ */}
+      <div className="w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative md:max-w-5xl lg:max-w-6xl lg:h-auto lg:min-h-screen lg:overflow-visible">
         
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20 lg:overflow-visible lg:pb-8">
           {/* Hero Section */}
           <div className="relative">
             {/* Background image */}
@@ -280,7 +351,7 @@ const Explore = () => {
               </p>
 
               {/* Search Section - Single Bar */}
-              <div className="relative">
+              <div className="relative md:max-w-2xl md:mx-auto">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-purple-600/20 rounded-full blur-sm"></div>
                 <div className="relative bg-card/90 rounded-full border border-border/50 backdrop-blur-sm flex items-center px-3 py-2 gap-2">
                   <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
@@ -299,7 +370,7 @@ const Explore = () => {
           </div>
 
           {/* Tabs for Experiences and Restaurants */}
-          <Tabs defaultValue="experiences" className="px-3 py-3">
+          <Tabs defaultValue="experiences" className="px-3 py-3 md:px-6">
             <TabsList className="w-full justify-start rounded-none bg-transparent h-10 p-0 border-b border-border mb-4">
               <TabsTrigger 
                 value="experiences" 
@@ -338,141 +409,55 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Row 1 - First half of verified vendors */}
-              {experiencesRow1.length > 0 && (
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
-                    {experiencesRow1.map((vendor) => (
-                      <Link
-                        key={vendor.id}
-                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
-                        className="flex-shrink-0 w-40 block"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          {vendor.photos && vendor.photos.length > 0 ? (
-                            <img
-                              src={vendor.photos[0]}
-                              alt={vendor.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
-                              <Store className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {isHostMode && (
-                            <button
-                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
-                              disabled={loadingVendors[vendor.id]}
-                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
-                                hasRecommendation(vendor.id, 'vendor')
-                                  ? 'bg-green-500 text-white' 
-                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
-                              }`}
-                            >
-                              {loadingVendors[vendor.id] ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : hasRecommendation(vendor.id, 'vendor') ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                            </button>
-                          )}
-                          
-                          {/* Commission badge removed - sensitive data not exposed in public listing */}
-                          
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {vendor.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{vendor.google_rating}</span>
-                                  <span>•</span>
-                                </>
-                              )}
-                              <span>${vendor.price_per_person || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-1.5">
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
-                        </div>
-                      </Link>
-                    ))}
+              {/* Mobile: two horizontal rows. md+: multi-column grid */}
+              <div className="space-y-4 md:hidden">
+                {experiencesRow1.length > 0 && (
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                    <div className="flex gap-3 w-max pb-2">
+                      {experiencesRow1.map((vendor) => (
+                        <ExploreVendorCard
+                          key={vendor.id}
+                          vendor={vendor}
+                          isHostMode={isHostMode}
+                          isSaved={hasRecommendation(vendor.id, "vendor")}
+                          isLoading={!!loadingVendors[vendor.id]}
+                          onAdd={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                          className="flex-shrink-0 w-40"
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Row 2 - Second half of verified vendors */}
-              {experiencesRow2.length > 0 && (
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
-                    {experiencesRow2.map((vendor) => (
-                      <Link
-                        key={vendor.id}
-                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
-                        className="flex-shrink-0 w-40 block"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          {vendor.photos && vendor.photos.length > 0 ? (
-                            <img
-                              src={vendor.photos[0]}
-                              alt={vendor.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
-                              <Store className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {isHostMode && (
-                            <button
-                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
-                              disabled={loadingVendors[vendor.id]}
-                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
-                                hasRecommendation(vendor.id, 'vendor')
-                                  ? 'bg-green-500 text-white' 
-                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
-                              }`}
-                            >
-                              {loadingVendors[vendor.id] ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : hasRecommendation(vendor.id, 'vendor') ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                            </button>
-                          )}
-                          
-                          {/* Commission badge removed - sensitive data not exposed in public listing */}
-                          
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {vendor.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{vendor.google_rating}</span>
-                                  <span>•</span>
-                                </>
-                              )}
-                              <span>${vendor.price_per_person || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-1.5">
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
-                        </div>
-                      </Link>
-                    ))}
+                )}
+                {experiencesRow2.length > 0 && (
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                    <div className="flex gap-3 w-max pb-2">
+                      {experiencesRow2.map((vendor) => (
+                        <ExploreVendorCard
+                          key={vendor.id}
+                          vendor={vendor}
+                          isHostMode={isHostMode}
+                          isSaved={hasRecommendation(vendor.id, "vendor")}
+                          isLoading={!!loadingVendors[vendor.id]}
+                          onAdd={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                          className="flex-shrink-0 w-40"
+                        />
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
+              {filteredVendorExperiences.length > 0 && (
+                <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {filteredVendorExperiences.map((vendor) => (
+                    <ExploreVendorCard
+                      key={vendor.id}
+                      vendor={vendor}
+                      isHostMode={isHostMode}
+                      isSaved={hasRecommendation(vendor.id, "vendor")}
+                      isLoading={!!loadingVendors[vendor.id]}
+                      onAdd={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                    />
+                  ))}
                 </div>
               )}
 
@@ -506,141 +491,55 @@ const Explore = () => {
                 ))}
               </div>
 
-              {/* Row 1 - First half of verified restaurants */}
-              {restaurantsRow1.length > 0 && (
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
-                    {restaurantsRow1.map((vendor) => (
-                      <Link
-                        key={vendor.id}
-                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
-                        className="flex-shrink-0 w-40 block"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          {vendor.photos && vendor.photos.length > 0 ? (
-                            <img
-                              src={vendor.photos[0]}
-                              alt={vendor.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
-                              <Store className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {isHostMode && (
-                            <button
-                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
-                              disabled={loadingVendors[vendor.id]}
-                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
-                                hasRecommendation(vendor.id, 'vendor')
-                                  ? 'bg-green-500 text-white' 
-                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
-                              }`}
-                            >
-                              {loadingVendors[vendor.id] ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : hasRecommendation(vendor.id, 'vendor') ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                            </button>
-                          )}
-                          
-                          {/* Commission badge removed - sensitive data not exposed in public listing */}
-                          
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {vendor.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{vendor.google_rating}</span>
-                                  <span>•</span>
-                                </>
-                              )}
-                              <span>${vendor.price_per_person || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-1.5">
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
-                        </div>
-                      </Link>
-                    ))}
+              {/* Mobile: two horizontal rows. md+: multi-column grid */}
+              <div className="space-y-4 md:hidden">
+                {restaurantsRow1.length > 0 && (
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                    <div className="flex gap-3 w-max pb-2">
+                      {restaurantsRow1.map((vendor) => (
+                        <ExploreVendorCard
+                          key={vendor.id}
+                          vendor={vendor}
+                          isHostMode={isHostMode}
+                          isSaved={hasRecommendation(vendor.id, "vendor")}
+                          isLoading={!!loadingVendors[vendor.id]}
+                          onAdd={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                          className="flex-shrink-0 w-40"
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Row 2 - Second half of verified restaurants */}
-              {restaurantsRow2.length > 0 && (
-                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
-                  <div className="flex gap-3 w-max pb-2">
-                    {restaurantsRow2.map((vendor) => (
-                      <Link
-                        key={vendor.id}
-                        to={`/vendor/${vendor.id}${isHostMode ? '?mode=host' : ''}`}
-                        className="flex-shrink-0 w-40 block"
-                      >
-                        <div className="aspect-square rounded-xl overflow-hidden relative">
-                          {vendor.photos && vendor.photos.length > 0 ? (
-                            <img
-                              src={vendor.photos[0]}
-                              alt={vendor.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-purple-600/20 flex items-center justify-center">
-                              <Store className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {isHostMode && (
-                            <button
-                              onClick={(e) => handleAddVendor(vendor.id, vendor.name, e)}
-                              disabled={loadingVendors[vendor.id]}
-                              className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-lg transition-all duration-200 ${
-                                hasRecommendation(vendor.id, 'vendor')
-                                  ? 'bg-green-500 text-white' 
-                                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600'
-                              }`}
-                            >
-                              {loadingVendors[vendor.id] ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : hasRecommendation(vendor.id, 'vendor') ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                            </button>
-                          )}
-                          
-                          {/* Commission badge removed - sensitive data not exposed in public listing */}
-                          
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
-                            <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                              {vendor.google_rating && (
-                                <>
-                                  <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                                  <span>{vendor.google_rating}</span>
-                                  <span>•</span>
-                                </>
-                              )}
-                              <span>${vendor.price_per_person || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-1.5">
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{vendor.category}</p>
-                        </div>
-                      </Link>
-                    ))}
+                )}
+                {restaurantsRow2.length > 0 && (
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3">
+                    <div className="flex gap-3 w-max pb-2">
+                      {restaurantsRow2.map((vendor) => (
+                        <ExploreVendorCard
+                          key={vendor.id}
+                          vendor={vendor}
+                          isHostMode={isHostMode}
+                          isSaved={hasRecommendation(vendor.id, "vendor")}
+                          isLoading={!!loadingVendors[vendor.id]}
+                          onAdd={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                          className="flex-shrink-0 w-40"
+                        />
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
+              {filteredVendorRestaurants.length > 0 && (
+                <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {filteredVendorRestaurants.map((vendor) => (
+                    <ExploreVendorCard
+                      key={vendor.id}
+                      vendor={vendor}
+                      isHostMode={isHostMode}
+                      isSaved={hasRecommendation(vendor.id, "vendor")}
+                      isLoading={!!loadingVendors[vendor.id]}
+                      onAdd={(e) => handleAddVendor(vendor.id, vendor.name, e)}
+                    />
+                  ))}
                 </div>
               )}
 

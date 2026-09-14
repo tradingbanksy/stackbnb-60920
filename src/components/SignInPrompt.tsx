@@ -24,7 +24,7 @@ export const SignInPrompt = ({
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-[375px] md:max-w-xl lg:max-w-2xl mx-auto px-4 py-6 space-y-6">
         <button
           onClick={goBack}
           aria-label="Go back"

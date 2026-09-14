@@ -35,7 +35,7 @@ const HostBottomNav = () => {
         <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         
         {/* Content */}
-        <div className="relative flex justify-around items-center h-16 max-w-[375px] mx-auto">
+        <div className="relative flex justify-around items-center h-16 max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || 

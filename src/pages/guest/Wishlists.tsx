@@ -326,7 +326,7 @@ const Wishlists = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {wishlistExperiences.map((exp) => (
                 <Card key={exp.itemId} className="overflow-hidden group">
                   <div className="relative aspect-[4/3]">
@@ -433,7 +433,7 @@ const Wishlists = () => {
               <div className="space-y-6">
                 {/* Favorite Vendors */}
                 {favoriteVendors.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {favoriteVendors.map((vendor) => (
                       <Card 
                         key={vendor.id} 
@@ -480,7 +480,7 @@ const Wishlists = () => {
 
                 {/* Wishlists */}
                 {wishlists.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {wishlists.map((wishlist) => {
                       const thumbnails = getWishlistThumbnails(wishlist);
                       const itemCount = wishlist.items?.length || 0;
@@ -567,7 +567,7 @@ const Wishlists = () => {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {favoriteRestaurants.map((restaurant) => (
                   <Card 
                     key={restaurant.id} 

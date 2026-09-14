@@ -16,7 +16,7 @@ interface GlassBottomNavProps {
   maxWidth?: string;
 }
 
-const GlassBottomNav = ({ items, maxWidth = "max-w-[375px]" }: GlassBottomNavProps) => {
+const GlassBottomNav = ({ items, maxWidth = "max-w-[375px] md:max-w-3xl lg:max-w-5xl" }: GlassBottomNavProps) => {
   const location = useLocation();
 
   return (

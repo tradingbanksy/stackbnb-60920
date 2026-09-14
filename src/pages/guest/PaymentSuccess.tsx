@@ -266,6 +266,26 @@ END:VCALENDAR`;
     );
   }
 
+  const hasBookingDetails = Boolean(bookingData.experienceName);
+  if (!hasBookingDetails && !sessionId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="p-8 text-center max-w-sm space-y-4 rounded-2xl">
+          <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+            <CheckCircle className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <h1 className="text-xl">No confirmation to show</h1>
+          <p className="text-sm text-muted-foreground">
+            Book an experience to see your confirmation here.
+          </p>
+          <Button variant="gradient" className="rounded-full" onClick={() => navigate('/appview')}>
+            Back to Explore
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   // If booking was cancelled, show cancelled state
   if (isCancelled) {
     return (
@@ -316,10 +336,10 @@ END:VCALENDAR`;
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="max-w-[375px] mx-auto">
+      <div className="shot-frame sm:border-x sm:border-border sm:shadow-2xl">
         {/* Progress Indicator */}
-        <div className="bg-card border-b p-4">
-          <div className="text-center text-sm text-muted-foreground mb-2">Payment Complete</div>
+        <div className="bg-card/80 border-b border-border p-4">
+          <div className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-2">Confirmed</div>
           <div className="flex gap-1">
             <div className="h-1 flex-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full" />
             <div className="h-1 flex-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full" />
@@ -334,15 +354,19 @@ END:VCALENDAR`;
               <CheckCircle className="h-12 w-12 text-white" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-medium">Payment Successful!</h1>
-              <p className="text-muted-foreground">
-                Your booking has been confirmed
+              <h1 className="text-2xl">
+                {sessionId ? 'Payment successful' : 'Booking confirmed'}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {sessionId
+                  ? 'Your booking is confirmed. Details are below.'
+                  : 'Preview of your booking details'}
               </p>
             </div>
           </div>
 
           {/* Booking Details */}
-          <Card className="p-5 space-y-4">
+          <Card className="p-5 space-y-4 rounded-2xl border-border/80">
             <div className="space-y-3">
               <h2 className="font-semibold text-lg">{bookingData.experienceName || "Experience Booked"}</h2>
               
@@ -387,7 +411,7 @@ END:VCALENDAR`;
               {bookingData.totalPrice > 0 && (
                 <div className="pt-4 mt-4 border-t">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold">Total Paid</span>
+                    <span className="font-semibold">{sessionId ? 'Total paid' : 'Total'}</span>
                     <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
                       ${bookingData.totalPrice}
                     </span>
@@ -420,13 +444,17 @@ END:VCALENDAR`;
           )}
 
           {/* Email Confirmation */}
-          <Card className="p-5 bg-muted/30">
+          <Card className="p-5 bg-muted/40 rounded-2xl border-border/60">
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="font-medium text-sm">Confirmation Email Sent</p>
+                <p className="font-medium text-sm">
+                  {user?.email || guestData.email ? 'Confirmation email' : 'Confirmation'}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  A confirmation email has been sent to <span className="font-medium">{user?.email || guestData.email}</span>
+                  {user?.email || guestData.email
+                    ? <>Details will go to <span className="font-medium text-foreground">{user?.email || guestData.email}</span></>
+                    : 'Sign in to receive a confirmation email after checkout.'}
                 </p>
               </div>
             </div>

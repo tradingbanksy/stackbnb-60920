@@ -184,6 +184,7 @@ const VendorBookingForm = () => {
     updateBookingData({
       experienceId: vendor.id,
       experienceName: selectedTier ? `${vendor.name} - ${selectedTier.name}` : vendor.name,
+      vendorProfileId: vendor.id,
       vendorName: vendor.category,
       date: formData.date,
       time: formData.time,

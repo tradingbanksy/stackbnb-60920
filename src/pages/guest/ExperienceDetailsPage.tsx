@@ -130,7 +130,7 @@ const ExperienceDetails = () => {
 
   return (
     <div className="min-h-screen bg-background pb-[100px]">
-      <div className="max-w-[375px] mx-auto">
+      <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto">
 
         {/* Floating header bar */}
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
@@ -155,13 +155,14 @@ const ExperienceDetails = () => {
           </div>
         </header>
 
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
         {/* Photo Grid */}
-        <div className="px-4">
+        <div className="px-4 lg:px-6 lg:pt-2">
           <StackedPhotoGrid photos={photos} alt={experience.name} />
         </div>
 
         {/* Content sections */}
-        <div className="px-4">
+        <div className="px-4 lg:px-6">
 
           {/* Section: Title + Rating */}
           <div className="py-6 space-y-2">
@@ -243,10 +244,11 @@ const ExperienceDetails = () => {
             />
           </div>
         </div>
+        </div>
 
         {/* Fixed Bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-40">
-          <div className="max-w-[375px] mx-auto flex items-center justify-between gap-4">
+          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto flex items-center justify-between gap-4">
             <div>
               <p className="text-[13px] text-muted-foreground">From</p>
               <p className="text-xl font-semibold">${experience.price}<span className="text-[14px] font-normal text-muted-foreground"> /person</span></p>

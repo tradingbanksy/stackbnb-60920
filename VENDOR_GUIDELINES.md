@@ -8,15 +8,14 @@ Use this document as a reference when creating or editing vendor profiles in sta
 
 ### New Vendor Signup
 1. Vendor signs up via `/auth` with role "vendor"
-2. Redirected to `/test-instagram` to scrape photos from Instagram
-3. Navigates to `/vendor/create-profile` to complete profile
-4. Once saved, redirected to `/vendor/preview` to see how guests view their profile
+2. Redirected to `/vendor/create-profile` to complete profile
+3. Once saved, redirected to `/vendor/preview` to see how guests view their profile
 
 ### Returning Vendor Login
 1. Vendor logs in via `/auth`
 2. System checks if `vendor_profiles` exists for user
 3. **If profile exists** → Redirect to `/vendor/dashboard`
-4. **If no profile** → Redirect to `/test-instagram` to create one
+4. **If no profile** → Redirect to `/vendor/create-profile` to create one
 
 ### Profile Create vs Update
 - `/vendor/create-profile` automatically detects existing profile

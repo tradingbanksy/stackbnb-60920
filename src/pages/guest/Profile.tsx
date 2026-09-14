@@ -140,7 +140,7 @@ const Profile = () => {
 
   return (
     <PageTransition className="min-h-screen bg-background pb-24">
-      <div className="max-w-[375px] mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-[375px] md:max-w-xl lg:max-w-2xl mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"

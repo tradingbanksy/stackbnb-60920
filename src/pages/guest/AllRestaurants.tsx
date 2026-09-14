@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star, Store } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import RestaurantFilters, { type FilterState } from "@/components/RestaurantFilters";
 import RestaurantCard from "@/components/RestaurantCard";
@@ -15,6 +15,16 @@ import {
 } from "@/data/mockRestaurants";
 import { useNearbyPlaces } from "@/hooks/useNearbyPlaces";
 import { type GeoapifyPlace, type AutocompleteSuggestion } from "@/services/googleMapsService";
+import { supabase } from "@/integrations/supabase/client";
+
+interface VendorRestaurant {
+  id: string;
+  name: string;
+  category: string;
+  photos: string[] | null;
+  price_per_person: number | null;
+  google_rating: number | null;
+}
 
 const convertApiPlaceToRestaurant = (place: GeoapifyPlace): Restaurant => ({
   id: place.id,
@@ -41,6 +51,7 @@ const convertApiPlaceToRestaurant = (place: GeoapifyPlace): Restaurant => ({
 
 const AllRestaurants = () => {
   const navigate = useNavigate();
+  const [vendorRestaurants, setVendorRestaurants] = useState<VendorRestaurant[]>([]);
   const [searchCity, setSearchCity] = useState("");
   const [searchZip, setSearchZip] = useState("");
   const [filters, setFilters] = useState<FilterState>({
@@ -60,6 +71,20 @@ const AllRestaurants = () => {
     setPlacesFromSelection,
     isLocationLoading 
   } = useNearbyPlaces();
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id, name, category, photos, price_per_person, google_rating')
+        .eq('is_published', true)
+        .eq('listing_type', 'restaurant');
+      if (!error && data) {
+        setVendorRestaurants(data as VendorRestaurant[]);
+      }
+    };
+    fetchVendors();
+  }, []);
 
   const handleSearch = () => {
     const query = searchCity || searchZip;
@@ -108,8 +133,10 @@ const AllRestaurants = () => {
       restaurants = apiPlaces.map(convertApiPlaceToRestaurant);
     } else if (searchCity || searchZip) {
       restaurants = filterRestaurantsByLocation(mockRestaurants, searchCity, searchZip);
-    } else {
+    } else if (vendorRestaurants.length === 0) {
       restaurants = mockRestaurants;
+    } else {
+      restaurants = [];
     }
 
     if (filters.openNow) {
@@ -129,7 +156,7 @@ const AllRestaurants = () => {
     }
 
     return restaurants;
-  }, [apiPlaces, searchCity, searchZip, filters, apiUserLocation]);
+  }, [apiPlaces, searchCity, searchZip, filters, apiUserLocation, vendorRestaurants.length]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -154,7 +181,7 @@ const AllRestaurants = () => {
         </div>
       </header>
 
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-4 py-4 space-y-4 max-w-6xl mx-auto w-full">
         <h1 className="text-2xl font-bold">Restaurants Near You</h1>
         
         <LocationSearch
@@ -170,6 +197,40 @@ const AllRestaurants = () => {
           userLocation={apiUserLocation}
         />
 
+        {vendorRestaurants.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold">On stackd</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {vendorRestaurants.map((vendor) => (
+                <Link key={vendor.id} to={`/vendor/${vendor.id}`} className="block group">
+                  <div className="aspect-square rounded-xl overflow-hidden relative">
+                    {vendor.photos?.[0] ? (
+                      <img src={vendor.photos[0]} alt={vendor.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
+                        <Store className="h-8 w-8 text-white/80" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                      <p className="text-white text-xs font-medium line-clamp-1">{vendor.name}</p>
+                      <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                        {vendor.google_rating && (
+                          <>
+                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                            <span>{vendor.google_rating}</span>
+                            <span>•</span>
+                          </>
+                        )}
+                        <span>{vendor.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         <RestaurantFilters 
           filters={filters} 
           onFilterChange={setFilters} 
@@ -183,18 +244,20 @@ const AllRestaurants = () => {
             <SkeletonCardGrid count={8} variant="restaurant" columns={4} />
           </>
         ) : filteredRestaurants.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-muted-foreground">No restaurants found</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Try adjusting your filters or search location
-            </p>
-          </div>
+          vendorRestaurants.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">No restaurants found</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Try adjusting your filters or search location
+              </p>
+            </div>
+          ) : null
         ) : (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
               {filteredRestaurants.length} restaurant{filteredRestaurants.length !== 1 ? 's' : ''} found
             </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredRestaurants.map((restaurant) => (
                 <RestaurantCard key={restaurant.id} restaurant={restaurant} variant="grid" />
               ))}

@@ -199,3 +199,17 @@ All colors MUST be HSL.
     animation: shimmer 1.5s infinite;
   }
 }
+
+@layer components {
+  .shot-frame {
+    @apply w-full max-w-[430px] mx-auto min-h-screen bg-background;
+  }
+
+  .shot-phone {
+    @apply w-full max-w-[430px] h-full flex flex-col bg-background overflow-hidden relative sm:border sm:border-border sm:shadow-2xl;
+  }
+
+  .listing-tile {
+    @apply aspect-square rounded-2xl overflow-hidden relative ring-1 ring-border/70;
+  }
+}

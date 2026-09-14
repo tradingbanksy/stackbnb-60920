@@ -184,7 +184,13 @@ export function ChatSuggestionPills({ className, onOpenItinerary }: ChatSuggesti
       // First confirm the itinerary, then generate share link
       confirmItinerary();
       try {
-        await generateShareLink();
+        const shareUrl = await generateShareLink();
+        if (!shareUrl) {
+          toast.error("Failed to generate share link", {
+            description: "Build an itinerary first, then try again.",
+          });
+          return;
+        }
         toast.success("Shareable link generated!", {
           description: "Your itinerary is now ready to share.",
         });

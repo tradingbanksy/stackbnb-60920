@@ -147,6 +147,7 @@ const BookingConfirmation = () => {
   };
 
   const generateGoogleCalendarUrl = () => {
+    if (!bookingData.date || !bookingData.time) return '';
     const startDate = formatDateForCalendar(bookingData.date, bookingData.time);
     const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
 
@@ -164,6 +165,7 @@ const BookingConfirmation = () => {
   };
 
   const generateICSContent = () => {
+    if (!bookingData.date || !bookingData.time) return '';
     const startDate = formatDateForCalendar(bookingData.date, bookingData.time);
     const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
 
@@ -186,6 +188,7 @@ END:VCALENDAR`;
 
   const downloadICS = () => {
     const icsContent = generateICSContent();
+    if (!icsContent) return;
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -198,7 +201,8 @@ END:VCALENDAR`;
   };
 
   const openGoogleCalendar = () => {
-    window.open(generateGoogleCalendarUrl(), '_blank');
+    const url = generateGoogleCalendarUrl();
+    if (url) window.open(url, '_blank');
   };
 
   // If booking was cancelled, show cancelled state
@@ -239,7 +243,7 @@ END:VCALENDAR`;
               variant="gradient" 
               className="w-full" 
               size="lg"
-              onClick={() => navigate('/explore')}
+              onClick={() => navigate('/appview')}
             >
               Back to Experiences
             </Button>
@@ -249,12 +253,31 @@ END:VCALENDAR`;
     );
   }
 
+  if (!bookingData.experienceName) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="p-8 text-center max-w-sm space-y-4 rounded-2xl">
+          <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+            <CheckCircle className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <h1 className="text-xl">No booking to confirm</h1>
+          <p className="text-sm text-muted-foreground">
+            Pick a vendor and complete the booking flow to see confirmation details.
+          </p>
+          <Button variant="gradient" className="rounded-full" onClick={() => navigate('/appview')}>
+            Back to Explore
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="max-w-[375px] mx-auto">
+      <div className="shot-frame sm:border-x sm:border-border sm:shadow-2xl">
         {/* Progress Indicator */}
-        <div className="bg-card border-b p-4">
-          <div className="text-center text-sm text-muted-foreground mb-2">Step 3 of 3</div>
+        <div className="bg-card/80 border-b border-border p-4">
+          <div className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-2">Step 3 of 3</div>
           <div className="flex gap-1">
             <div className="h-1 flex-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full" />
             <div className="h-1 flex-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full" />
@@ -269,15 +292,15 @@ END:VCALENDAR`;
               <CheckCircle className="h-12 w-12 text-white" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold animate-fade-in">Booking Confirmed!</h1>
-              <p className="text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
-                Your experience has been successfully booked
+              <h1 className="text-2xl animate-fade-in">Booking confirmed</h1>
+              <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
+                Your experience is reserved. Details are below.
               </p>
             </div>
           </div>
 
           {/* Booking Details */}
-          <Card className="p-5 space-y-4">
+          <Card className="p-5 space-y-4 rounded-2xl border-border/80">
             <div className="space-y-3">
               <h2 className="font-semibold text-lg">{bookingData.experienceName}</h2>
               
@@ -325,8 +348,8 @@ END:VCALENDAR`;
           </Card>
 
           {/* Vendor Info */}
-          <Card className="p-5 space-y-3">
-            <h3 className="font-semibold">Vendor Information</h3>
+          <Card className="p-5 space-y-3 rounded-2xl border-border/80">
+            <h3 className="font-semibold">Vendor</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Provider</span>
@@ -362,13 +385,17 @@ END:VCALENDAR`;
           )}
 
           {/* Email Confirmation */}
-          <Card className="p-5 bg-muted/30">
+          <Card className="p-5 bg-muted/40 rounded-2xl border-border/60">
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="font-medium text-sm">Email Confirmation Sent</p>
+                <p className="font-medium text-sm">
+                  {guestData.email ? 'Confirmation email' : 'Confirmation'}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  A confirmation email with all booking details has been sent to <span className="font-medium">{guestData.email}</span>
+                  {guestData.email
+                    ? <>Details will go to <span className="font-medium text-foreground">{guestData.email}</span></>
+                    : 'Sign in to receive a confirmation email after checkout.'}
                 </p>
               </div>
             </div>
@@ -409,7 +436,7 @@ END:VCALENDAR`;
               variant="gradient" 
               className="w-full" 
               size="lg"
-              onClick={() => navigate('/explore')}
+              onClick={() => navigate('/appview')}
             >
               Back to Experiences
             </Button>

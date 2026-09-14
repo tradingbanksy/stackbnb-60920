@@ -106,7 +106,7 @@ const AllExperiences = () => {
         </div>
       </header>
 
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-4 py-4 space-y-4 max-w-6xl mx-auto w-full">
         <h1 className="text-2xl font-bold">Popular Experiences</h1>
         
         {/* Search */}
@@ -136,11 +136,11 @@ const AllExperiences = () => {
         )}
 
         {/* Experiences Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {isLoading ? (
             <SkeletonCardGrid count={6} variant="experience" columns={2} />
           ) : filteredExperiences.length === 0 ? (
-            <div className="col-span-2 text-center py-12">
+            <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center py-12">
               <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No experiences found</p>
               <p className="text-sm text-muted-foreground mt-1">
