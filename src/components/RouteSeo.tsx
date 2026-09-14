@@ -1,5 +1,8 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+
+const OG_IMAGE = "https://stackddraft.lovable.app/og-stackd-logo.png";
+
 const pages: Record<string, [string, string]> = {
   "/": ["Stackd | Local experiences and restaurants", "Discover and book trusted local experiences, tours, and restaurants."],
   "/explore": ["Explore local experiences | Stackd", "Find memorable local experiences curated by trusted hosts."],
@@ -14,7 +17,7 @@ export function RouteSeo() {
   useEffect(() => {
     const base = pathname.startsWith("/experience/") ? ["Experience details | Stackd", "Explore this local experience and book your next adventure."] : pathname.startsWith("/restaurant/") ? ["Restaurant details | Stackd", "Explore this restaurant and plan your visit."] : pages[pathname] || ["Stackd | Local experiences and restaurants", "Discover and book trusted local experiences, tours, and restaurants."];
     document.title = base[0];
-    for (const [selector, value] of [["description", base[1]], ["og:title", base[0]], ["og:description", base[1]], ["twitter:title", base[0]], ["twitter:description", base[1]]] as const) {
+    for (const [selector, value] of [["description", base[1]], ["og:title", base[0]], ["og:description", base[1]], ["og:image", OG_IMAGE], ["twitter:title", base[0]], ["twitter:description", base[1]], ["twitter:image", OG_IMAGE]] as const) {
       const attr = selector.startsWith("og:") ? "property" : "name";
       let el = document.head.querySelector(`meta[${attr}="${selector}"]`);
       if (!el) { el = document.createElement("meta"); el.setAttribute(attr, selector); document.head.appendChild(el); }
