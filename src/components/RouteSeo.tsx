@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const OG_IMAGE = "https://stackddraft.lovable.app/og-stackd-logo.png";
+const OG_IMAGE = "https://stackddraft.lovable.app/og-stackd-logo.png?v=2";
 
 const pages: Record<string, [string, string]> = {
   "/": ["Stackd | Local experiences and restaurants", "Discover and book trusted local experiences, tours, and restaurants."],
