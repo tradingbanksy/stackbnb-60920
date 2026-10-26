@@ -201,28 +201,28 @@ const RestaurantDetail = () => {
     }
   };
 
+  const reservationLink = restaurant
+    ? buildReservationLink(restaurant, { date: selectedDate })
+    : null;
+
   const handleReservation = () => {
     if (!restaurant) return;
-    if (restaurant.reservationUrl && restaurant.reservationPlatform) {
-      let url = restaurant.reservationUrl;
-      if (selectedDate) {
-        try {
-          const urlObj = new URL(url);
-          urlObj.searchParams.set('date', format(selectedDate, 'yyyy-MM-dd'));
-          url = urlObj.toString();
-        } catch { /* use original URL */ }
-      }
-      setReservationUrl(url);
-      setShowReservationWebview(true);
+    if (reservationLink) {
+      void openExternalUrl(reservationLink.url);
     } else {
-      window.location.href = `tel:${restaurant.phone}`;
+      setShowReservationFallback(true);
     }
   };
 
   const handleCall = () => {
-    if (restaurant) {
-      window.location.href = `tel:${restaurant.phone}`;
+    if (restaurant?.phone) {
+      window.location.href = `tel:${restaurant.phone.replace(/[^\d+]/g, '')}`;
     }
+  };
+
+  const handleViewOnMaps = () => {
+    if (!restaurant) return;
+    void openExternalUrl(googleReviews?.googleMapsUrl || googleMapsSearchUrl(restaurant));
   };
 
   if (!restaurant) {
@@ -235,29 +235,9 @@ const RestaurantDetail = () => {
 
   const isOpen = isRestaurantOpen(restaurant);
   const photos = displayPhotos.slice(0, 6);
-
-  // Reservation webview modal
-  if (showReservationWebview && (reservationUrl || restaurant.reservationUrl)) {
-    const iframeSrc = reservationUrl || restaurant.reservationUrl;
-    return (
-      <div className="fixed inset-0 z-50 bg-background">
-        <div className="sticky top-0 z-10 bg-card border-b border-border flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="sm" onClick={() => {
-            setShowReservationWebview(false);
-            setReservationUrl(null);
-          }}>
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
-          </Button>
-          <span className="text-sm font-medium capitalize">{restaurant.reservationPlatform}</span>
-          <Button variant="ghost" size="sm" onClick={() => window.open(iframeSrc, '_blank')}>
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </div>
-        <iframe src={iframeSrc} className="w-full h-[calc(100vh-56px)]" title="Reservation" />
-      </div>
-    );
-  }
+  const platformLabel = reservationLink
+    ? { resy: 'Resy', opentable: 'OpenTable', yelp: 'Yelp' }[reservationLink.platform]
+    : null;
 
   return (
     <div className="min-h-screen bg-background pb-[100px]">

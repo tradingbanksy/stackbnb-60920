@@ -77,8 +77,7 @@ export const mockRestaurants: Restaurant[] = [
     photos: uniqueRestaurantPhotos.r1,
     features: ["Outdoor Seating", "Open-Fire Cooking", "Fine Dining", "Reservations Required"],
     hasOutdoorSeating: true,
-    reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/arca',
+    reservationPlatform: null,
     coordinates: { lat: 20.2048, lng: -87.4312 },
   },
   {
@@ -106,8 +105,7 @@ export const mockRestaurants: Restaurant[] = [
     photos: uniqueRestaurantPhotos.r2,
     features: ["Outdoor Seating", "Wood-Fired Cooking", "Farm-to-Table", "Reservations Required"],
     hasOutdoorSeating: true,
-    reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/hartwood',
+    reservationPlatform: null,
     coordinates: { lat: 20.2070, lng: -87.4340 },
   },
   {
@@ -247,8 +245,7 @@ export const mockRestaurants: Restaurant[] = [
     photos: uniqueRestaurantPhotos.r7,
     features: ["Garden Setting", "Tasting Menu", "Wine Pairing", "Reservations Recommended"],
     hasOutdoorSeating: true,
-    reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/kitchen-table',
+    reservationPlatform: null,
     coordinates: { lat: 20.2098, lng: -87.4623 },
   },
   {
