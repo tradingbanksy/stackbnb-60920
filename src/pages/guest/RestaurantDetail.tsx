@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Star, MapPin, Phone, Clock, ExternalLink,
-  Navigation, Heart, Share, Globe, MessageSquare, Loader2
+  Navigation, Heart, Share, Globe, MessageSquare, Loader2, Map as MapIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,8 @@ import StackedPhotoGrid from "@/components/ui/stacked-photo-grid";
 import { supabase } from "@/integrations/supabase/client";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
 import { useSearch } from "@/contexts/SearchContext";
-import { format } from "date-fns";
+import { buildReservationLink, googleMapsSearchUrl } from "@/lib/reservations";
+import { openExternalUrl } from "@/lib/openExternalUrl";
 
 interface GoogleReview {
   author_name: string;
@@ -69,15 +70,6 @@ const setCachedReviews = (restaurantId: string, data: GoogleReviewsData) => {
   }
 };
 
-const openExternalLink = (url: string) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
 const getDayName = (index: number): string => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -92,10 +84,8 @@ const RestaurantDetail = () => {
   const { selectedDate } = useSearch();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showReservationWebview, setShowReservationWebview] = useState(false);
   const [googleReviews, setGoogleReviews] = useState<GoogleReviewsData | null>(null);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-  const [reservationUrl, setReservationUrl] = useState<string | null>(null);
   const [displayPhotos, setDisplayPhotos] = useState<string[]>([]);
   useEffect(() => {
     if (!restaurant) return;
@@ -197,32 +187,32 @@ const RestaurantDetail = () => {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
         `${restaurant.address}, ${restaurant.city}`
       )}`;
-      window.open(url, '_blank');
+      void openExternalUrl(url);
     }
   };
 
+  const reservationLink = restaurant
+    ? buildReservationLink(restaurant, { date: selectedDate })
+    : null;
+
   const handleReservation = () => {
     if (!restaurant) return;
-    if (restaurant.reservationUrl && restaurant.reservationPlatform) {
-      let url = restaurant.reservationUrl;
-      if (selectedDate) {
-        try {
-          const urlObj = new URL(url);
-          urlObj.searchParams.set('date', format(selectedDate, 'yyyy-MM-dd'));
-          url = urlObj.toString();
-        } catch { /* use original URL */ }
-      }
-      setReservationUrl(url);
-      setShowReservationWebview(true);
+    if (reservationLink) {
+      void openExternalUrl(reservationLink.url);
     } else {
-      window.location.href = `tel:${restaurant.phone}`;
+      handleViewOnMaps();
     }
   };
 
   const handleCall = () => {
-    if (restaurant) {
-      window.location.href = `tel:${restaurant.phone}`;
+    if (restaurant?.phone) {
+      window.location.href = `tel:${restaurant.phone.replace(/[^\d+]/g, '')}`;
     }
+  };
+
+  const handleViewOnMaps = () => {
+    if (!restaurant) return;
+    void openExternalUrl(googleReviews?.googleMapsUrl || googleMapsSearchUrl(restaurant));
   };
 
   if (!restaurant) {
@@ -235,29 +225,9 @@ const RestaurantDetail = () => {
 
   const isOpen = isRestaurantOpen(restaurant);
   const photos = displayPhotos.slice(0, 6);
-
-  // Reservation webview modal
-  if (showReservationWebview && (reservationUrl || restaurant.reservationUrl)) {
-    const iframeSrc = reservationUrl || restaurant.reservationUrl;
-    return (
-      <div className="fixed inset-0 z-50 bg-background">
-        <div className="sticky top-0 z-10 bg-card border-b border-border flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="sm" onClick={() => {
-            setShowReservationWebview(false);
-            setReservationUrl(null);
-          }}>
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
-          </Button>
-          <span className="text-sm font-medium capitalize">{restaurant.reservationPlatform}</span>
-          <Button variant="ghost" size="sm" onClick={() => window.open(iframeSrc, '_blank')}>
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </div>
-        <iframe src={iframeSrc} className="w-full h-[calc(100vh-56px)]" title="Reservation" />
-      </div>
-    );
-  }
+  const platformLabel = reservationLink
+    ? { resy: 'Resy', opentable: 'OpenTable', yelp: 'Yelp' }[reservationLink.platform]
+    : null;
 
   return (
     <div className="min-h-screen bg-background pb-[100px]">
@@ -501,7 +471,7 @@ const RestaurantDetail = () => {
                 {googleReviews.googleMapsUrl && (
                   <button
                     type="button"
-                    onClick={() => void openExternalLink(googleReviews.googleMapsUrl!)}
+                    onClick={() => void openExternalUrl(googleReviews.googleMapsUrl!)}
                     className="text-[15px] font-semibold underline underline-offset-4 hover:text-foreground/80 transition-colors"
                   >
                     View all reviews on Google Maps
@@ -533,31 +503,37 @@ const RestaurantDetail = () => {
 
         {/* Fixed bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-40">
-          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-full"
-              onClick={handleCall}
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              Call
-            </Button>
-            <Button
-              className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
-              onClick={handleReservation}
-            >
-              {restaurant.reservationPlatform ? (
-                <>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Reserve Table
-                </>
-              ) : (
-                <>
+          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto space-y-2">
+            {!reservationLink && (
+              <p role="status" className="text-center text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Reservations unavailable online</span>
+                {restaurant.phone ? " — call to book or view on Google Maps" : " — view on Google Maps"}
+              </p>
+            )}
+            <div className="flex gap-3">
+              {restaurant.phone && (
+                <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
                   <Phone className="h-4 w-4 mr-2" />
-                  Call to Book
-                </>
+                  Call
+                </Button>
               )}
-            </Button>
+              <Button
+                className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
+                onClick={reservationLink ? handleReservation : handleViewOnMaps}
+              >
+                {reservationLink ? (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Reserve on {platformLabel}
+                  </>
+                ) : (
+                  <>
+                    <MapIcon className="h-4 w-4 mr-2" />
+                    View on Google Maps
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

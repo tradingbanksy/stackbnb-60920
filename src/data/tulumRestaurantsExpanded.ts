@@ -45,7 +45,7 @@ export const expandedTulumRestaurants: Restaurant[] = [
     features: ["Live Music", "Craft Cocktails", "Jungle Setting", "Late Night"],
     hasOutdoorSeating: true,
     reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/gitano',
+    reservationUrl: 'https://resy.com/cities/tlm/venues/restaurante-gitano-tulum',
     coordinates: { lat: 20.2041, lng: -87.4305 },
   },
   {
@@ -129,8 +129,7 @@ export const expandedTulumRestaurants: Restaurant[] = [
     photos: [mexican4],
     features: ["Jungle Setting", "Candlelit", "Mezcal Bar", "Romantic"],
     hasOutdoorSeating: true,
-    reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/casa-jaguar',
+    reservationPlatform: null,
     coordinates: { lat: 20.2046, lng: -87.4311 },
   },
   {
@@ -158,8 +157,7 @@ export const expandedTulumRestaurants: Restaurant[] = [
     photos: [japanese1],
     features: ["Omakase", "Sushi Bar", "Sake Selection", "Fine Dining"],
     hasOutdoorSeating: true,
-    reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/noma',
+    reservationPlatform: null,
     coordinates: { lat: 20.2001, lng: -87.4291 },
   },
   {
@@ -300,7 +298,7 @@ export const expandedTulumRestaurants: Restaurant[] = [
     features: ["Beach Club", "DJ Sets", "Pool", "Premium Sushi"],
     hasOutdoorSeating: true,
     reservationPlatform: 'resy',
-    reservationUrl: 'https://resy.com/cities/tulum-mx/taboo',
+    reservationUrl: 'https://resy.com/cities/tlm/venues/taboo-beach-club-tulum',
     coordinates: { lat: 20.2043, lng: -87.4309 },
   },
   {
