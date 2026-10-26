@@ -70,15 +70,6 @@ const setCachedReviews = (restaurantId: string, data: GoogleReviewsData) => {
   }
 };
 
-const openExternalLink = (url: string) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
 const getDayName = (index: number): string => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -93,7 +84,6 @@ const RestaurantDetail = () => {
   const { selectedDate } = useSearch();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showReservationFallback, setShowReservationFallback] = useState(false);
   const [googleReviews, setGoogleReviews] = useState<GoogleReviewsData | null>(null);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [displayPhotos, setDisplayPhotos] = useState<string[]>([]);
@@ -197,7 +187,7 @@ const RestaurantDetail = () => {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
         `${restaurant.address}, ${restaurant.city}`
       )}`;
-      window.open(url, '_blank');
+      void openExternalUrl(url);
     }
   };
 
@@ -210,7 +200,7 @@ const RestaurantDetail = () => {
     if (reservationLink) {
       void openExternalUrl(reservationLink.url);
     } else {
-      setShowReservationFallback(true);
+      handleViewOnMaps();
     }
   };
 
@@ -481,7 +471,7 @@ const RestaurantDetail = () => {
                 {googleReviews.googleMapsUrl && (
                   <button
                     type="button"
-                    onClick={() => void openExternalLink(googleReviews.googleMapsUrl!)}
+                    onClick={() => void openExternalUrl(googleReviews.googleMapsUrl!)}
                     className="text-[15px] font-semibold underline underline-offset-4 hover:text-foreground/80 transition-colors"
                   >
                     View all reviews on Google Maps
@@ -513,67 +503,36 @@ const RestaurantDetail = () => {
 
         {/* Fixed bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-40">
-          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto space-y-3">
-            {showReservationFallback && !reservationLink && (
-              <div role="status" className="rounded-xl border border-border bg-muted/50 p-3 text-sm">
-                <p className="font-semibold">Reservations unavailable online</p>
-                <p className="text-muted-foreground">
-                  {restaurant.phone
-                    ? "Call the restaurant to book, or check details on Google Maps."
-                    : "Check opening details and booking options on Google Maps."}
-                </p>
-              </div>
+          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto space-y-2">
+            {!reservationLink && (
+              <p role="status" className="text-center text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Reservations unavailable online</span>
+                {restaurant.phone ? " — call to book or view on Google Maps" : " — view on Google Maps"}
+              </p>
             )}
             <div className="flex gap-3">
-              {reservationLink ? (
-                <>
-                  {restaurant.phone && (
-                    <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call
-                    </Button>
-                  )}
-                  <Button
-                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
-                    onClick={handleReservation}
-                    aria-label={`Reserve a table on ${platformLabel}`}
-                  >
+              {restaurant.phone && (
+                <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call
+                </Button>
+              )}
+              <Button
+                className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
+                onClick={reservationLink ? handleReservation : handleViewOnMaps}
+              >
+                {reservationLink ? (
+                  <>
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Reserve on {platformLabel}
-                  </Button>
-                </>
-              ) : showReservationFallback ? (
-                <>
-                  {restaurant.phone && (
-                    <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call
-                    </Button>
-                  )}
-                  <Button
-                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
-                    onClick={handleViewOnMaps}
-                  >
+                  </>
+                ) : (
+                  <>
                     <MapIcon className="h-4 w-4 mr-2" />
                     View on Google Maps
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {restaurant.phone && (
-                    <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call
-                    </Button>
-                  )}
-                  <Button
-                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
-                    onClick={handleReservation}
-                  >
-                    Reserve Table
-                  </Button>
-                </>
-              )}
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
