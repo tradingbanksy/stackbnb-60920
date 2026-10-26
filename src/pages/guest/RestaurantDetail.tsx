@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Star, MapPin, Phone, Clock, ExternalLink,
-  Navigation, Heart, Share, Globe, MessageSquare, Loader2
+  Navigation, Heart, Share, Globe, MessageSquare, Loader2, Map as MapIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,8 @@ import StackedPhotoGrid from "@/components/ui/stacked-photo-grid";
 import { supabase } from "@/integrations/supabase/client";
 import { GuestGuideButton } from "@/components/GuestGuideButton";
 import { useSearch } from "@/contexts/SearchContext";
-import { format } from "date-fns";
+import { buildReservationLink, googleMapsSearchUrl } from "@/lib/reservations";
+import { openExternalUrl } from "@/lib/openExternalUrl";
 
 interface GoogleReview {
   author_name: string;
@@ -92,10 +93,9 @@ const RestaurantDetail = () => {
   const { selectedDate } = useSearch();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showReservationWebview, setShowReservationWebview] = useState(false);
+  const [showReservationFallback, setShowReservationFallback] = useState(false);
   const [googleReviews, setGoogleReviews] = useState<GoogleReviewsData | null>(null);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-  const [reservationUrl, setReservationUrl] = useState<string | null>(null);
   const [displayPhotos, setDisplayPhotos] = useState<string[]>([]);
   useEffect(() => {
     if (!restaurant) return;
@@ -513,31 +513,68 @@ const RestaurantDetail = () => {
 
         {/* Fixed bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-40">
-          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-full"
-              onClick={handleCall}
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              Call
-            </Button>
-            <Button
-              className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
-              onClick={handleReservation}
-            >
-              {restaurant.reservationPlatform ? (
+          <div className="max-w-[375px] md:max-w-3xl lg:max-w-5xl mx-auto space-y-3">
+            {showReservationFallback && !reservationLink && (
+              <div role="status" className="rounded-xl border border-border bg-muted/50 p-3 text-sm">
+                <p className="font-semibold">Reservations unavailable online</p>
+                <p className="text-muted-foreground">
+                  {restaurant.phone
+                    ? "Call the restaurant to book, or check details on Google Maps."
+                    : "Check opening details and booking options on Google Maps."}
+                </p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              {reservationLink ? (
                 <>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Reserve Table
+                  {restaurant.phone && (
+                    <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call
+                    </Button>
+                  )}
+                  <Button
+                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
+                    onClick={handleReservation}
+                    aria-label={`Reserve a table on ${platformLabel}`}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Reserve on {platformLabel}
+                  </Button>
+                </>
+              ) : showReservationFallback ? (
+                <>
+                  {restaurant.phone && (
+                    <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call
+                    </Button>
+                  )}
+                  <Button
+                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
+                    onClick={handleViewOnMaps}
+                  >
+                    <MapIcon className="h-4 w-4 mr-2" />
+                    View on Google Maps
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Phone className="h-4 w-4 mr-2" />
-                  Call to Book
+                  {restaurant.phone && (
+                    <Button variant="outline" className="flex-1 rounded-full" onClick={handleCall}>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call
+                    </Button>
+                  )}
+                  <Button
+                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold"
+                    onClick={handleReservation}
+                  >
+                    Reserve Table
+                  </Button>
                 </>
               )}
-            </Button>
+            </div>
           </div>
         </div>
       </div>
