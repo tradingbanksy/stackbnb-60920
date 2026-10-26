@@ -14,6 +14,11 @@ export async function openExternalUrl(url: string): Promise<void> {
       console.error('In-app browser failed, falling back:', error);
     }
   }
-  const win = window.open(url, '_blank', 'noopener,noreferrer');
-  if (!win) window.location.assign(url);
+  // Note: passing 'noopener' makes window.open always return null, so detach manually.
+  const win = window.open(url, '_blank');
+  if (win) {
+    try { win.opener = null; } catch { /* cross-origin, ignore */ }
+  } else {
+    window.location.assign(url);
+  }
 }
